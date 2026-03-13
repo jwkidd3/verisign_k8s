@@ -1,0 +1,124 @@
+# This file goes in clusters/<cluster-name>/infrastructure.yaml
+# It tells Flux to reconcile everything under the infrastructure/ directory
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: infrastructure-sources
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./flux/infrastructure/sources
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: infrastructure-core
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./flux/infrastructure/core
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+    - name: infrastructure-sources
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: infrastructure-security
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./flux/infrastructure/security
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+    - name: infrastructure-core
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: infrastructure-monitoring
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./flux/infrastructure/monitoring
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+    - name: infrastructure-core
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: infrastructure-networking
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./flux/infrastructure/networking
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+    - name: infrastructure-core
+    - name: infrastructure-security
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: infrastructure-logging
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./flux/infrastructure/logging
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+    - name: infrastructure-core
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: platform
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./flux/platform
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+    - name: infrastructure-core
+    - name: infrastructure-security
+    - name: infrastructure-networking
+    - name: infrastructure-monitoring
+    - name: infrastructure-logging
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: policies
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./flux/policies
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+    - name: infrastructure-security

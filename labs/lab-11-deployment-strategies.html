@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab 11: Deployment Strategies | Intermediate Kubernetes</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reset.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/theme/white.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/highlight/monokai.css">
+    <style>
+        :root {
+            --heading-color: #1a365d;
+            --accent-color: #2b6cb0;
+            --success-color: #2f855a;
+            --warning-color: #c05621;
+            --danger-color: #c53030;
+            --text-color: #2d3748;
+        }
+
+        .reveal {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text-color);
+            font-size: 28px;
+        }
+
+        .reveal h1, .reveal h2, .reveal h3, .reveal h4 {
+            color: var(--heading-color);
+            font-weight: 700;
+            text-transform: none;
+        }
+
+        .reveal h1 { font-size: 2.2em; }
+        .reveal h2 { font-size: 1.6em; }
+        .reveal h3 { font-size: 1.3em; }
+
+        /* Title Slide */
+        .title-slide h1 {
+            color: #ffffff;
+            font-size: 2.4em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            margin-bottom: 0.3em;
+        }
+        .title-slide h2 {
+            color: #e2e8f0;
+            font-size: 1.4em;
+            font-weight: 400;
+            margin-bottom: 0.2em;
+        }
+        .title-slide h3 {
+            color: #cbd5e0;
+            font-size: 1.1em;
+            font-weight: 300;
+        }
+
+        /* Section Divider */
+        .section-divider h2 {
+            color: #ffffff;
+            font-size: 2.0em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .section-divider h3 {
+            color: #e2e8f0;
+            font-size: 1.2em;
+            font-weight: 400;
+        }
+
+        /* Highlight Boxes */
+        .highlight-box {
+            background: #ebf8ff;
+            border-left: 4px solid var(--accent-color);
+            padding: 20px 25px;
+            border-radius: 0 8px 8px 0;
+            margin: 15px 0;
+            text-align: left;
+        }
+        .highlight-box.success {
+            background: #f0fff4;
+            border-left-color: var(--success-color);
+        }
+        .highlight-box.warning {
+            background: #fffaf0;
+            border-left-color: var(--warning-color);
+        }
+        .highlight-box.danger {
+            background: #fff5f5;
+            border-left-color: var(--danger-color);
+        }
+
+        /* Two Columns */
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            align-items: start;
+            text-align: left;
+        }
+
+        /* Three Columns */
+        .three-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            align-items: start;
+            text-align: left;
+        }
+
+        /* Card */
+        .card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid #e2e8f0;
+            text-align: left;
+        }
+        .card h3, .card h4 {
+            margin-top: 0;
+            color: var(--accent-color);
+        }
+
+        /* Concept Box */
+        .concept-box {
+            background: linear-gradient(135deg, #ebf8ff 0%, #e2e8f0 100%);
+            border-radius: 12px;
+            padding: 25px;
+            margin: 15px 0;
+            border: 1px solid #bee3f8;
+            text-align: left;
+        }
+        .concept-box h3, .concept-box h4 {
+            color: var(--heading-color);
+            margin-top: 0;
+        }
+
+        /* Emoji Header */
+        .emoji-header {
+            font-size: 1.8em;
+            margin-bottom: 0.5em;
+        }
+
+        /* Key Point */
+        .key-point {
+            background: #ebf8ff;
+            border: 2px solid var(--accent-color);
+            border-radius: 12px;
+            padding: 20px 25px;
+            margin: 15px 0;
+            text-align: left;
+            font-size: 0.95em;
+        }
+        .key-point strong {
+            color: var(--accent-color);
+        }
+
+        /* Lab Callout */
+        .lab-callout h2 {
+            color: #ffffff;
+            font-size: 1.8em;
+            margin-bottom: 0.3em;
+        }
+        .lab-callout h3 {
+            color: #90cdf4;
+            font-size: 1.3em;
+            font-weight: 400;
+        }
+        .lab-callout p {
+            color: #e2e8f0;
+            font-size: 1.0em;
+        }
+        .lab-callout ul {
+            color: #e2e8f0;
+            text-align: left;
+            display: inline-block;
+        }
+        .lab-callout .highlight-box {
+            background: rgba(255,255,255,0.1);
+            border-left-color: #90cdf4;
+            color: #e2e8f0;
+        }
+
+        /* Questions Slide */
+        .questions-slide h2 {
+            color: #ffffff;
+            font-size: 2.2em;
+        }
+        .questions-slide p {
+            color: #e2e8f0;
+            font-size: 1.2em;
+        }
+
+        /* Takeaway List */
+        .takeaway-list {
+            text-align: left;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .takeaway-list li {
+            margin-bottom: 12px;
+            line-height: 1.6;
+            list-style: none;
+            padding-left: 10px;
+        }
+
+        /* Module Progress */
+        .module-progress {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 20px;
+        }
+        .module-progress .step {
+            width: 30px;
+            height: 6px;
+            border-radius: 3px;
+            background: #cbd5e0;
+        }
+        .module-progress .step.active {
+            background: var(--accent-color);
+        }
+        .module-progress .step.completed {
+            background: var(--success-color);
+        }
+
+        /* Table Styles */
+        .reveal table {
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 0.75em;
+            margin: 15px 0;
+        }
+        .reveal table th {
+            background: var(--heading-color);
+            color: #ffffff;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+        }
+        .reveal table td {
+            padding: 10px 16px;
+            border-bottom: 1px solid #e2e8f0;
+            text-align: left;
+        }
+        .reveal table tr:nth-child(even) {
+            background: #f7fafc;
+        }
+        .reveal table tr:hover {
+            background: #ebf8ff;
+        }
+
+        /* General list styling */
+        .reveal ul, .reveal ol {
+            text-align: left;
+            display: block;
+            margin-left: 1em;
+        }
+        .reveal li {
+            margin-bottom: 0.5em;
+            line-height: 1.5;
+            font-size: 0.9em;
+        }
+
+        .reveal p {
+            line-height: 1.6;
+        }
+
+        .reveal .small-text {
+            font-size: 0.7em;
+            color: #718096;
+        }
+
+        /* Code blocks */
+        .reveal pre code {
+            font-size: 0.65em;
+            max-height: 450px;
+            overflow-y: auto;
+            line-height: 1.4;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+
+            <!-- Title Slide -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="title-slide">
+                <h1>Lab 11: Deployment Strategies</h1>
+                <h2>Rolling Updates, Blue-Green, Canary &amp; Disruption Budgets</h2>
+                <h3>Intermediate Kubernetes &mdash; Module 11 of 16</h3>
+                <div class="module-progress">
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step active"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                </div>
+                <aside class="notes">
+                    Welcome to Lab 11. This lab focuses on deployment strategies that are critical for production workloads. Students will practice rolling updates, blue-green and canary patterns, Pod Disruption Budgets, and progress deadline configuration. Ensure everyone has a working cluster before starting.
+                </aside>
+            </section>
+
+            <!-- Lab Overview -->
+            <section>
+                <h2>&#x1F4CB; Lab Overview</h2>
+                <div class="two-columns">
+                    <div class="card">
+                        <h4>Objectives</h4>
+                        <ul>
+                            <li class="fragment">Perform rolling updates and rollbacks</li>
+                            <li class="fragment">Implement blue-green deployment pattern</li>
+                            <li class="fragment">Implement canary deployment pattern</li>
+                            <li class="fragment">Configure Pod Disruption Budgets</li>
+                            <li class="fragment">Detect stuck rollouts with progress deadlines</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>Prerequisites</h4>
+                        <ul>
+                            <li>kubectl installed and configured</li>
+                            <li>Access to a Kubernetes cluster (EKS)</li>
+                            <li>Completed Labs 1&ndash;10</li>
+                        </ul>
+                        <div class="highlight-box warning" style="margin-top: 15px;">
+                            <strong>&#x23F1; Duration:</strong> ~45 minutes
+                        </div>
+                    </div>
+                </div>
+                <aside class="notes">
+                    Review the objectives and confirm everyone has the prerequisites. This lab builds on Deployment knowledge from earlier labs but introduces advanced rollout patterns used in production environments.
+                </aside>
+            </section>
+
+            <!-- ========== STEP 1: Deploy v1 of the Application ========== -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="section-divider">
+                <h2>Step 1</h2>
+                <h3>Deploy v1 of the Application</h3>
+                <div class="module-progress">
+                    <div class="step active"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                </div>
+                <aside class="notes">
+                    We start by deploying a baseline v1 application using nginx with a custom index page. This gives us a clear way to distinguish between versions during updates.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F680; Create the v1 Application</h2>
+                <p>First, create a namespace and a ConfigMap for our v1 index page:</p>
+                <pre><code class="bash" data-trim>
+# Create a dedicated namespace
+kubectl create namespace deploy-strategies
+
+# Create a ConfigMap with v1 index page
+kubectl create configmap app-v1-page \
+  --from-literal=index.html='&lt;h1 style="color:blue"&gt;Application v1&lt;/h1&gt;&lt;p&gt;Version: 1.0.0&lt;/p&gt;' \
+  -n deploy-strategies
+                </code></pre>
+                <div class="highlight-box success fragment">
+                    <strong>&#x2705; Expected Output:</strong>
+                    <code>namespace/deploy-strategies created</code><br>
+                    <code>configmap/app-v1-page created</code>
+                </div>
+                <aside class="notes">
+                    The ConfigMap approach lets us change the application content without building custom images. Students can easily see which version is responding.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F680; Deploy v1 with Rolling Update Strategy</h2>
+                <p>Create the Deployment manifest and apply it:</p>
+                <pre><code class="yaml" data-trim>
+# Save as app-deploy-v1.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webapp
+  namespace: deploy-strategies
+  labels:
+    app: webapp
+spec:
+  replicas: 4
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: webapp
+  template:
+    metadata:
+      labels:
+        app: webapp
+        version: v1
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.24
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: html
+          mountPath: /usr/share/nginx/html
+      volumes:
+      - name: html
+        configMap:
+          name: app-v1-page
+                </code></pre>
+                <aside class="notes">
+                    Walk through the strategy section. maxSurge 1 means at most 5 pods during update. maxUnavailable 1 means at least 3 pods available during update. These settings control the pace of the rolling update.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F680; Apply and Expose the Deployment</h2>
+                <p>Apply the manifest and create a Service:</p>
+                <pre><code class="bash" data-trim>
+# Apply the deployment
+kubectl apply -f app-deploy-v1.yaml
+
+# Expose the deployment with a ClusterIP service
+kubectl expose deployment webapp \
+  --port=80 --target-port=80 \
+  --name=webapp-svc \
+  -n deploy-strategies
+
+# Verify the deployment
+kubectl get deployment webapp -n deploy-strategies
+kubectl get pods -n deploy-strategies -l app=webapp
+                </code></pre>
+                <div class="highlight-box success fragment">
+                    <strong>&#x2705; Expected Output:</strong> 4 pods running with STATUS <code>Running</code> and READY <code>1/1</code>.
+                </div>
+                <div class="highlight-box fragment">
+                    <strong>&#x1F50D; Verify v1 is serving:</strong>
+                    <pre style="margin:8px 0;"><code class="bash" data-trim>
+kubectl run curl-test --image=curlimages/curl --rm -it --restart=Never \
+  -n deploy-strategies -- curl -s webapp-svc
+                    </code></pre>
+                    You should see <code>Application v1</code> in the response.
+                </div>
+                <aside class="notes">
+                    Have students verify they see the v1 page content before proceeding. This confirms the end-to-end deployment is working correctly.
+                </aside>
+            </section>
+
+            <!-- ========== STEP 2: Perform Rolling Update to v2 ========== -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="section-divider">
+                <h2>Step 2</h2>
+                <h3>Perform a Rolling Update to v2</h3>
+                <div class="module-progress">
+                    <div class="step completed"></div>
+                    <div class="step active"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                </div>
+                <aside class="notes">
+                    Now we perform a rolling update by changing the image and ConfigMap. Students will observe how Kubernetes gradually replaces old pods with new ones.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F504; Update to v2</h2>
+                <p>Create a v2 ConfigMap and update the Deployment:</p>
+                <pre><code class="bash" data-trim>
+# Create v2 ConfigMap
+kubectl create configmap app-v2-page \
+  --from-literal=index.html='&lt;h1 style="color:green"&gt;Application v2&lt;/h1&gt;&lt;p&gt;Version: 2.0.0&lt;/p&gt;' \
+  -n deploy-strategies
+
+# Update the deployment image and volume reference
+kubectl set image deployment/webapp nginx=nginx:1.25 \
+  -n deploy-strategies --record
+
+# Simultaneously patch the volume to use v2 ConfigMap
+kubectl patch deployment webapp -n deploy-strategies --type=json \
+  -p='[{"op":"replace","path":"/spec/template/spec/volumes/0/configMap/name","value":"app-v2-page"}]'
+                </code></pre>
+                <div class="highlight-box warning fragment">
+                    <strong>&#x26A0; Note:</strong> The <code>--record</code> flag is deprecated but still functional. It records the command in the rollout history for reference. In production, use annotations instead.
+                </div>
+                <aside class="notes">
+                    Explain that updating either the image or the ConfigMap reference triggers a new rollout because both change the pod template spec. The patch command modifies the volume source.
+                </aside>
+            </section>
+
+            <!-- ========== STEP 3: Monitor the Rolling Update ========== -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="section-divider">
+                <h2>Step 3</h2>
+                <h3>Monitor the Rolling Update</h3>
+                <div class="module-progress">
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step active"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                </div>
+                <aside class="notes">
+                    Monitoring rollout progress is essential in production. Students will learn several ways to observe the update in real time.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F4CA; Watch Rollout Progress</h2>
+                <p>Use multiple commands to observe the rolling update:</p>
+                <pre><code class="bash" data-trim>
+# Watch the rollout status (blocks until complete)
+kubectl rollout status deployment/webapp -n deploy-strategies
+
+# View rollout history
+kubectl rollout history deployment/webapp -n deploy-strategies
+
+# Describe the deployment to see events
+kubectl describe deployment webapp -n deploy-strategies | tail -20
+                </code></pre>
+                <div class="highlight-box success fragment">
+                    <strong>&#x2705; Expected Output:</strong>
+                    <code>deployment "webapp" successfully rolled out</code><br>
+                    The rollout history should show at least 2 revisions.
+                </div>
+                <aside class="notes">
+                    The rollout status command is blocking and waits until the update finishes. The describe output shows ReplicaSet scaling events. Point out how old ReplicaSets are scaled down while new ones are scaled up.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F4CA; Verify the Update</h2>
+                <p>Confirm v2 is now serving traffic:</p>
+                <pre><code class="bash" data-trim>
+# Check pods are running the new image
+kubectl get pods -n deploy-strategies -l app=webapp -o wide
+
+# Verify the response
+kubectl run curl-test2 --image=curlimages/curl --rm -it --restart=Never \
+  -n deploy-strategies -- curl -s webapp-svc
+
+# Check the ReplicaSets
+kubectl get replicasets -n deploy-strategies -l app=webapp
+                </code></pre>
+                <div class="highlight-box success fragment">
+                    <strong>&#x2705; Expected Output:</strong> You should see <code>Application v2</code> in the curl response. The old ReplicaSet should have 0 desired/current pods, while the new one has 4.
+                </div>
+                <aside class="notes">
+                    Point out that Kubernetes keeps the old ReplicaSet around with 0 replicas. This is what enables rollback. The revisionHistoryLimit setting controls how many old ReplicaSets are retained.
+                </aside>
+            </section>
+
+            <!-- ========== STEP 4: Rollback to v1 ========== -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="section-divider">
+                <h2>Step 4</h2>
+                <h3>Rollback to v1</h3>
+                <div class="module-progress">
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step active"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                </div>
+                <aside class="notes">
+                    Rollbacks are one of the most important operational capabilities. A failed deployment should be quickly reverted. Kubernetes makes this simple with rollout undo.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x23EA; Rollback the Deployment</h2>
+                <p>Undo the rollout to return to v1:</p>
+                <pre><code class="bash" data-trim>
+# Rollback to the previous revision
+kubectl rollout undo deployment/webapp -n deploy-strategies
+
+# Watch the rollback progress
+kubectl rollout status deployment/webapp -n deploy-strategies
+
+# Verify we are back to v1
+kubectl run curl-test3 --image=curlimages/curl --rm -it --restart=Never \
+  -n deploy-strategies -- curl -s webapp-svc
+
+# Check rollout history (notice the revision numbers)
+kubectl rollout history deployment/webapp -n deploy-strategies
+                </code></pre>
+                <div class="highlight-box success fragment">
+                    <strong>&#x2705; Expected Output:</strong> The curl response should show <code>Application v1</code> again. The rollout history will show a new revision number for the rollback.
+                </div>
+                <div class="concept-box fragment">
+                    <h4>&#x1F4A1; Rollback to a Specific Revision</h4>
+                    <p>You can also target a specific revision: <code>kubectl rollout undo deployment/webapp --to-revision=1 -n deploy-strategies</code></p>
+                </div>
+                <aside class="notes">
+                    Explain that rollback reuses the old ReplicaSet. A rollback is essentially another rolling update, just to a previously known-good state. The revision numbers never decrease.
+                </aside>
+            </section>
+
+            <!-- ========== STEP 5: Blue-Green Deployment ========== -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="section-divider">
+                <h2>Step 5</h2>
+                <h3>Implement Blue-Green Deployment</h3>
+                <div class="module-progress">
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step active"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                </div>
+                <aside class="notes">
+                    Blue-green is a zero-downtime deployment pattern. Both versions run simultaneously, and a service selector switch directs all traffic at once. This is different from rolling updates which gradually shift traffic.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F535; Deploy the Blue Version</h2>
+                <p>Create a blue deployment with its own version label:</p>
+                <pre><code class="yaml" data-trim>
+# Save as blue-deploy.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webapp-blue
+  namespace: deploy-strategies
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: webapp-bg
+      version: blue
+  template:
+    metadata:
+      labels:
+        app: webapp-bg
+        version: blue
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.24
+        ports:
+        - containerPort: 80
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          echo '&lt;h1 style="color:blue"&gt;BLUE Version&lt;/h1&gt;' > /usr/share/nginx/html/index.html
+          nginx -g 'daemon off;'
+                </code></pre>
+                <aside class="notes">
+                    Using inline commands to set the page content keeps the example self-contained. In production, you would use proper container images for each version.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F7E2; Deploy the Green Version</h2>
+                <p>Create a green deployment alongside blue:</p>
+                <pre><code class="yaml" data-trim>
+# Save as green-deploy.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webapp-green
+  namespace: deploy-strategies
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: webapp-bg
+      version: green
+  template:
+    metadata:
+      labels:
+        app: webapp-bg
+        version: green
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.25
+        ports:
+        - containerPort: 80
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          echo '&lt;h1 style="color:green"&gt;GREEN Version&lt;/h1&gt;' > /usr/share/nginx/html/index.html
+          nginx -g 'daemon off;'
+                </code></pre>
+                <aside class="notes">
+                    Both deployments share the app label webapp-bg but differ on the version label. The service selector will switch between them.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F500; Create the Blue-Green Service</h2>
+                <p>Create a Service that initially points to blue:</p>
+                <pre><code class="bash" data-trim>
+# Apply both deployments
+kubectl apply -f blue-deploy.yaml
+kubectl apply -f green-deploy.yaml
+
+# Create a service pointing to blue
+kubectl create service clusterip webapp-bg-svc \
+  --tcp=80:80 -n deploy-strategies --dry-run=client -o yaml | \
+  kubectl patch -f - --dry-run=client -o yaml \
+  --type=json -p='[{"op":"replace","path":"/spec/selector","value":{"app":"webapp-bg","version":"blue"}}]' | \
+  kubectl apply -f -
+                </code></pre>
+                <p class="fragment">Or use a simpler YAML approach:</p>
+                <pre class="fragment"><code class="yaml" data-trim>
+# Save as bg-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: webapp-bg-svc
+  namespace: deploy-strategies
+spec:
+  selector:
+    app: webapp-bg
+    version: blue          # Currently routing to blue
+  ports:
+  - port: 80
+    targetPort: 80
+                </code></pre>
+                <aside class="notes">
+                    The YAML approach is cleaner and recommended. The service selector includes both the app label and the version label, which is how we control which deployment receives traffic.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F500; Switch Traffic: Blue to Green</h2>
+                <p>Perform the blue-green switch by changing the service selector:</p>
+                <pre><code class="bash" data-trim>
+# Apply the service
+kubectl apply -f bg-service.yaml
+
+# Verify blue is serving
+kubectl run bg-test1 --image=curlimages/curl --rm -it --restart=Never \
+  -n deploy-strategies -- curl -s webapp-bg-svc
+
+# Switch to green by patching the service selector
+kubectl patch service webapp-bg-svc -n deploy-strategies \
+  -p '{"spec":{"selector":{"version":"green"}}}'
+
+# Verify green is now serving
+kubectl run bg-test2 --image=curlimages/curl --rm -it --restart=Never \
+  -n deploy-strategies -- curl -s webapp-bg-svc
+                </code></pre>
+                <div class="highlight-box success fragment">
+                    <strong>&#x2705; Expected Output:</strong> First curl shows <code>BLUE Version</code>, second curl shows <code>GREEN Version</code>. The switch is instantaneous.
+                </div>
+                <div class="highlight-box warning fragment">
+                    <strong>&#x26A0; Production Note:</strong> Keep the blue deployment running until green is validated. If issues arise, switch back immediately by patching the selector to <code>version: blue</code>.
+                </div>
+                <aside class="notes">
+                    Emphasize the instant cutover. Unlike rolling updates, blue-green switches 100% of traffic at once. The rollback is equally fast. The trade-off is that you need double the resources during deployment.
+                </aside>
+            </section>
+
+            <!-- ========== STEP 6: Canary Deployment ========== -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="section-divider">
+                <h2>Step 6</h2>
+                <h3>Implement Canary Deployment</h3>
+                <div class="module-progress">
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step active"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                </div>
+                <aside class="notes">
+                    Canary deployments gradually shift traffic to a new version. We use different replica counts and a shared label to control the traffic ratio. This is a native Kubernetes approach without a service mesh.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F426; Deploy Stable and Canary Versions</h2>
+                <p>Create the stable deployment with 4 replicas:</p>
+                <pre><code class="yaml" data-trim>
+# Save as canary-stable.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webapp-stable
+  namespace: deploy-strategies
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: webapp-canary
+      track: stable
+  template:
+    metadata:
+      labels:
+        app: webapp-canary
+        track: stable
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.24
+        ports:
+        - containerPort: 80
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          echo 'STABLE-v1' > /usr/share/nginx/html/index.html
+          nginx -g 'daemon off;'
+                </code></pre>
+                <aside class="notes">
+                    The stable deployment uses 4 replicas and the shared label app: webapp-canary. The track label differentiates stable from canary but is not used in the service selector.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F426; Deploy the Canary</h2>
+                <p>Create the canary deployment with 1 replica:</p>
+                <pre><code class="yaml" data-trim>
+# Save as canary-new.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webapp-canary
+  namespace: deploy-strategies
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webapp-canary
+      track: canary
+  template:
+    metadata:
+      labels:
+        app: webapp-canary
+        track: canary
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.25
+        ports:
+        - containerPort: 80
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          echo 'CANARY-v2' > /usr/share/nginx/html/index.html
+          nginx -g 'daemon off;'
+                </code></pre>
+                <div class="concept-box fragment">
+                    <h4>&#x1F4A1; Traffic Ratio</h4>
+                    <p>With 4 stable + 1 canary = 5 total pods, approximately <strong>20%</strong> of traffic goes to the canary version. Adjust replica counts to control the ratio.</p>
+                </div>
+                <aside class="notes">
+                    The service selects on app: webapp-canary only, which matches both stable and canary pods. Kubernetes round-robins across all endpoints, giving us an approximate traffic split based on pod count.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F426; Create the Canary Service</h2>
+                <p>Create a Service that selects both stable and canary pods:</p>
+                <pre><code class="yaml" data-trim>
+# Save as canary-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: webapp-canary-svc
+  namespace: deploy-strategies
+spec:
+  selector:
+    app: webapp-canary    # Matches BOTH stable and canary pods
+  ports:
+  - port: 80
+    targetPort: 80
+                </code></pre>
+                <pre><code class="bash" data-trim>
+# Apply all canary resources
+kubectl apply -f canary-stable.yaml
+kubectl apply -f canary-new.yaml
+kubectl apply -f canary-service.yaml
+
+# Verify pods are running
+kubectl get pods -n deploy-strategies -l app=webapp-canary --show-labels
+                </code></pre>
+                <div class="highlight-box success fragment">
+                    <strong>&#x2705; Expected Output:</strong> 5 pods total &mdash; 4 with <code>track=stable</code> and 1 with <code>track=canary</code>.
+                </div>
+                <aside class="notes">
+                    The key insight is that the service selector uses only the shared app label. Both deployments have their own track label for management, but the service does not filter on track.
+                </aside>
+            </section>
+
+            <!-- ========== STEP 7: Verify Canary Traffic Distribution ========== -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="section-divider">
+                <h2>Step 7</h2>
+                <h3>Verify Canary Traffic Distribution</h3>
+                <div class="module-progress">
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step active"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                </div>
+                <aside class="notes">
+                    Students will now verify the traffic split by sending multiple requests and counting responses. This demonstrates the approximate nature of replica-based traffic splitting.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F4CA; Test Traffic Distribution</h2>
+                <p>Run a loop to observe the traffic split between stable and canary:</p>
+                <pre><code class="bash" data-trim>
+# Run 20 requests and count responses
+kubectl run traffic-test --image=curlimages/curl --rm -it --restart=Never \
+  -n deploy-strategies -- sh -c '
+  STABLE=0; CANARY=0
+  for i in $(seq 1 20); do
+    RESPONSE=$(curl -s webapp-canary-svc)
+    if echo "$RESPONSE" | grep -q "STABLE"; then
+      STABLE=$((STABLE+1))
+    else
+      CANARY=$((CANARY+1))
+    fi
+  done
+  echo "Stable: $STABLE / Canary: $CANARY out of 20 requests"
+'
+                </code></pre>
+                <div class="highlight-box success fragment">
+                    <strong>&#x2705; Expected Output:</strong> Approximately <code>Stable: 16 / Canary: 4</code> (80/20 split). Results will vary due to round-robin distribution.
+                </div>
+                <div class="highlight-box fragment">
+                    <strong>&#x1F4A1; Promoting the Canary:</strong> Once validated, promote by scaling stable to use the new image and scaling canary to 0, or scale canary up and stable down gradually.
+                </div>
+                <aside class="notes">
+                    The distribution is approximate because Kubernetes uses round-robin across endpoints. With iptables mode, the randomization is per-connection. Results will vary but should be roughly 80/20. For precise traffic splitting, a service mesh like Istio is needed.
+                </aside>
+            </section>
+
+            <!-- ========== STEP 8: Pod Disruption Budgets ========== -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="section-divider">
+                <h2>Step 8</h2>
+                <h3>Pod Disruption Budgets</h3>
+                <div class="module-progress">
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step active"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                </div>
+                <aside class="notes">
+                    Pod Disruption Budgets protect application availability during voluntary disruptions like node drains, cluster upgrades, and autoscaler scale-downs. This is essential for production workloads.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F6E1; Create a Pod Disruption Budget</h2>
+                <p>Create a PDB that ensures minimum availability during disruptions:</p>
+                <pre><code class="yaml" data-trim>
+# Save as pdb.yaml
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: webapp-pdb
+  namespace: deploy-strategies
+spec:
+  minAvailable: 2          # At least 2 pods must remain available
+  selector:
+    matchLabels:
+      app: webapp
+                </code></pre>
+                <pre><code class="bash" data-trim>
+# First, re-deploy our original webapp (update back to v2 for this step)
+kubectl patch deployment webapp -n deploy-strategies \
+  -p '{"spec":{"template":{"spec":{"volumes":[{"name":"html","configMap":{"name":"app-v2-page"}}]}}}}'
+
+# Apply the PDB
+kubectl apply -f pdb.yaml
+
+# Inspect the PDB
+kubectl get pdb -n deploy-strategies
+kubectl describe pdb webapp-pdb -n deploy-strategies
+                </code></pre>
+                <div class="highlight-box success fragment">
+                    <strong>&#x2705; Expected Output:</strong> PDB shows <code>ALLOWED-DISRUPTIONS: 2</code> (4 replicas - 2 minAvailable = 2 allowed disruptions).
+                </div>
+                <aside class="notes">
+                    Explain the difference between minAvailable and maxUnavailable in PDB specs. minAvailable is an absolute number or percentage, maxUnavailable is how many can be down at once. Both achieve similar results from different perspectives.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F6E1; Test the PDB with Node Drain</h2>
+                <p>Simulate a voluntary disruption by draining a node:</p>
+                <pre><code class="bash" data-trim>
+# Identify which nodes our pods are running on
+kubectl get pods -n deploy-strategies -l app=webapp -o wide
+
+# Attempt to drain a node (use one that hosts webapp pods)
+# The PDB will prevent draining if it would violate minAvailable
+kubectl drain &lt;NODE_NAME&gt; --ignore-daemonsets --delete-emptydir-data --dry-run=client
+
+# Observe the PDB status during operations
+kubectl get pdb webapp-pdb -n deploy-strategies -w
+                </code></pre>
+                <div class="highlight-box warning fragment">
+                    <strong>&#x26A0; Important:</strong> Use <code>--dry-run=client</code> first to avoid actually evicting pods from the node. In a real scenario, the drain respects the PDB and will wait or fail if minimum availability cannot be maintained.
+                </div>
+                <div class="concept-box fragment">
+                    <h4>&#x1F4A1; PDB Use Cases</h4>
+                    <ul>
+                        <li><strong>Cluster upgrades</strong> &mdash; ensures application availability during node rolling updates</li>
+                        <li><strong>Cluster autoscaler</strong> &mdash; prevents scaling down nodes that would violate the budget</li>
+                        <li><strong>Maintenance windows</strong> &mdash; safe node cordoning and draining</li>
+                    </ul>
+                </div>
+                <aside class="notes">
+                    Emphasize that PDBs only protect against voluntary disruptions. Involuntary disruptions like node crashes, OOM kills, or hardware failures are not governed by PDBs. Applications should also be designed for resilience.
+                </aside>
+            </section>
+
+            <!-- ========== STEP 9: Progress Deadline ========== -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="section-divider">
+                <h2>Step 9</h2>
+                <h3>Configure Progress Deadline</h3>
+                <div class="module-progress">
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step active"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                </div>
+                <aside class="notes">
+                    The progressDeadlineSeconds field helps detect stuck rollouts. If a rollout does not make progress within the deadline, Kubernetes marks the deployment condition as failed.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x23F0; Detect Stuck Rollouts</h2>
+                <p>Configure a progress deadline and trigger a stuck rollout:</p>
+                <pre><code class="bash" data-trim>
+# Set a short progress deadline (60 seconds) for testing
+kubectl patch deployment webapp -n deploy-strategies \
+  -p '{"spec":{"progressDeadlineSeconds":60}}'
+
+# Trigger a rollout with a non-existent image (simulates failure)
+kubectl set image deployment/webapp nginx=nginx:nonexistent-tag \
+  -n deploy-strategies
+
+# Watch the rollout (it will eventually fail)
+kubectl rollout status deployment/webapp -n deploy-strategies --timeout=90s
+                </code></pre>
+                <div class="highlight-box danger fragment">
+                    <strong>&#x26A0; Expected Output:</strong> After 60 seconds, the rollout status will report:
+                    <code>error: deployment "webapp" exceeded its progress deadline</code>
+                </div>
+                <aside class="notes">
+                    The default progressDeadlineSeconds is 600 (10 minutes). We set it to 60 for faster demonstration. In production, choose a value that gives your containers enough time to start but detects genuine failures quickly.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x23F0; Inspect and Recover from Stuck Rollout</h2>
+                <p>Examine the deployment conditions and recover:</p>
+                <pre><code class="bash" data-trim>
+# Check the deployment conditions
+kubectl get deployment webapp -n deploy-strategies \
+  -o jsonpath='{.status.conditions[*].message}' | tr ',' '\n'
+
+# View the failing pods
+kubectl get pods -n deploy-strategies -l app=webapp
+
+# Rollback to the last working version
+kubectl rollout undo deployment/webapp -n deploy-strategies
+
+# Verify recovery
+kubectl rollout status deployment/webapp -n deploy-strategies
+kubectl get pods -n deploy-strategies -l app=webapp
+                </code></pre>
+                <div class="highlight-box success fragment">
+                    <strong>&#x2705; Checkpoint:</strong> After the rollback, all 4 pods should be Running and Ready. The deployment condition should show <code>Available: True</code>.
+                </div>
+                <aside class="notes">
+                    Show students the Progressing condition type. When the deadline is exceeded, the condition reason changes to ProgressDeadlineExceeded. This can be used for alerting in monitoring systems.
+                </aside>
+            </section>
+
+            <!-- ========== STEP 10: Clean Up ========== -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="section-divider">
+                <h2>Step 10</h2>
+                <h3>Clean Up</h3>
+                <div class="module-progress">
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step active"></div>
+                    <div class="step"></div>
+                </div>
+                <aside class="notes">
+                    Clean up all resources created during this lab. Deleting the namespace removes everything within it.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F9F9; Clean Up Resources</h2>
+                <p>Remove all resources created during this lab:</p>
+                <pre><code class="bash" data-trim>
+# Delete the entire namespace (removes all resources within it)
+kubectl delete namespace deploy-strategies
+
+# Verify cleanup
+kubectl get namespace deploy-strategies
+                </code></pre>
+                <div class="highlight-box success fragment">
+                    <strong>&#x2705; Expected Output:</strong>
+                    <code>namespace "deploy-strategies" deleted</code><br>
+                    <code>Error from server (NotFound): namespaces "deploy-strategies" not found</code>
+                </div>
+                <div class="highlight-box warning fragment">
+                    <strong>&#x26A0; Note:</strong> If you drained a node earlier (without --dry-run), remember to uncordon it: <code>kubectl uncordon &lt;NODE_NAME&gt;</code>
+                </div>
+                <aside class="notes">
+                    Namespace deletion is the cleanest way to remove all lab resources. Remind students to uncordon any drained nodes. Verify the namespace is fully terminated before proceeding.
+                </aside>
+            </section>
+
+            <!-- ========== STEP 11: Summary ========== -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="section-divider">
+                <h2>Step 11</h2>
+                <h3>Summary &amp; Strategy Comparison</h3>
+                <div class="module-progress">
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step active"></div>
+                </div>
+                <aside class="notes">
+                    Wrap up the lab with a comparison of all three strategies. Discuss when to use each one and the trade-offs involved.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F4CA; Strategy Comparison</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Strategy</th>
+                            <th>Downtime</th>
+                            <th>Resource Cost</th>
+                            <th>Rollback Speed</th>
+                            <th>Risk</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="fragment">
+                            <td><strong>Rolling Update</strong></td>
+                            <td>None</td>
+                            <td>Low (+maxSurge)</td>
+                            <td>Minutes</td>
+                            <td>Medium</td>
+                        </tr>
+                        <tr class="fragment">
+                            <td><strong>Blue-Green</strong></td>
+                            <td>None</td>
+                            <td>High (2x)</td>
+                            <td>Instant</td>
+                            <td>Low</td>
+                        </tr>
+                        <tr class="fragment">
+                            <td><strong>Canary</strong></td>
+                            <td>None</td>
+                            <td>Medium (+canary)</td>
+                            <td>Fast</td>
+                            <td>Low</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="key-point fragment">
+                    <strong>Key Takeaway:</strong> Choose your strategy based on your risk tolerance, resource budget, and the criticality of the workload. Many organizations use rolling updates by default and canary or blue-green for critical services.
+                </div>
+                <aside class="notes">
+                    Discuss how service meshes like Istio enable more sophisticated traffic management for canary deployments with weighted routing instead of replica-based splitting.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x2705; Lab 11 Complete</h2>
+                <div class="takeaway-list">
+                    <ul>
+                        <li class="fragment">&#x1F504; <strong>Rolling Updates</strong> &mdash; built-in, gradual replacement with maxSurge/maxUnavailable control</li>
+                        <li class="fragment">&#x1F535; <strong>Blue-Green</strong> &mdash; instant traffic switch via service selector, requires double resources</li>
+                        <li class="fragment">&#x1F426; <strong>Canary</strong> &mdash; gradual traffic shift using replica ratios, validates new versions with real traffic</li>
+                        <li class="fragment">&#x1F6E1; <strong>PDB</strong> &mdash; protects application availability during voluntary disruptions</li>
+                        <li class="fragment">&#x23F0; <strong>Progress Deadline</strong> &mdash; detects stuck rollouts automatically</li>
+                    </ul>
+                </div>
+                <div class="module-progress">
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                </div>
+                <aside class="notes">
+                    Congratulations on completing Lab 11. Students now understand three major deployment strategies and how to protect workloads with PDBs. Next lab covers Helm and templating.
+                </aside>
+            </section>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/highlight/highlight.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/notes/notes.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            slideNumber: true,
+            transition: 'slide',
+            plugins: [RevealHighlight, RevealNotes]
+        });
+    </script>
+</body>
+</html>

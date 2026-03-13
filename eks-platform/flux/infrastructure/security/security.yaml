@@ -1,0 +1,90 @@
+# ─── External Secrets Operator ──────────────────────────────────────────────
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: external-secrets
+  namespace: flux-system
+spec:
+  interval: 30m
+  targetNamespace: external-secrets
+  install:
+    createNamespace: true
+  chart:
+    spec:
+      chart: external-secrets
+      sourceRef:
+        kind: HelmRepository
+        name: external-secrets
+      version: ">=0.10.0"
+  values:
+    serviceAccount:
+      name: external-secrets
+---
+# ─── ESO ServiceAccount for Vault Auth ─────────────────────────────────────
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: external-secrets-sa
+  namespace: external-secrets
+---
+# ─── ClusterSecretStore → Vault ────────────────────────────────────────────
+apiVersion: external-secrets.io/v1beta1
+kind: ClusterSecretStore
+metadata:
+  name: vault-store
+spec:
+  provider:
+    vault:
+      server: "http://vault.vault.svc.cluster.local:8200"
+      path: "secret"
+      version: "v2"
+      auth:
+        kubernetes:
+          mountPath: "kubernetes"
+          role: "external-secrets"
+          serviceAccountRef:
+            name: external-secrets-sa
+            namespace: external-secrets
+---
+# ─── Kyverno ───────────────────────────────────────────────────────────────
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: kyverno
+  namespace: flux-system
+spec:
+  interval: 30m
+  targetNamespace: kyverno
+  install:
+    createNamespace: true
+  chart:
+    spec:
+      chart: kyverno
+      sourceRef:
+        kind: HelmRepository
+        name: kyverno
+      version: ">=3.2.0"
+  values:
+    replicaCount: 3
+---
+# ─── Kyverno Baseline Policies ─────────────────────────────────────────────
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: kyverno-policies
+  namespace: flux-system
+spec:
+  interval: 30m
+  targetNamespace: kyverno
+  dependsOn:
+    - name: kyverno
+  chart:
+    spec:
+      chart: kyverno-policies
+      sourceRef:
+        kind: HelmRepository
+        name: kyverno
+      version: ">=3.2.0"
+  values:
+    podSecurityStandard: baseline
+    validationFailureAction: Audit

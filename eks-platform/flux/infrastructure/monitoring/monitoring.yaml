@@ -1,0 +1,66 @@
+# ─── Prometheus Stack (Prometheus + Alertmanager + Grafana) ─────────────────
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: kube-prometheus-stack
+  namespace: flux-system
+spec:
+  interval: 30m
+  targetNamespace: monitoring
+  install:
+    createNamespace: true
+  chart:
+    spec:
+      chart: kube-prometheus-stack
+      sourceRef:
+        kind: HelmRepository
+        name: prometheus-community
+      version: ">=60.0.0"
+  values:
+    grafana:
+      adminPassword: admin
+      sidecar:
+        dashboards:
+          searchNamespace: ALL
+    prometheus:
+      prometheusSpec:
+        retention: 7d
+        serviceMonitorSelectorNilUsesHelmValues: false
+        podMonitorSelectorNilUsesHelmValues: false
+        probeSelectorNilUsesHelmValues: false
+        ruleSelectorNilUsesHelmValues: false
+    alertmanager:
+      alertmanagerSpec:
+        retention: 120h
+---
+# ─── Blackbox Exporter ─────────────────────────────────────────────────────
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: blackbox-exporter
+  namespace: flux-system
+spec:
+  interval: 30m
+  targetNamespace: monitoring
+  dependsOn:
+    - name: kube-prometheus-stack
+  chart:
+    spec:
+      chart: prometheus-blackbox-exporter
+      sourceRef:
+        kind: HelmRepository
+        name: prometheus-community
+      version: ">=8.0.0"
+  values:
+    serviceMonitor:
+      enabled: true
+    prometheusRule:
+      enabled: true
+      rules:
+        - alert: BlackboxProbeFailed
+          expr: probe_success == 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Probe failed for {{ $labels.instance }}"

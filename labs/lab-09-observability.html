@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab 9: Observability | Intermediate Kubernetes</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reset.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/theme/white.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/highlight/monokai.css">
+    <style>
+        :root {
+            --heading-color: #1a365d;
+            --accent-color: #2b6cb0;
+            --success-color: #2f855a;
+            --warning-color: #c05621;
+            --danger-color: #c53030;
+            --text-color: #2d3748;
+        }
+
+        .reveal {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text-color);
+            font-size: 28px;
+        }
+
+        .reveal h1, .reveal h2, .reveal h3, .reveal h4 {
+            color: var(--heading-color);
+            font-weight: 700;
+            text-transform: none;
+        }
+
+        .reveal h1 { font-size: 2.2em; }
+        .reveal h2 { font-size: 1.6em; }
+        .reveal h3 { font-size: 1.3em; }
+
+        /* Title Slide */
+        .title-slide h1 {
+            color: #ffffff;
+            font-size: 2.4em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            margin-bottom: 0.3em;
+        }
+        .title-slide h2 {
+            color: #e2e8f0;
+            font-size: 1.4em;
+            font-weight: 400;
+            margin-bottom: 0.2em;
+        }
+        .title-slide h3 {
+            color: #cbd5e0;
+            font-size: 1.1em;
+            font-weight: 300;
+        }
+
+        /* Section Divider */
+        .section-divider h2 {
+            color: #ffffff;
+            font-size: 2.0em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .section-divider h3 {
+            color: #e2e8f0;
+            font-size: 1.2em;
+            font-weight: 400;
+        }
+
+        /* Highlight Boxes */
+        .highlight-box {
+            background: #ebf8ff;
+            border-left: 4px solid var(--accent-color);
+            padding: 20px 25px;
+            border-radius: 0 8px 8px 0;
+            margin: 15px 0;
+            text-align: left;
+        }
+        .highlight-box.success {
+            background: #f0fff4;
+            border-left-color: var(--success-color);
+        }
+        .highlight-box.warning {
+            background: #fffaf0;
+            border-left-color: var(--warning-color);
+        }
+        .highlight-box.danger {
+            background: #fff5f5;
+            border-left-color: var(--danger-color);
+        }
+
+        /* Two Columns */
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            align-items: start;
+            text-align: left;
+        }
+
+        /* Three Columns */
+        .three-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            align-items: start;
+            text-align: left;
+        }
+
+        /* Card */
+        .card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid #e2e8f0;
+            text-align: left;
+        }
+        .card h3, .card h4 {
+            margin-top: 0;
+            color: var(--accent-color);
+        }
+
+        /* Concept Box */
+        .concept-box {
+            background: linear-gradient(135deg, #ebf8ff 0%, #e2e8f0 100%);
+            border-radius: 12px;
+            padding: 25px;
+            margin: 15px 0;
+            border: 1px solid #bee3f8;
+            text-align: left;
+        }
+        .concept-box h3, .concept-box h4 {
+            color: var(--heading-color);
+            margin-top: 0;
+        }
+
+        /* Emoji Header */
+        .emoji-header {
+            font-size: 1.8em;
+            margin-bottom: 0.5em;
+        }
+
+        /* Key Point */
+        .key-point {
+            background: #ebf8ff;
+            border: 2px solid var(--accent-color);
+            border-radius: 12px;
+            padding: 20px 25px;
+            margin: 15px 0;
+            text-align: left;
+            font-size: 0.95em;
+        }
+        .key-point strong {
+            color: var(--accent-color);
+        }
+
+        /* Lab Callout */
+        .lab-callout h2 {
+            color: #ffffff;
+            font-size: 1.8em;
+            margin-bottom: 0.3em;
+        }
+        .lab-callout h3 {
+            color: #90cdf4;
+            font-size: 1.3em;
+            font-weight: 400;
+        }
+        .lab-callout p {
+            color: #e2e8f0;
+            font-size: 1.0em;
+        }
+        .lab-callout ul {
+            color: #e2e8f0;
+            text-align: left;
+            display: inline-block;
+        }
+        .lab-callout .highlight-box {
+            background: rgba(255,255,255,0.1);
+            border-left-color: #90cdf4;
+            color: #e2e8f0;
+        }
+
+        /* Questions Slide */
+        .questions-slide h2 {
+            color: #ffffff;
+            font-size: 2.2em;
+        }
+        .questions-slide p {
+            color: #e2e8f0;
+            font-size: 1.2em;
+        }
+
+        /* Takeaway List */
+        .takeaway-list {
+            text-align: left;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .takeaway-list li {
+            margin-bottom: 12px;
+            line-height: 1.6;
+            list-style: none;
+            padding-left: 10px;
+        }
+
+        /* Module Progress */
+        .module-progress {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 20px;
+        }
+        .module-progress .step {
+            width: 30px;
+            height: 6px;
+            border-radius: 3px;
+            background: #cbd5e0;
+        }
+        .module-progress .step.active {
+            background: var(--accent-color);
+        }
+        .module-progress .step.completed {
+            background: var(--success-color);
+        }
+
+        /* Table Styles */
+        .reveal table {
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 0.75em;
+            margin: 15px 0;
+        }
+        .reveal table th {
+            background: var(--heading-color);
+            color: #ffffff;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+        }
+        .reveal table td {
+            padding: 10px 16px;
+            border-bottom: 1px solid #e2e8f0;
+            text-align: left;
+        }
+        .reveal table tr:nth-child(even) {
+            background: #f7fafc;
+        }
+        .reveal table tr:hover {
+            background: #ebf8ff;
+        }
+
+        /* General list styling */
+        .reveal ul, .reveal ol {
+            text-align: left;
+            display: block;
+            margin-left: 1em;
+        }
+        .reveal li {
+            margin-bottom: 0.5em;
+            line-height: 1.5;
+            font-size: 0.9em;
+        }
+
+        .reveal p {
+            line-height: 1.6;
+        }
+
+        .reveal .small-text {
+            font-size: 0.7em;
+            color: #718096;
+        }
+
+        /* Code blocks */
+        .reveal pre code {
+            font-size: 0.65em;
+            max-height: 450px;
+            overflow-y: auto;
+            line-height: 1.4;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+
+            <!-- Title Slide -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="title-slide">
+                <h1>Lab 9: Observability</h1>
+                <h2>Monitoring, Logging, and Debugging Kubernetes Workloads</h2>
+                <h3>Intermediate Kubernetes &mdash; Module 9 of 16</h3>
+                <div class="module-progress">
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step active"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                </div>
+                <aside class="notes">
+                    Lab 9 focuses on observability — the ability to understand what's happening inside your cluster through logs, metrics, and traces. This is critical for production operations.
+                </aside>
+            </section>
+
+            <!-- Lab Overview -->
+            <section>
+                <h2>&#x1F4CB; Lab Overview</h2>
+                <div class="two-columns">
+                    <div class="card">
+                        <h4>What You'll Learn</h4>
+                        <ul>
+                            <li class="fragment">Container log collection and analysis</li>
+                            <li class="fragment">Metrics Server and resource monitoring</li>
+                            <li class="fragment">Prometheus metrics and PromQL queries</li>
+                            <li class="fragment">Grafana dashboards for visualization</li>
+                            <li class="fragment">Custom alerting rules</li>
+                            <li class="fragment">Systematic debugging with observability tools</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>Lab Details</h4>
+                        <ul>
+                            <li><strong>Duration:</strong> ~45 minutes</li>
+                            <li><strong>Difficulty:</strong> Intermediate</li>
+                            <li><strong>Prerequisites:</strong> Labs 1-8</li>
+                            <li><strong>Namespace:</strong> observability-lab</li>
+                        </ul>
+                        <div class="highlight-box warning" style="margin-top: 15px;">
+                            <strong>&#x26A0;&#xFE0F; Note:</strong> Some steps require metrics-server. Verify it is running before you begin.
+                        </div>
+                    </div>
+                </div>
+                <aside class="notes">
+                    Observability is one of the three pillars of modern operations: logging, metrics, and tracing. In this lab we focus on the first two and touch on how they come together for debugging.
+                </aside>
+            </section>
+
+            <!-- Step 1: Explore Container Logs -->
+            <section data-background="linear-gradient(135deg, #2f855a 0%, #276749 100%)" class="section-divider">
+                <h2>Step 1</h2>
+                <h3>Explore Container Logs with kubectl</h3>
+                <aside class="notes">
+                    We start with the most fundamental observability tool: kubectl logs. Students should understand all the important flags.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F4DD; Set Up the Lab Namespace</h2>
+                <p>Create a dedicated namespace for this lab:</p>
+                <pre><code class="bash" data-trim>
+# Create the lab namespace
+kubectl create namespace observability-lab
+
+# Set as the current context
+kubectl config set-context --current --namespace=observability-lab
+                </code></pre>
+                <div class="highlight-box success fragment">
+                    <strong>&#x2705; Expected Output:</strong><br>
+                    <code>namespace/observability-lab created</code><br>
+                    <code>Context modified.</code>
+                </div>
+                <aside class="notes">
+                    Starting with a clean namespace keeps the lab isolated and makes cleanup straightforward at the end.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F4DD; Deploy a Simple Pod for Log Exploration</h2>
+                <pre><code class="bash" data-trim>
+# Deploy a pod that generates log output
+kubectl run log-generator --image=busybox \
+  --restart=Never -- \
+  sh -c 'i=0; while true; do
+    echo "$(date +%Y-%m-%dT%H:%M:%S) INFO  request_id=$i status=200 path=/api/health duration=12ms";
+    echo "$(date +%Y-%m-%dT%H:%M:%S) DEBUG request_id=$i cache_hit=true";
+    if [ $((i % 10)) -eq 0 ]; then
+      echo "$(date +%Y-%m-%dT%H:%M:%S) WARN  request_id=$i high_latency=true duration=1500ms";
+    fi;
+    i=$((i+1)); sleep 2;
+  done'
+                </code></pre>
+                <div class="fragment">
+                    <p>Wait for the pod to be running:</p>
+                    <pre><code class="bash" data-trim>
+kubectl wait --for=condition=Ready pod/log-generator --timeout=30s
+                    </code></pre>
+                </div>
+                <aside class="notes">
+                    This creates a pod that produces structured log output at different levels. Every 10th entry includes a WARN line to simulate latency spikes.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F50D; Explore kubectl logs Flags</h2>
+                <pre><code class="bash" data-trim>
+# View last 20 lines of logs
+kubectl logs log-generator --tail=20
+
+# Follow logs in real time (Ctrl+C to stop)
+kubectl logs log-generator -f
+
+# View logs from the last 5 minutes
+kubectl logs log-generator --since=5m
+
+# View logs with timestamps
+kubectl logs log-generator --timestamps
+                </code></pre>
+                <div class="highlight-box fragment">
+                    <strong>&#x1F4A1; Key Flags:</strong>
+                    <ul>
+                        <li><code>-f</code> &mdash; Follow (stream) logs in real time</li>
+                        <li><code>--previous</code> &mdash; Show logs from a previous container instance</li>
+                        <li><code>-c &lt;name&gt;</code> &mdash; Select a specific container in multi-container pods</li>
+                        <li><code>--tail=N</code> &mdash; Show only the last N lines</li>
+                        <li><code>--since=duration</code> &mdash; Show logs newer than a relative duration</li>
+                    </ul>
+                </div>
+                <aside class="notes">
+                    The --previous flag is extremely valuable for debugging CrashLoopBackOff situations where the container has already restarted and the current logs are empty. The -c flag is essential for multi-container pods like those with sidecars.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F4E6; Multi-Container Pod Logs</h2>
+                <pre><code class="yaml" data-trim>
+# Save as multi-container-pod.yaml
+cat &lt;&lt;'EOF' | kubectl apply -f -
+apiVersion: v1
+kind: Pod
+metadata:
+  name: multi-container-app
+  namespace: observability-lab
+spec:
+  containers:
+  - name: app
+    image: busybox
+    command: ['sh', '-c', 'while true; do echo "$(date) APP: Processing request"; sleep 3; done']
+  - name: sidecar
+    image: busybox
+    command: ['sh', '-c', 'while true; do echo "$(date) SIDECAR: Collecting metrics"; sleep 5; done']
+EOF
+                </code></pre>
+                <div class="fragment">
+                    <pre><code class="bash" data-trim>
+# View logs from a specific container
+kubectl logs multi-container-app -c app
+kubectl logs multi-container-app -c sidecar
+
+# View logs from ALL containers
+kubectl logs multi-container-app --all-containers=true
+                    </code></pre>
+                </div>
+                <aside class="notes">
+                    Multi-container pods are common with sidecar patterns. Being able to target specific container logs is essential.
+                </aside>
+            </section>
+
+            <!-- Step 2: Structured JSON Logs -->
+            <section data-background="linear-gradient(135deg, #2f855a 0%, #276749 100%)" class="section-divider">
+                <h2>Step 2</h2>
+                <h3>Structured JSON Logging</h3>
+                <aside class="notes">
+                    Structured logs are the standard in production environments because they can be parsed and queried by log aggregation systems.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F4CA; Deploy an App with JSON Logs</h2>
+                <pre><code class="yaml" data-trim>
+cat &lt;&lt;'EOF' | kubectl apply -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: json-logger
+  namespace: observability-lab
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: json-logger
+  template:
+    metadata:
+      labels:
+        app: json-logger
+    spec:
+      containers:
+      - name: logger
+        image: busybox
+        command: ['sh', '-c', 'i=0; while true; do
+          printf "{\"timestamp\":\"%s\",\"level\":\"info\",\"service\":\"order-api\",\"request_id\":\"%d\",\"method\":\"GET\",\"path\":\"/api/orders\",\"status\":200,\"duration_ms\":%d}\n" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$i" "$((RANDOM % 500))";
+          sleep 1; i=$((i+1)); done']
+EOF
+                </code></pre>
+                <div class="highlight-box success fragment">
+                    <strong>&#x2705; Expected:</strong> Deployment creates 2 replicas producing structured JSON log lines.
+                </div>
+                <aside class="notes">
+                    JSON logging is the gold standard for production because it enables automated parsing, filtering, and aggregation. Tools like Fluentd, Fluent Bit, and Loki can ingest these directly.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F50E; View and Filter JSON Logs</h2>
+                <pre><code class="bash" data-trim>
+# View logs from all pods in the deployment
+kubectl logs deployment/json-logger --all-containers=true --tail=5
+
+# Follow logs from the deployment
+kubectl logs deployment/json-logger -f --max-log-requests=5
+
+# Use label selector to get logs from specific pods
+kubectl logs -l app=json-logger --tail=10
+                </code></pre>
+                <div class="highlight-box fragment">
+                    <strong>&#x1F4A1; Tip:</strong> You can pipe JSON logs through <code>jq</code> for local filtering:<br>
+                    <code>kubectl logs -l app=json-logger --tail=20 | jq 'select(.status != 200)'</code>
+                </div>
+                <aside class="notes">
+                    The label selector approach is powerful because it works regardless of how many pod replicas exist. The jq tool is invaluable for local log analysis.
+                </aside>
+            </section>
+
+            <!-- Step 3: View Logs with kubectl -->
+            <section>
+                <h2>&#x1F4CB; Log Patterns and Best Practices</h2>
+                <div class="two-columns">
+                    <div class="card">
+                        <h4>&#x2705; Good Practices</h4>
+                        <ul>
+                            <li class="fragment">Structured JSON format</li>
+                            <li class="fragment">Include correlation IDs</li>
+                            <li class="fragment">Log to stdout/stderr</li>
+                            <li class="fragment">Use consistent log levels</li>
+                            <li class="fragment">Include timestamps in UTC</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>&#x274C; Anti-Patterns</h4>
+                        <ul>
+                            <li class="fragment">Writing logs to files inside containers</li>
+                            <li class="fragment">Unstructured multi-line stack traces</li>
+                            <li class="fragment">Logging sensitive data (tokens, passwords)</li>
+                            <li class="fragment">Excessive DEBUG logging in production</li>
+                            <li class="fragment">Missing context (no request IDs)</li>
+                        </ul>
+                    </div>
+                </div>
+                <aside class="notes">
+                    Kubernetes captures stdout and stderr from containers. Writing to files inside the container bypasses the kubelet log collection pipeline entirely.
+                </aside>
+            </section>
+
+            <!-- Step 4: Metrics Server -->
+            <section data-background="linear-gradient(135deg, #2f855a 0%, #276749 100%)" class="section-divider">
+                <h2>Step 4</h2>
+                <h3>Examine Metrics Server Data</h3>
+                <aside class="notes">
+                    Metrics Server provides resource usage data that powers kubectl top and the Horizontal Pod Autoscaler.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F4C8; Verify Metrics Server</h2>
+                <pre><code class="bash" data-trim>
+# Check if metrics-server is running
+kubectl get deployment metrics-server -n kube-system
+
+# Verify the API is available
+kubectl get apiservice v1beta1.metrics.k8s.io
+                </code></pre>
+                <div class="highlight-box success fragment">
+                    <strong>&#x2705; Expected Output:</strong><br>
+                    <code>NAME             READY   UP-TO-DATE   AVAILABLE</code><br>
+                    <code>metrics-server   1/1     1            1</code>
+                </div>
+                <div class="highlight-box warning fragment">
+                    <strong>&#x26A0;&#xFE0F; If Not Installed:</strong> Install with:<br>
+                    <code>kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml</code>
+                </div>
+                <aside class="notes">
+                    Metrics Server collects resource metrics from kubelets and exposes them via the Kubernetes Metrics API. It refreshes every 15 seconds by default.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F4CA; kubectl top: Node and Pod Metrics</h2>
+                <pre><code class="bash" data-trim>
+# View node resource usage
+kubectl top nodes
+
+# View pod resource usage in current namespace
+kubectl top pods
+
+# View pod resource usage across all namespaces
+kubectl top pods -A
+
+# Sort by CPU usage
+kubectl top pods --sort-by=cpu
+
+# Sort by memory usage
+kubectl top pods --sort-by=memory
+
+# Show resource usage per container
+kubectl top pods --containers
+                </code></pre>
+                <div class="highlight-box success fragment">
+                    <strong>&#x2705; Sample Output:</strong><br>
+                    <code>NAME&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CPU(cores)&nbsp;&nbsp;MEMORY(bytes)</code><br>
+                    <code>ip-10-0-1-100&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;250m&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1824Mi</code><br>
+                    <code>ip-10-0-2-101&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;180m&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1456Mi</code>
+                </div>
+                <aside class="notes">
+                    kubectl top is the quickest way to spot resource pressure. The --containers flag is particularly useful for identifying which container in a multi-container pod is consuming the most resources.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F3AF; Deploy a Resource-Intensive Workload</h2>
+                <pre><code class="yaml" data-trim>
+cat &lt;&lt;'EOF' | kubectl apply -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stress-test
+  namespace: observability-lab
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: stress-test
+  template:
+    metadata:
+      labels:
+        app: stress-test
+    spec:
+      containers:
+      - name: stress
+        image: busybox
+        command: ['sh', '-c', 'while true; do dd if=/dev/urandom bs=1024 count=1024 of=/dev/null 2>/dev/null; done']
+        resources:
+          requests:
+            cpu: 100m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 128Mi
+EOF
+                </code></pre>
+                <div class="fragment">
+                    <pre><code class="bash" data-trim>
+# Wait 30 seconds then observe resource consumption
+sleep 30
+kubectl top pods -l app=stress-test --containers
+                    </code></pre>
+                </div>
+                <aside class="notes">
+                    This deployment creates CPU load so students can see real resource consumption in kubectl top and later in Prometheus/Grafana.
+                </aside>
+            </section>
+
+            <!-- Checkpoint -->
+            <section>
+                <h2>&#x2705; Checkpoint: Logs and Metrics Basics</h2>
+                <div class="concept-box">
+                    <h4>Verify your progress:</h4>
+                    <ol>
+                        <li class="fragment">You can view logs with <code>kubectl logs</code> using <code>-f</code>, <code>--tail</code>, and <code>--since</code></li>
+                        <li class="fragment">You can target specific containers with <code>-c</code> in multi-container pods</li>
+                        <li class="fragment">You understand structured JSON logging patterns</li>
+                        <li class="fragment"><code>kubectl top nodes</code> and <code>kubectl top pods</code> return data</li>
+                    </ol>
+                </div>
+                <aside class="notes">
+                    This is a good stopping point to ensure everyone has the fundamentals before moving into Prometheus and Grafana.
+                </aside>
+            </section>
+
+            <!-- Step 5: Deploy Prometheus Stack -->
+            <section data-background="linear-gradient(135deg, #2f855a 0%, #276749 100%)" class="section-divider">
+                <h2>Step 5</h2>
+                <h3>Deploy the Prometheus Stack</h3>
+                <aside class="notes">
+                    The kube-prometheus-stack Helm chart is the most common way to deploy production-grade monitoring. It includes Prometheus, Grafana, Alertmanager, and many preconfigured dashboards.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F680; Install kube-prometheus-stack</h2>
+                <pre><code class="bash" data-trim>
+# Add the Prometheus community Helm repo
+helm repo add prometheus-community \
+  https://prometheus-community.github.io/helm-charts
+helm repo update
+
+# Install the kube-prometheus-stack
+helm install monitoring prometheus-community/kube-prometheus-stack \
+  --namespace monitoring \
+  --create-namespace \
+  --set prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false \
+  --set grafana.adminPassword=admin123 \
+  --wait --timeout 5m
+                </code></pre>
+                <div class="highlight-box warning fragment">
+                    <strong>&#x26A0;&#xFE0F; Note:</strong> This installation takes 2-4 minutes. The <code>--wait</code> flag ensures all components are ready before the command returns.
+                </div>
+                <aside class="notes">
+                    If the stack is already installed, students can skip the install and verify the existing deployment. The serviceMonitorSelectorNilUsesHelmValues flag allows Prometheus to discover ServiceMonitors in all namespaces.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F50D; Verify the Prometheus Stack</h2>
+                <pre><code class="bash" data-trim>
+# Check all pods in the monitoring namespace
+kubectl get pods -n monitoring
+
+# Check the services
+kubectl get svc -n monitoring
+                </code></pre>
+                <div class="highlight-box success fragment">
+                    <strong>&#x2705; Expected Pods:</strong>
+                    <ul>
+                        <li><code>prometheus-monitoring-kube-prometheus-prometheus-0</code></li>
+                        <li><code>monitoring-grafana-*</code></li>
+                        <li><code>alertmanager-monitoring-kube-prometheus-alertmanager-0</code></li>
+                        <li><code>monitoring-kube-state-metrics-*</code></li>
+                        <li><code>monitoring-prometheus-node-exporter-*</code></li>
+                    </ul>
+                </div>
+                <aside class="notes">
+                    The stack deploys many components. kube-state-metrics generates metrics about Kubernetes objects, while node-exporter provides host-level metrics.
+                </aside>
+            </section>
+
+            <!-- Step 6: Query Prometheus -->
+            <section data-background="linear-gradient(135deg, #2f855a 0%, #276749 100%)" class="section-divider">
+                <h2>Step 6</h2>
+                <h3>Query Prometheus Metrics</h3>
+                <aside class="notes">
+                    PromQL is the query language for Prometheus. Understanding its fundamentals is essential for effective monitoring and alerting.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F310; Access the Prometheus UI</h2>
+                <pre><code class="bash" data-trim>
+# Port-forward to Prometheus
+kubectl port-forward -n monitoring \
+  svc/monitoring-kube-prometheus-prometheus 9090:9090 &
+
+echo "Prometheus UI: http://localhost:9090"
+                </code></pre>
+                <div class="highlight-box fragment">
+                    <strong>&#x1F4A1; Tip:</strong> Open <code>http://localhost:9090</code> in your browser. Navigate to <strong>Status &rarr; Targets</strong> to see all scrape targets.
+                </div>
+                <aside class="notes">
+                    The Targets page shows all endpoints Prometheus is scraping. Green means healthy; red indicates a scrape failure that needs investigation.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F4CA; Run PromQL Queries</h2>
+                <p>Navigate to the <strong>Graph</strong> tab and run these queries:</p>
+                <pre><code class="promql" data-trim>
+# Total CPU usage per node
+sum(rate(node_cpu_seconds_total{mode!="idle"}[5m])) by (instance)
+
+# Memory usage percentage per node
+100 * (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes))
+
+# Pod CPU usage in the observability-lab namespace
+sum(rate(container_cpu_usage_seconds_total{
+  namespace="observability-lab"
+}[5m])) by (pod)
+
+# Container restart count
+sum(kube_pod_container_status_restarts_total) by (namespace, pod)
+                </code></pre>
+                <div class="highlight-box fragment">
+                    <strong>&#x1F4A1; Key PromQL Concepts:</strong>
+                    <ul>
+                        <li><code>rate()</code> &mdash; Per-second rate of increase for counters</li>
+                        <li><code>sum() by (label)</code> &mdash; Aggregate and group results</li>
+                        <li><code>[5m]</code> &mdash; Range vector selector (lookback window)</li>
+                    </ul>
+                </div>
+                <aside class="notes">
+                    Encourage students to switch between the Console and Graph views to see both raw numbers and time-series visualizations. The rate function is essential because CPU counters are cumulative.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F50E; Useful Cluster Queries</h2>
+                <pre><code class="promql" data-trim>
+# Number of pods by namespace
+count(kube_pod_info) by (namespace)
+
+# Pods in CrashLoopBackOff
+kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}
+
+# Available vs desired replicas per deployment
+kube_deployment_status_replicas_available
+  / kube_deployment_spec_replicas
+
+# Top 5 pods by memory usage
+topk(5, container_memory_working_set_bytes{
+  container!="", container!="POD"
+})
+                </code></pre>
+                <div class="key-point fragment">
+                    <strong>&#x1F511; Key Point:</strong> PromQL queries form the foundation of both dashboards and alerting rules. Master these patterns and you can monitor any aspect of your cluster.
+                </div>
+                <aside class="notes">
+                    These queries represent the most common production monitoring scenarios. The CrashLoopBackOff query is particularly valuable for on-call engineers.
+                </aside>
+            </section>
+
+            <!-- Step 7: Explore Grafana -->
+            <section data-background="linear-gradient(135deg, #2f855a 0%, #276749 100%)" class="section-divider">
+                <h2>Step 7</h2>
+                <h3>Explore Grafana Dashboards</h3>
+                <aside class="notes">
+                    Grafana provides rich visualization capabilities on top of Prometheus data. The kube-prometheus-stack includes many preconfigured dashboards.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F3A8; Access Grafana</h2>
+                <pre><code class="bash" data-trim>
+# Port-forward to Grafana
+kubectl port-forward -n monitoring \
+  svc/monitoring-grafana 3000:80 &
+
+echo "Grafana UI: http://localhost:3000"
+echo "Username: admin"
+echo "Password: admin123"
+                </code></pre>
+                <div class="highlight-box success fragment">
+                    <strong>&#x2705; Login Credentials:</strong><br>
+                    <strong>Username:</strong> admin<br>
+                    <strong>Password:</strong> admin123 (set during Helm install)
+                </div>
+                <aside class="notes">
+                    Grafana is the visualization layer. The kube-prometheus-stack ships with a comprehensive set of prebuilt dashboards for cluster, node, and workload monitoring.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F5C2;&#xFE0F; Navigate Kubernetes Dashboards</h2>
+                <p>In Grafana, go to <strong>Dashboards &rarr; Browse</strong> and explore:</p>
+                <div class="two-columns">
+                    <div class="card">
+                        <h4>Cluster-Level</h4>
+                        <ul>
+                            <li class="fragment"><strong>Kubernetes / Compute Resources / Cluster</strong> &mdash; Overall cluster CPU and memory</li>
+                            <li class="fragment"><strong>Kubernetes / Compute Resources / Node</strong> &mdash; Per-node breakdown</li>
+                            <li class="fragment"><strong>Node Exporter / Nodes</strong> &mdash; Host-level metrics</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>Workload-Level</h4>
+                        <ul>
+                            <li class="fragment"><strong>Kubernetes / Compute Resources / Namespace (Pods)</strong> &mdash; Pod metrics by namespace</li>
+                            <li class="fragment"><strong>Kubernetes / Compute Resources / Pod</strong> &mdash; Individual pod details</li>
+                            <li class="fragment"><strong>Kubernetes / Networking / Pod</strong> &mdash; Network I/O per pod</li>
+                        </ul>
+                    </div>
+                </div>
+                <aside class="notes">
+                    Have students select the observability-lab namespace in the namespace dropdown to see the workloads they deployed earlier. They should see the stress-test pods with elevated CPU usage.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F4CB; Explore a Dashboard</h2>
+                <div class="concept-box">
+                    <h4>Exercise: Investigate the stress-test workload</h4>
+                    <ol>
+                        <li class="fragment">Open <strong>Kubernetes / Compute Resources / Namespace (Pods)</strong></li>
+                        <li class="fragment">Select namespace: <code>observability-lab</code></li>
+                        <li class="fragment">Locate the <code>stress-test</code> pods &mdash; note their CPU usage</li>
+                        <li class="fragment">Click on a pod name to drill into the per-pod dashboard</li>
+                        <li class="fragment">Observe CPU throttling: compare <em>usage</em> vs <em>limit</em></li>
+                    </ol>
+                </div>
+                <div class="highlight-box fragment">
+                    <strong>&#x1F4A1; Tip:</strong> Grafana dashboards are interactive. Change the time range, hover over graphs for details, and use the namespace/pod dropdowns to filter.
+                </div>
+                <aside class="notes">
+                    CPU throttling is visible when usage approaches the CPU limit. This is a common production issue where pods have their CPU cycles restricted by CFS quotas.
+                </aside>
+            </section>
+
+            <!-- Step 8: Custom PrometheusRule -->
+            <section data-background="linear-gradient(135deg, #2f855a 0%, #276749 100%)" class="section-divider">
+                <h2>Step 8</h2>
+                <h3>Create a Custom PrometheusRule Alert</h3>
+                <aside class="notes">
+                    PrometheusRule CRDs allow you to define alerting rules that Prometheus evaluates continuously. This is how production alerting is configured in Kubernetes.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F514; Define a High Restart Count Alert</h2>
+                <pre><code class="yaml" data-trim>
+cat &lt;&lt;'EOF' | kubectl apply -f -
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: pod-restart-alert
+  namespace: monitoring
+  labels:
+    release: monitoring
+spec:
+  groups:
+  - name: pod-restarts
+    rules:
+    - alert: HighPodRestartCount
+      expr: |
+        increase(kube_pod_container_status_restarts_total[1h]) > 3
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Pod {{ $labels.namespace }}/{{ $labels.pod }} has restarted {{ $value }} times in the last hour"
+        description: "Container {{ $labels.container }} in pod {{ $labels.pod }} (namespace {{ $labels.namespace }}) has experienced excessive restarts."
+    - alert: PodCrashLooping
+      expr: |
+        rate(kube_pod_container_status_restarts_total[15m]) * 60 * 15 > 0
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Pod {{ $labels.namespace }}/{{ $labels.pod }} is crash looping"
+        description: "Container {{ $labels.container }} is restarting repeatedly."
+EOF
+                </code></pre>
+                <aside class="notes">
+                    The labels.release must match the Helm release name for the Prometheus operator to pick up this rule. The 'for' clause prevents transient spikes from firing alerts.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x2705; Verify the Alert Rule</h2>
+                <pre><code class="bash" data-trim>
+# Check the PrometheusRule resource
+kubectl get prometheusrules -n monitoring
+
+# Verify in Prometheus UI: Status -> Rules
+# Navigate to http://localhost:9090/rules
+# Look for the "pod-restarts" group
+                </code></pre>
+                <div class="highlight-box success fragment">
+                    <strong>&#x2705; Expected:</strong> The <code>pod-restart-alert</code> rule appears in the Prometheus Rules page with state <code>inactive</code> (no pods are currently restarting excessively).
+                </div>
+                <div class="highlight-box warning fragment">
+                    <strong>&#x26A0;&#xFE0F; Troubleshooting:</strong> If the rule does not appear, verify the <code>release: monitoring</code> label matches your Helm release name:<br>
+                    <code>helm list -n monitoring</code>
+                </div>
+                <aside class="notes">
+                    Rules may take up to 60 seconds to be loaded by Prometheus after creation. The inactive state means the condition is not currently true — that is expected.
+                </aside>
+            </section>
+
+            <!-- Step 9: CloudWatch Container Insights -->
+            <section data-background="linear-gradient(135deg, #2f855a 0%, #276749 100%)" class="section-divider">
+                <h2>Step 9</h2>
+                <h3>CloudWatch Container Insights (Optional)</h3>
+                <aside class="notes">
+                    This step is relevant for EKS clusters with CloudWatch Container Insights enabled. It provides AWS-native monitoring without additional tooling.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x2601;&#xFE0F; CloudWatch Container Insights</h2>
+                <div class="two-columns">
+                    <div class="card">
+                        <h4>Check if Enabled</h4>
+                        <pre><code class="bash" data-trim>
+# Check for CloudWatch agent
+kubectl get daemonset -n amazon-cloudwatch
+
+# Or check for the ADOT collector
+kubectl get pods -n amazon-cloudwatch
+                        </code></pre>
+                    </div>
+                    <div class="card">
+                        <h4>What It Provides</h4>
+                        <ul>
+                            <li class="fragment">Automatic metrics collection</li>
+                            <li class="fragment">Pre-built CloudWatch dashboards</li>
+                            <li class="fragment">Container-level performance data</li>
+                            <li class="fragment">Integration with CloudWatch Alarms</li>
+                            <li class="fragment">Log group: <code>/aws/containerinsights/CLUSTER_NAME</code></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="highlight-box fragment">
+                    <strong>&#x1F4A1; Note:</strong> Container Insights complements Prometheus. Use Prometheus for detailed application metrics and CloudWatch for AWS-native alerting and centralized logging across accounts.
+                </div>
+                <aside class="notes">
+                    If Container Insights is not enabled, discuss the concept and move on. Many organizations use both Prometheus for detailed metrics and CloudWatch for infrastructure-level monitoring and billing visibility.
+                </aside>
+            </section>
+
+            <!-- Step 10: Debug a Failing Application -->
+            <section data-background="linear-gradient(135deg, #2f855a 0%, #276749 100%)" class="section-divider">
+                <h2>Step 10</h2>
+                <h3>Debug a Failing Application</h3>
+                <aside class="notes">
+                    This is the culmination of the lab: using all the observability tools together in a systematic debugging workflow.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F41B; Deploy a Broken Application</h2>
+                <pre><code class="yaml" data-trim>
+cat &lt;&lt;'EOF' | kubectl apply -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: buggy-app
+  namespace: observability-lab
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: buggy-app
+  template:
+    metadata:
+      labels:
+        app: buggy-app
+    spec:
+      containers:
+      - name: app
+        image: busybox
+        command: ['sh', '-c', 'echo "Starting app..."; sleep $((RANDOM % 10 + 5)); echo "ERROR: Out of memory - cannot allocate buffer"; exit 137']
+        resources:
+          requests:
+            cpu: 50m
+            memory: 32Mi
+          limits:
+            cpu: 100m
+            memory: 64Mi
+EOF
+                </code></pre>
+                <div class="highlight-box warning fragment">
+                    <strong>&#x26A0;&#xFE0F; Expected:</strong> This app will crash and enter CrashLoopBackOff after a few iterations. That is intentional!
+                </div>
+                <aside class="notes">
+                    The app simulates an OOM-like crash. Students will use the systematic debugging approach to diagnose it.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F50D; Systematic Debugging: Step 1 &mdash; Events</h2>
+                <pre><code class="bash" data-trim>
+# Check pod status
+kubectl get pods -l app=buggy-app
+
+# Check events for the namespace
+kubectl get events --sort-by='.lastTimestamp' \
+  -n observability-lab | tail -20
+
+# Describe a specific crashing pod
+kubectl describe pod -l app=buggy-app | grep -A 10 "State:"
+                </code></pre>
+                <div class="highlight-box success fragment">
+                    <strong>&#x2705; What to Look For:</strong>
+                    <ul>
+                        <li>Pod status: <code>CrashLoopBackOff</code></li>
+                        <li>Last State: <code>Terminated</code> with exit code <code>137</code></li>
+                        <li>Restart count increasing</li>
+                    </ul>
+                </div>
+                <aside class="notes">
+                    Exit code 137 means the process received SIGKILL, which typically indicates an OOM kill. The describe command shows both current and last state.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F50D; Systematic Debugging: Step 2 &mdash; Logs</h2>
+                <pre><code class="bash" data-trim>
+# View current container logs
+kubectl logs -l app=buggy-app --tail=20
+
+# View PREVIOUS container logs (from before the crash)
+kubectl logs -l app=buggy-app --previous --tail=20
+                </code></pre>
+                <div class="highlight-box success fragment">
+                    <strong>&#x2705; Expected Output:</strong><br>
+                    <code>Starting app...</code><br>
+                    <code>ERROR: Out of memory - cannot allocate buffer</code>
+                </div>
+                <div class="key-point fragment">
+                    <strong>&#x1F511; Key Insight:</strong> The <code>--previous</code> flag is essential when a container has crashed and restarted. Without it, you only see the current (possibly empty) container's logs.
+                </div>
+                <aside class="notes">
+                    This is the most common debugging mistake: forgetting --previous. When a pod is in CrashLoopBackOff, the current container may have just started and have no useful logs yet.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F50D; Systematic Debugging: Step 3 &mdash; Metrics</h2>
+                <pre><code class="bash" data-trim>
+# Check resource consumption
+kubectl top pods -l app=buggy-app
+
+# In Prometheus, query restart count:
+# increase(kube_pod_container_status_restarts_total{
+#   namespace="observability-lab", pod=~"buggy-app.*"
+# }[30m])
+
+# Check OOMKilled status in Prometheus:
+# kube_pod_container_status_last_terminated_reason{
+#   namespace="observability-lab",
+#   reason="OOMKilled"
+# }
+                </code></pre>
+                <div class="concept-box fragment">
+                    <h4>&#x1F3AF; Debugging Flowchart</h4>
+                    <ol>
+                        <li><strong>Events</strong> &rarr; What happened? When?</li>
+                        <li><strong>Logs</strong> &rarr; What did the app report?</li>
+                        <li><strong>Metrics</strong> &rarr; What was the resource state?</li>
+                        <li><strong>Describe</strong> &rarr; What are the pod's current conditions?</li>
+                    </ol>
+                </div>
+                <aside class="notes">
+                    This systematic approach — events, logs, metrics, describe — should become second nature. It covers 90% of production debugging scenarios.
+                </aside>
+            </section>
+
+            <!-- Step 11: Clean Up -->
+            <section data-background="linear-gradient(135deg, #2f855a 0%, #276749 100%)" class="section-divider">
+                <h2>Step 11</h2>
+                <h3>Clean Up</h3>
+                <aside class="notes">
+                    Clean up lab resources while optionally keeping the monitoring stack for future labs.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F9F9; Clean Up Lab Resources</h2>
+                <pre><code class="bash" data-trim>
+# Delete the lab namespace (removes all lab workloads)
+kubectl delete namespace observability-lab
+
+# Kill port-forward processes
+pkill -f "port-forward.*9090" 2>/dev/null
+pkill -f "port-forward.*3000" 2>/dev/null
+
+# OPTIONAL: Remove the Prometheus stack
+# (Keep it if you plan to use it in later labs)
+# helm uninstall monitoring -n monitoring
+# kubectl delete namespace monitoring
+                </code></pre>
+                <div class="highlight-box warning fragment">
+                    <strong>&#x26A0;&#xFE0F; Recommendation:</strong> Keep the monitoring namespace and Prometheus stack installed &mdash; it will be useful in subsequent labs for observing workload behavior.
+                </div>
+                <div class="highlight-box success fragment">
+                    <strong>&#x2705; Verify Cleanup:</strong><br>
+                    <code>kubectl get namespace observability-lab</code><br>
+                    Expected: <code>Error from server (NotFound): namespaces "observability-lab" not found</code>
+                </div>
+                <aside class="notes">
+                    Deleting the namespace is the cleanest way to remove all lab resources. The monitoring stack should remain for future labs.
+                </aside>
+            </section>
+
+            <!-- Step 12: Summary -->
+            <section data-background="linear-gradient(135deg, #2f855a 0%, #276749 100%)" class="section-divider">
+                <h2>Step 12</h2>
+                <h3>Summary and Reference</h3>
+                <aside class="notes">
+                    Wrap up with a reference card of all the observability tools and commands covered in this lab.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F4DA; Observability Tools Reference</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tool</th>
+                            <th>Purpose</th>
+                            <th>Key Command / URL</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="fragment">
+                            <td><strong>kubectl logs</strong></td>
+                            <td>Container log access</td>
+                            <td><code>kubectl logs -f --previous -c &lt;container&gt;</code></td>
+                        </tr>
+                        <tr class="fragment">
+                            <td><strong>kubectl top</strong></td>
+                            <td>Real-time resource usage</td>
+                            <td><code>kubectl top pods --sort-by=cpu</code></td>
+                        </tr>
+                        <tr class="fragment">
+                            <td><strong>kubectl events</strong></td>
+                            <td>Cluster event stream</td>
+                            <td><code>kubectl get events --sort-by='.lastTimestamp'</code></td>
+                        </tr>
+                        <tr class="fragment">
+                            <td><strong>Prometheus</strong></td>
+                            <td>Metrics collection and querying</td>
+                            <td><code>localhost:9090</code> + PromQL</td>
+                        </tr>
+                        <tr class="fragment">
+                            <td><strong>Grafana</strong></td>
+                            <td>Metrics visualization</td>
+                            <td><code>localhost:3000</code></td>
+                        </tr>
+                        <tr class="fragment">
+                            <td><strong>PrometheusRule</strong></td>
+                            <td>Custom alerting</td>
+                            <td>CRD: <code>monitoring.coreos.com/v1</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <aside class="notes">
+                    This reference table summarizes the core tools. In production, these would be supplemented with distributed tracing (Jaeger, Tempo) and log aggregation (Loki, Elasticsearch).
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F3AF; Key Takeaways</h2>
+                <ul class="takeaway-list">
+                    <li class="fragment">&#x1F4DD; <strong>Logging:</strong> Always log to stdout/stderr in structured JSON format; use <code>--previous</code> for crashed containers</li>
+                    <li class="fragment">&#x1F4CA; <strong>Metrics:</strong> Metrics Server powers <code>kubectl top</code> and HPA; Prometheus provides deep metric collection</li>
+                    <li class="fragment">&#x1F50D; <strong>PromQL:</strong> Master <code>rate()</code>, <code>sum() by</code>, and range vectors for effective monitoring</li>
+                    <li class="fragment">&#x1F3A8; <strong>Grafana:</strong> Pre-built dashboards provide immediate cluster visibility</li>
+                    <li class="fragment">&#x1F514; <strong>Alerting:</strong> PrometheusRule CRDs define alerting conditions evaluated by Prometheus</li>
+                    <li class="fragment">&#x1F41B; <strong>Debugging:</strong> Follow the systematic approach: Events &rarr; Logs &rarr; Metrics &rarr; Describe</li>
+                </ul>
+                <aside class="notes">
+                    Reinforce that observability is not just installing tools — it is about building a systematic approach to understanding system behavior and diagnosing issues quickly.
+                </aside>
+            </section>
+
+            <!-- Questions Slide -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="questions-slide">
+                <h2>&#x2753; Questions?</h2>
+                <p>Review topics: logging, metrics-server, Prometheus, Grafana, alerting, debugging</p>
+                <aside class="notes">
+                    Common questions: How does Prometheus differ from CloudWatch? How do you handle log rotation? What about distributed tracing? These are great discussion topics.
+                </aside>
+            </section>
+
+            <!-- Completion Slide -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="title-slide">
+                <h1>&#x2705; Lab 9 Complete!</h1>
+                <h2>You now have hands-on experience with Kubernetes observability</h2>
+                <h3>Next: Lab 10 &mdash; Health Checks and Probes</h3>
+                <div class="module-progress">
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                </div>
+                <aside class="notes">
+                    Lab 9 is complete. Students now understand how to use logging, metrics, and alerting to monitor and debug Kubernetes workloads. Next lab covers health probes which tie directly into observability.
+                </aside>
+            </section>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/highlight/highlight.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/notes/notes.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            slideNumber: true,
+            transition: 'slide',
+            plugins: [RevealHighlight, RevealNotes]
+        });
+    </script>
+</body>
+</html>

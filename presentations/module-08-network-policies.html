@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Policies | Intermediate Kubernetes</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reset.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/theme/white.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/highlight/monokai.css">
+    <style>
+        :root { --heading-color: #1a365d; --accent-color: #2b6cb0; --success-color: #2f855a; --warning-color: #c05621; --danger-color: #c53030; --text-color: #2d3748; }
+        .reveal { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: var(--text-color); font-size: 28px; }
+        .reveal .slides section { text-align: left; padding: 20px 40px; }
+        .reveal h1, .reveal h2, .reveal h3, .reveal h4 { color: var(--heading-color); font-weight: 700; text-transform: none; }
+        .reveal h1 { font-size: 2.2em; } .reveal h2 { font-size: 1.6em; } .reveal h3 { font-size: 1.3em; }
+        .title-slide { text-align: center !important; }
+        .title-slide h1 { color: #ffffff; font-size: 2.4em; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); margin-bottom: 0.3em; }
+        .title-slide h2 { color: #e2e8f0; font-size: 1.4em; font-weight: 400; }
+        .title-slide h3 { color: #cbd5e0; font-size: 1.1em; font-weight: 300; }
+        .section-divider { text-align: center !important; }
+        .section-divider h2 { color: #ffffff; font-size: 2.0em; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .section-divider h3 { color: #e2e8f0; font-size: 1.2em; font-weight: 400; }
+        .highlight-box { background: #ebf8ff; border-left: 4px solid var(--accent-color); padding: 20px 25px; border-radius: 0 8px 8px 0; margin: 15px 0; text-align: left; }
+        .highlight-box.success { background: #f0fff4; border-left-color: var(--success-color); }
+        .highlight-box.warning { background: #fffaf0; border-left-color: var(--warning-color); }
+        .highlight-box.danger { background: #fff5f5; border-left-color: var(--danger-color); }
+        .two-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: start; text-align: left; }
+        .three-columns { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; align-items: start; text-align: left; }
+        .card { background: #ffffff; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; text-align: left; }
+        .card h3, .card h4 { margin-top: 0; color: var(--accent-color); }
+        .concept-box { background: linear-gradient(135deg, #ebf8ff 0%, #e2e8f0 100%); border-radius: 12px; padding: 25px; margin: 15px 0; border: 1px solid #bee3f8; text-align: left; }
+        .concept-box h3, .concept-box h4 { color: var(--heading-color); margin-top: 0; }
+        .key-point { background: #ebf8ff; border: 2px solid var(--accent-color); border-radius: 12px; padding: 20px 25px; margin: 15px 0; text-align: left; font-size: 0.95em; }
+        .key-point strong { color: var(--accent-color); }
+        .lab-callout h2 { color: #ffffff; font-size: 1.8em; margin-bottom: 0.3em; }
+        .lab-callout h3 { color: #90cdf4; font-size: 1.3em; font-weight: 400; }
+        .lab-callout p { color: #e2e8f0; font-size: 1.0em; }
+        .lab-callout ul { color: #e2e8f0; text-align: left; display: inline-block; }
+        .lab-callout .highlight-box { background: rgba(255,255,255,0.1); border-left-color: #90cdf4; color: #e2e8f0; }
+        .questions-slide h2 { color: #ffffff; font-size: 2.2em; }
+        .questions-slide p { color: #e2e8f0; font-size: 1.2em; }
+        .module-progress { display: flex; justify-content: center; gap: 8px; margin-top: 20px; }
+        .module-progress .step { width: 30px; height: 6px; border-radius: 3px; background: #cbd5e0; }
+        .module-progress .step.active { background: var(--accent-color); }
+        .module-progress .step.completed { background: var(--success-color); }
+        .reveal table { border-collapse: collapse; width: 100%; font-size: 0.75em; margin: 15px 0; }
+        .reveal table th { background: var(--heading-color); color: #ffffff; padding: 12px 16px; text-align: left; font-weight: 600; }
+        .reveal table td { padding: 10px 16px; border-bottom: 1px solid #e2e8f0; text-align: left; }
+        .reveal table tr:nth-child(even) { background: #f7fafc; }
+        .reveal ul, .reveal ol { text-align: left; display: block; margin-left: 1em; }
+        .reveal li { margin-bottom: 0.5em; line-height: 1.5; font-size: 0.9em; }
+        .reveal p { line-height: 1.6; }
+        .reveal pre code { font-size: 0.7em; line-height: 1.4; max-height: 500px; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+
+            <!-- Slide 1: Title -->
+            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" class="title-slide">
+                <h1>&#128737;&#65039; Network Policies</h1>
+                <h2>Securing Pod-to-Pod Communication &mdash; Module 8 of 16</h2>
+                <h3>Verisign EKS Platform</h3>
+                <div class="module-progress">
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step active"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                </div>
+                <aside class="notes">Welcome to Module 8. Network Policies are the firewall rules of Kubernetes — they control which pods can communicate with each other. By default, Kubernetes allows all traffic between pods, which is a significant security risk. Today we'll learn how to lock that down.</aside>
+            </section>
+
+            <!-- Slide 2: Agenda -->
+            <section>
+                <h2>&#128203; Module Agenda</h2>
+                <ul>
+                    <li class="fragment fade-up">Kubernetes Networking Fundamentals</li>
+                    <li class="fragment fade-up">Network Policy Basics &amp; Anatomy</li>
+                    <li class="fragment fade-up">Ingress and Egress Rules</li>
+                    <li class="fragment fade-up">Common Policy Patterns</li>
+                    <li class="fragment fade-up">CNI and Network Policy Providers</li>
+                    <li class="fragment fade-up">Real-World Security Strategies</li>
+                    <li class="fragment fade-up">Debugging &amp; Monitoring Network Policies</li>
+                </ul>
+                <aside class="notes">We'll start with the networking model that makes policies necessary, then dive into policy syntax and patterns, compare CNI providers, and finish with real-world operational strategies. The lab at the end ties everything together.</aside>
+            </section>
+
+            <!-- Slide 3: Section — Kubernetes Networking Fundamentals -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #2c5282 100%)" class="section-divider">
+                <h2>&#127760; Kubernetes Networking Fundamentals</h2>
+                <h3>Understanding the Flat Network Model</h3>
+                <aside class="notes">Before we write a single policy, we need to understand the networking model that Kubernetes imposes. This is what makes network policies both necessary and powerful.</aside>
+            </section>
+
+            <!-- Slide 4: The Flat Network -->
+            <section>
+                <h2>&#127760; The Kubernetes Flat Network</h2>
+                <div class="concept-box">
+                    <h4>Core Networking Requirement</h4>
+                    <p>Every pod gets its own IP address, and <strong>every pod can reach every other pod</strong> without NAT &mdash; across nodes, across namespaces.</p>
+                </div>
+                <ul>
+                    <li class="fragment fade-up"><strong>Pod-to-Pod:</strong> Direct communication via cluster-internal IPs</li>
+                    <li class="fragment fade-up"><strong>Cross-Namespace:</strong> No isolation boundary by default</li>
+                    <li class="fragment fade-up"><strong>Cross-Node:</strong> CNI plugin handles overlay or native routing</li>
+                    <li class="fragment fade-up"><strong>DNS Resolution:</strong> Every service discoverable via CoreDNS</li>
+                </ul>
+                <aside class="notes">Kubernetes mandates a flat network where every pod can talk to every other pod. This simplifies application networking but creates a massive attack surface. If an attacker compromises one pod, they can reach every other pod in the cluster by default.</aside>
+            </section>
+
+            <!-- Slide 5: The Security Problem -->
+            <section>
+                <h2>&#9888;&#65039; The Security Problem: Default Allow</h2>
+                <div class="highlight-box danger">
+                    <strong>Default Behavior:</strong> Every pod can communicate with every other pod on every port. There are no firewalls between workloads.
+                </div>
+                <div class="two-columns fragment fade-up">
+                    <div class="card">
+                        <h4>&#128308; Without Network Policies</h4>
+                        <ul>
+                            <li>Compromised frontend reaches database directly</li>
+                            <li>Dev namespace can access production</li>
+                            <li>Any pod can exfiltrate data externally</li>
+                            <li>Lateral movement is trivial</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>&#128994; With Network Policies</h4>
+                        <ul>
+                            <li>Frontend only reaches its API server</li>
+                            <li>Namespaces are isolated boundaries</li>
+                            <li>Egress restricted to known endpoints</li>
+                            <li>Blast radius is contained</li>
+                        </ul>
+                    </div>
+                </div>
+                <aside class="notes">This is the core motivation. The flat network is great for development convenience but terrible for security. In a multi-tenant cluster like Verisign's, you absolutely need network policies. Without them, a vulnerability in one microservice compromises everything.</aside>
+            </section>
+
+            <!-- Slide 6: Section — Network Policy Basics -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #2c5282 100%)" class="section-divider">
+                <h2>&#128220; Network Policy Basics</h2>
+                <h3>Anatomy, Selectors, and Rules</h3>
+                <aside class="notes">Now let's look at the actual NetworkPolicy resource. We'll break down every field so you understand exactly how to construct policies.</aside>
+            </section>
+
+            <!-- Slide 7: NetworkPolicy Anatomy -->
+            <section>
+                <h2>&#128220; NetworkPolicy Anatomy</h2>
+                <pre><code class="language-yaml">apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: api-server-policy
+  namespace: production
+spec:
+  podSelector:              # Which pods this policy applies to
+    matchLabels:
+      app: api-server
+  policyTypes:              # Ingress, Egress, or both
+    - Ingress
+    - Egress
+  ingress:                  # Allowed inbound traffic
+    - from:
+        - podSelector:
+            matchLabels:
+              app: frontend
+      ports:
+        - protocol: TCP
+          port: 8080
+  egress:                   # Allowed outbound traffic
+    - to:
+        - podSelector:
+            matchLabels:
+              app: database
+      ports:
+        - protocol: TCP
+          port: 5432</code></pre>
+                <aside class="notes">This is the complete structure. The podSelector targets which pods are governed. policyTypes declares whether ingress, egress, or both are controlled. Once a policy selects a pod, all traffic not explicitly allowed by a rule is denied — this is the key to understand. Policies are additive, meaning multiple policies combine their allow rules.</aside>
+            </section>
+
+            <!-- Slide 8: Pod Selectors and Label Matching -->
+            <section>
+                <h2>&#127991;&#65039; Pod Selectors and Label Matching</h2>
+                <div class="two-columns">
+                    <div>
+                        <h4>matchLabels (AND logic)</h4>
+                        <pre><code class="language-yaml">podSelector:
+  matchLabels:
+    app: api-server
+    tier: backend
+# Must match ALL labels</code></pre>
+                    </div>
+                    <div>
+                        <h4>matchExpressions (flexible)</h4>
+                        <pre><code class="language-yaml">podSelector:
+  matchExpressions:
+    - key: tier
+      operator: In
+      values: [backend, middleware]
+    - key: env
+      operator: NotIn
+      values: [test]</code></pre>
+                    </div>
+                </div>
+                <div class="highlight-box fragment fade-up">
+                    <strong>Empty podSelector <code>{}</code></strong> &mdash; Selects <em>all</em> pods in the namespace. This is how you create default deny policies.
+                </div>
+                <aside class="notes">Label selectors are the targeting mechanism. matchLabels uses AND logic — all labels must match. matchExpressions gives you In, NotIn, Exists, and DoesNotExist operators for more flexible selection. The empty selector is critical — it selects every pod in the namespace.</aside>
+            </section>
+
+            <!-- Slide 9: Ingress Rules -->
+            <section>
+                <h2>&#128229; Ingress Rules: Controlling Inbound Traffic</h2>
+                <pre><code class="language-yaml">ingress:
+  # Rule 1: Allow from pods with label app=frontend
+  - from:
+      - podSelector:
+          matchLabels:
+            app: frontend
+  # Rule 2: Allow from monitoring namespace
+  - from:
+      - namespaceSelector:
+          matchLabels:
+            purpose: monitoring
+  # Rule 3: Allow from corporate VPN CIDR
+  - from:
+      - ipBlock:
+          cidr: 10.0.0.0/8
+          except:
+            - 10.0.5.0/24</code></pre>
+                <div class="highlight-box warning fragment fade-up">
+                    <strong>OR vs AND:</strong> Separate list items under <code>from:</code> are OR&rsquo;d. Multiple selectors <em>within</em> a single list item are AND&rsquo;d.
+                </div>
+                <aside class="notes">Three source types for ingress: podSelector for pods in the same namespace, namespaceSelector for pods in other namespaces, and ipBlock for CIDR ranges. The OR vs AND distinction is critical and a common source of misconfiguration. Separate dash items are OR — any match allows traffic. Selectors in the same item are AND — all must match.</aside>
+            </section>
+
+            <!-- Slide 10: Egress Rules -->
+            <section>
+                <h2>&#128228; Egress Rules: Controlling Outbound Traffic</h2>
+                <pre><code class="language-yaml">egress:
+  # Allow DNS resolution (critical!)
+  - to:
+      - namespaceSelector: {}
+    ports:
+      - protocol: UDP
+        port: 53
+      - protocol: TCP
+        port: 53
+  # Allow traffic to database pods
+  - to:
+      - podSelector:
+          matchLabels:
+            app: postgres
+    ports:
+      - protocol: TCP
+        port: 5432
+  # Allow external API calls
+  - to:
+      - ipBlock:
+          cidr: 203.0.113.0/24
+    ports:
+      - protocol: TCP
+        port: 443</code></pre>
+                <div class="highlight-box danger fragment fade-up">
+                    <strong>Never forget DNS!</strong> If you restrict egress, you must explicitly allow UDP/TCP port 53 or your pods cannot resolve service names.
+                </div>
+                <aside class="notes">Egress rules follow the same structure as ingress but control outbound traffic. The number one mistake teams make is forgetting to allow DNS when implementing egress policies. Your application will fail silently because it can't resolve hostnames. Always include DNS as the first egress rule.</aside>
+            </section>
+
+            <!-- Slide 11: Port-Level Controls -->
+            <section>
+                <h2>&#128274; Port-Level Controls</h2>
+                <div class="two-columns">
+                    <div class="card">
+                        <h4>Specific Ports</h4>
+                        <pre><code class="language-yaml">ports:
+  - protocol: TCP
+    port: 8080
+  - protocol: TCP
+    port: 8443
+  - protocol: TCP
+    port: 9090</code></pre>
+                    </div>
+                    <div class="card">
+                        <h4>Port Ranges (K8s 1.25+)</h4>
+                        <pre><code class="language-yaml">ports:
+  - protocol: TCP
+    port: 8000
+    endPort: 9000</code></pre>
+                        <p style="font-size: 0.8em; margin-top: 10px;">Covers all ports from 8000 to 9000 inclusive.</p>
+                    </div>
+                </div>
+                <div class="concept-box fragment fade-up">
+                    <h4>Named Ports</h4>
+                    <pre><code class="language-yaml">ports:
+  - protocol: TCP
+    port: http    # Matches the named port in the target pod spec</code></pre>
+                    <p style="font-size: 0.85em;">Named ports reference the <code>containerPort</code> name, decoupling policy from hard-coded numbers.</p>
+                </div>
+                <aside class="notes">Port controls add the final layer of precision. You can specify individual ports, port ranges since Kubernetes 1.25, or named ports. Named ports are a best practice because they decouple the policy from the actual port number — if the application changes its port, only the pod spec needs updating.</aside>
+            </section>
+
+            <!-- Slide 12: Section — Policy Patterns -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #2c5282 100%)" class="section-divider">
+                <h2>&#128209; Common Policy Patterns</h2>
+                <h3>Production-Ready Templates</h3>
+                <aside class="notes">Now that we understand the syntax, let's look at the most common patterns you'll implement. These are battle-tested templates that cover the majority of use cases.</aside>
+            </section>
+
+            <!-- Slide 13: Default Deny All Ingress -->
+            <section>
+                <h2>&#128683; Default Deny All Ingress</h2>
+                <pre><code class="language-yaml">apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: production
+spec:
+  podSelector: {}       # Selects ALL pods in namespace
+  policyTypes:
+    - Ingress
+  # No ingress rules = deny all inbound traffic</code></pre>
+                <div class="key-point fragment fade-up">
+                    <strong>Best Practice:</strong> Apply default-deny-ingress to every namespace first, then layer on allow rules. This ensures no pod is accidentally exposed.
+                </div>
+                <aside class="notes">This is the foundational policy. Empty podSelector means all pods. Declaring Ingress in policyTypes with no ingress rules means all inbound traffic is denied. Apply this first to every namespace, then write targeted allow rules. This is the cornerstone of zero-trust networking in Kubernetes.</aside>
+            </section>
+
+            <!-- Slide 14: Default Deny All Egress -->
+            <section>
+                <h2>&#128683; Default Deny All Egress</h2>
+                <pre><code class="language-yaml">apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-egress
+  namespace: production
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  # No egress rules = deny all outbound traffic</code></pre>
+                <div class="highlight-box warning fragment fade-up">
+                    <strong>Caution:</strong> Denying all egress breaks DNS resolution. Pair this with an explicit DNS allow policy:
+                </div>
+                <pre class="fragment fade-up"><code class="language-yaml">apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns
+  namespace: production
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53</code></pre>
+                <aside class="notes">Egress deny is equally important but requires more care. You must pair it with a DNS allow policy or nothing in the namespace will work. Some teams scope the DNS rule to the kube-system namespace where CoreDNS runs, but allowing any namespace is safer for custom DNS setups.</aside>
+            </section>
+
+            <!-- Slide 15: Allow Specific Namespace Communication -->
+            <section>
+                <h2>&#128193; Allow Specific Namespace Communication</h2>
+                <pre><code class="language-yaml">apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-from-monitoring
+  namespace: production
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - protocol: TCP
+          port: 9090   # Prometheus metrics
+        - protocol: TCP
+          port: 8080   # Health checks</code></pre>
+                <div class="highlight-box success fragment fade-up">
+                    <strong>Tip:</strong> Use the built-in label <code>kubernetes.io/metadata.name</code> (added automatically since K8s 1.21) to select namespaces by name without custom labels.
+                </div>
+                <aside class="notes">This pattern allows monitoring tools like Prometheus to scrape metrics from production pods. The namespace selector targets the monitoring namespace specifically. Note the use of the automatic namespace label — this removes the need to manually label namespaces for policy targeting.</aside>
+            </section>
+
+            <!-- Slide 16: Allow Specific Pod-to-Pod -->
+            <section>
+                <h2>&#128257; Allow Specific Pod-to-Pod Communication</h2>
+                <div class="concept-box">
+                    <h4>Three-Tier Application Pattern</h4>
+                    <p>Frontend &#8594; API Server &#8594; Database &mdash; each tier only talks to its neighbors.</p>
+                </div>
+                <pre><code class="language-yaml"># Allow API server to receive from frontend only
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: api-allow-frontend
+  namespace: production
+spec:
+  podSelector:
+    matchLabels:
+      tier: api
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              tier: frontend
+      ports:
+        - protocol: TCP
+          port: 8080</code></pre>
+                <aside class="notes">This is the classic three-tier pattern. The frontend can reach the API server on port 8080. The API server can reach the database on port 5432. The frontend cannot reach the database directly. This limits lateral movement — if the frontend is compromised, the attacker cannot jump straight to the database.</aside>
+            </section>
+
+            <!-- Slide 17: Database Isolation Pattern -->
+            <section>
+                <h2>&#128451;&#65039; Database Isolation Pattern</h2>
+                <pre><code class="language-yaml">apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: database-isolation
+  namespace: production
+spec:
+  podSelector:
+    matchLabels:
+      app: postgres
+      tier: database
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              tier: api
+      ports:
+        - protocol: TCP
+          port: 5432
+  egress:
+    # DNS only — database should not initiate connections
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53</code></pre>
+                <div class="highlight-box danger fragment fade-up">
+                    <strong>Critical:</strong> Databases should have both ingress AND egress restrictions. A compromised database that can make outbound connections enables data exfiltration.
+                </div>
+                <aside class="notes">Database isolation is one of the most important patterns. The database only accepts connections from the API tier on the PostgreSQL port. Egress is locked down to DNS only — the database has no reason to initiate outbound connections. This prevents data exfiltration even if the database pod is compromised.</aside>
+            </section>
+
+            <!-- Slide 18: Section — CNI and Network Policy Providers -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #2c5282 100%)" class="section-divider">
+                <h2>&#128268; CNI &amp; Network Policy Providers</h2>
+                <h3>Implementation Behind the API</h3>
+                <aside class="notes">NetworkPolicy is just an API resource. The actual enforcement depends on your CNI plugin. Let's compare the major providers and their capabilities beyond the standard API.</aside>
+            </section>
+
+            <!-- Slide 19: CNI Provider Comparison -->
+            <section>
+                <h2>&#128268; CNI Provider Comparison</h2>
+                <table>
+                    <thead>
+                        <tr><th>Feature</th><th>Calico</th><th>Cilium</th><th>AWS VPC CNI</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr class="fragment fade-up"><td>K8s NetworkPolicy</td><td>&#9989;</td><td>&#9989;</td><td>&#9989; (v1.25+)</td></tr>
+                        <tr class="fragment fade-up"><td>Global Policies</td><td>&#9989;</td><td>&#9989;</td><td>&#10060;</td></tr>
+                        <tr class="fragment fade-up"><td>L7 Filtering (HTTP)</td><td>&#9989; (Enterprise)</td><td>&#9989;</td><td>&#10060;</td></tr>
+                        <tr class="fragment fade-up"><td>DNS-Based Rules</td><td>&#9989;</td><td>&#9989;</td><td>&#10060;</td></tr>
+                        <tr class="fragment fade-up"><td>Host-Level Policies</td><td>&#9989;</td><td>&#9989;</td><td>&#10060;</td></tr>
+                        <tr class="fragment fade-up"><td>Encryption (WireGuard)</td><td>&#9989;</td><td>&#9989;</td><td>&#10060;</td></tr>
+                        <tr class="fragment fade-up"><td>Flow Logging</td><td>&#9989;</td><td>&#9989; (Hubble)</td><td>VPC Flow Logs</td></tr>
+                    </tbody>
+                </table>
+                <aside class="notes">Not all CNI plugins are equal. The standard Kubernetes NetworkPolicy API covers L3/L4 rules. Calico and Cilium both extend this significantly with their own CRDs. AWS VPC CNI added native network policy support in EKS 1.25, which is relevant for Verisign's platform.</aside>
+            </section>
+
+            <!-- Slide 20: Calico Network Policies -->
+            <section>
+                <h2>&#128005; Calico Network Policies</h2>
+                <pre><code class="language-yaml">apiVersion: projectcalico.org/v3
+kind: GlobalNetworkPolicy
+metadata:
+  name: deny-external-egress
+spec:
+  selector: env == 'production'
+  types:
+    - Egress
+  egress:
+    # Allow cluster-internal traffic
+    - action: Allow
+      destination:
+        nets:
+          - 10.0.0.0/8
+    # Allow DNS
+    - action: Allow
+      protocol: UDP
+      destination:
+        ports: [53]
+    # Deny everything else
+    - action: Deny</code></pre>
+                <div class="two-columns fragment fade-up">
+                    <div class="highlight-box success">
+                        <strong>GlobalNetworkPolicy</strong> &mdash; Applies across all namespaces without per-namespace duplication.
+                    </div>
+                    <div class="highlight-box">
+                        <strong>Action field</strong> &mdash; Calico adds explicit Allow/Deny/Log actions with ordered rule evaluation.
+                    </div>
+                </div>
+                <aside class="notes">Calico extends the standard API with GlobalNetworkPolicy, which applies cluster-wide. It also adds explicit deny actions and ordered rule evaluation, making complex policies more readable. The selector syntax uses Calico's own expression language rather than standard label selectors.</aside>
+            </section>
+
+            <!-- Slide 21: AWS VPC CNI Network Policy Support -->
+            <section>
+                <h2>&#9729;&#65039; AWS VPC CNI &amp; Network Policy on EKS</h2>
+                <div class="concept-box">
+                    <h4>EKS Network Policy Support</h4>
+                    <p>Since EKS 1.25, the AWS VPC CNI plugin natively enforces Kubernetes NetworkPolicy resources using eBPF.</p>
+                </div>
+                <ul>
+                    <li class="fragment fade-up"><strong>Enable via add-on:</strong> Update <code>vpc-cni</code> add-on with <code>enableNetworkPolicy: true</code></li>
+                    <li class="fragment fade-up"><strong>eBPF-based:</strong> Enforcement happens in the kernel for minimal latency impact</li>
+                    <li class="fragment fade-up"><strong>Standard API:</strong> Uses native <code>networking.k8s.io/v1</code> resources</li>
+                    <li class="fragment fade-up"><strong>VPC Flow Logs:</strong> Network flow visibility through AWS-native tooling</li>
+                    <li class="fragment fade-up"><strong>Limitation:</strong> No extended CRDs like Calico/Cilium — L3/L4 only</li>
+                </ul>
+                <div class="highlight-box fragment fade-up">
+                    <strong>Verisign Context:</strong> If running VPC CNI natively, standard NetworkPolicy is fully supported. For L7 or global policies, consider Calico overlay alongside VPC CNI.
+                </div>
+                <aside class="notes">For Verisign's EKS clusters, AWS VPC CNI is likely the default. The good news is that it now supports standard NetworkPolicy without needing a third-party plugin. The trade-off is that you only get L3/L4 capabilities. If you need L7 filtering or global policies, you can run Calico as a policy-only add-on alongside VPC CNI.</aside>
+            </section>
+
+            <!-- Slide 22: Cilium Network Policies -->
+            <section>
+                <h2>&#128029; Cilium: L7-Aware Network Policies</h2>
+                <pre><code class="language-yaml">apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: api-l7-policy
+  namespace: production
+spec:
+  endpointSelector:
+    matchLabels:
+      app: api-server
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            app: frontend
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+          rules:
+            http:
+              - method: GET
+                path: "/api/v1/.*"
+              - method: POST
+                path: "/api/v1/orders"</code></pre>
+                <div class="key-point fragment fade-up">
+                    <strong>L7 Filtering:</strong> Cilium can restrict traffic by HTTP method, path, headers, and even gRPC method &mdash; far beyond what standard NetworkPolicy offers.
+                </div>
+                <aside class="notes">Cilium takes network policies to the application layer. Instead of just allowing TCP port 8080, you can specify which HTTP methods and URL paths are permitted. This is extremely powerful for API security — a compromised frontend can only call the specific endpoints it needs, not arbitrary paths on the API server.</aside>
+            </section>
+
+            <!-- Slide 23: Section — Real-World Security -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #2c5282 100%)" class="section-divider">
+                <h2>&#128737;&#65039; Real-World Security Strategies</h2>
+                <h3>From Policy to Practice</h3>
+                <aside class="notes">Writing policies is one thing. Implementing a comprehensive network security strategy across a production cluster is another. Let's talk about the strategies that make network policies work at scale.</aside>
+            </section>
+
+            <!-- Slide 24: Zero-Trust Networking -->
+            <section>
+                <h2>&#128737;&#65039; Zero-Trust Networking in Kubernetes</h2>
+                <div class="concept-box">
+                    <h4>Zero-Trust Principle</h4>
+                    <p><strong>Never trust, always verify.</strong> Every connection is denied unless explicitly permitted, regardless of source location.</p>
+                </div>
+                <div class="three-columns fragment fade-up">
+                    <div class="card">
+                        <h4>1. Default Deny</h4>
+                        <ul>
+                            <li>Apply to every namespace</li>
+                            <li>Both ingress and egress</li>
+                            <li>Automate via admission controller</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>2. Least Privilege</h4>
+                        <ul>
+                            <li>Allow only required paths</li>
+                            <li>Restrict ports precisely</li>
+                            <li>Scope to exact labels</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>3. Verify &amp; Audit</h4>
+                        <ul>
+                            <li>Log denied connections</li>
+                            <li>Review policies in CI/CD</li>
+                            <li>Test with network probes</li>
+                        </ul>
+                    </div>
+                </div>
+                <aside class="notes">Zero-trust isn't a product, it's a strategy. In Kubernetes, it starts with default deny everywhere, then allows only the minimum required communication paths. The third pillar — verification — is often overlooked. You need to continuously validate that policies are working as intended.</aside>
+            </section>
+
+            <!-- Slide 25: Microsegmentation Strategies -->
+            <section>
+                <h2>&#129513; Microsegmentation Strategies</h2>
+                <div class="two-columns">
+                    <div class="card">
+                        <h4>Namespace-Level Segmentation</h4>
+                        <ul>
+                            <li>Isolate by environment (dev/staging/prod)</li>
+                            <li>Isolate by team or business unit</li>
+                            <li>Broad but effective first step</li>
+                        </ul>
+                        <pre><code class="language-yaml"># Block all cross-namespace traffic
+ingress:
+  - from:
+      - podSelector: {} # Same ns only</code></pre>
+                    </div>
+                    <div class="card">
+                        <h4>Application-Level Segmentation</h4>
+                        <ul>
+                            <li>Isolate by microservice tier</li>
+                            <li>Per-service egress restrictions</li>
+                            <li>Granular but higher maintenance</li>
+                        </ul>
+                        <pre><code class="language-yaml"># Only specific pod-to-pod
+ingress:
+  - from:
+      - podSelector:
+          matchLabels:
+            app: checkout</code></pre>
+                    </div>
+                </div>
+                <aside class="notes">Microsegmentation is about shrinking the blast radius. Start with namespace-level isolation — it's straightforward and covers multi-tenancy. Then layer on application-level segmentation for sensitive workloads like databases, payment processing, or PII stores. You don't need to segment everything equally — focus on your crown jewels first.</aside>
+            </section>
+
+            <!-- Slide 26: Debugging Network Policies -->
+            <section>
+                <h2>&#128269; Debugging Network Policies</h2>
+                <h4>Common Pitfalls</h4>
+                <div class="highlight-box danger fragment fade-up">
+                    <strong>Pitfall 1: Forgotten DNS.</strong> Egress policies that don't allow port 53 break all name resolution silently.
+                </div>
+                <div class="highlight-box warning fragment fade-up">
+                    <strong>Pitfall 2: OR vs AND confusion.</strong> Two selectors in one <code>from:</code> item are AND&rsquo;d. Separate <code>from:</code> items are OR&rsquo;d. Mixing them up creates overly permissive or overly restrictive rules.
+                </div>
+                <div class="highlight-box warning fragment fade-up">
+                    <strong>Pitfall 3: CNI doesn't enforce.</strong> Some CNI plugins (e.g., Flannel) ignore NetworkPolicy entirely. Verify your CNI supports enforcement.
+                </div>
+                <div class="highlight-box fragment fade-up">
+                    <strong>Pitfall 4: Policies are namespace-scoped.</strong> A policy in namespace A cannot affect pods in namespace B. Use per-namespace policies or Calico GlobalNetworkPolicy.
+                </div>
+                <aside class="notes">These are the four most common issues teams hit when implementing network policies. DNS breakage is by far the number one problem. The OR/AND confusion causes subtle security gaps. And many teams deploy policies without realizing their CNI doesn't enforce them — always verify enforcement with a connectivity test.</aside>
+            </section>
+
+            <!-- Slide 27: Debugging Tools -->
+            <section>
+                <h2>&#128736;&#65039; Debugging Toolkit</h2>
+                <div class="two-columns">
+                    <div class="card">
+                        <h4>Connectivity Testing</h4>
+                        <pre><code class="language-bash"># Test connectivity from a pod
+kubectl run test-conn --rm -it \
+  --image=busybox -- wget -qO- \
+  --timeout=3 http://api-server:8080
+
+# Test DNS resolution
+kubectl run test-dns --rm -it \
+  --image=busybox -- nslookup \
+  api-server.production.svc
+
+# Netcat port test
+kubectl exec -it debug-pod -- \
+  nc -zv postgres-svc 5432</code></pre>
+                    </div>
+                    <div class="card">
+                        <h4>Policy Inspection</h4>
+                        <pre><code class="language-bash"># List policies affecting a pod
+kubectl get networkpolicy -n prod
+
+# Describe policy details
+kubectl describe netpol \
+  api-server-policy -n prod
+
+# Check pod labels match
+kubectl get pods -n prod \
+  --show-labels | grep api
+
+# Validate YAML before apply
+kubectl apply --dry-run=server \
+  -f policy.yaml</code></pre>
+                    </div>
+                </div>
+                <aside class="notes">These are your essential debugging commands. Always test connectivity after applying a policy — don't assume it works. The busybox image is your best friend for quick connectivity tests. For persistent debugging, keep a debug pod running in each namespace with network tools installed.</aside>
+            </section>
+
+            <!-- Slide 28: Monitoring and Auditing -->
+            <section>
+                <h2>&#128202; Monitoring &amp; Auditing Network Flows</h2>
+                <div class="three-columns">
+                    <div class="card">
+                        <h4>&#128029; Cilium Hubble</h4>
+                        <ul>
+                            <li>Real-time flow visibility</li>
+                            <li>Policy verdict logging</li>
+                            <li>Service dependency maps</li>
+                            <li>CLI + UI dashboard</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>&#128005; Calico Flow Logs</h4>
+                        <ul>
+                            <li>Allow/deny log entries</li>
+                            <li>Export to SIEM systems</li>
+                            <li>Kibana dashboards</li>
+                            <li>Policy recommendation engine</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>&#9729;&#65039; AWS VPC Flow Logs</h4>
+                        <ul>
+                            <li>ENI-level traffic capture</li>
+                            <li>CloudWatch integration</li>
+                            <li>Athena SQL queries</li>
+                            <li>Pod IP correlation</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="key-point fragment fade-up">
+                    <strong>Recommendation:</strong> Enable flow logging <em>before</em> enforcing policies. Observe traffic patterns first, then write policies based on actual communication paths.
+                </div>
+                <aside class="notes">Monitoring is essential for both writing correct policies and verifying they work. Hubble provides the richest Kubernetes-native visibility. Calico's flow logs integrate well with existing SIEM infrastructure. AWS VPC Flow Logs work at the infrastructure level and can be queried with Athena. The recommended approach is observe-first: enable logging, map actual traffic, then write policies based on reality rather than assumptions.</aside>
+            </section>
+
+            <!-- Slide 29: Policy Lifecycle in CI/CD -->
+            <section>
+                <h2>&#128640; Network Policy Lifecycle</h2>
+                <div class="concept-box">
+                    <h4>Recommended Workflow</h4>
+                    <p>Treat network policies as code &mdash; version, review, test, and automate them through your CI/CD pipeline.</p>
+                </div>
+                <ol>
+                    <li class="fragment fade-up"><strong>Observe:</strong> Enable flow logging and map actual traffic patterns</li>
+                    <li class="fragment fade-up"><strong>Draft:</strong> Write policies based on observed flows, store in Git</li>
+                    <li class="fragment fade-up"><strong>Validate:</strong> Lint with <code>kubeval</code> or <code>kubectl --dry-run=server</code></li>
+                    <li class="fragment fade-up"><strong>Test:</strong> Apply in a staging namespace with connectivity tests</li>
+                    <li class="fragment fade-up"><strong>Enforce:</strong> Apply to production with monitoring enabled</li>
+                    <li class="fragment fade-up"><strong>Audit:</strong> Periodically review denied flows and policy coverage</li>
+                </ol>
+                <aside class="notes">Network policies should go through the same rigor as application code. Version control them, review changes in pull requests, validate with dry runs, test in staging, and monitor after enforcement. This lifecycle approach prevents outages caused by misconfigured policies.</aside>
+            </section>
+
+            <!-- Slide 30: Summary -->
+            <section>
+                <h2>&#128218; Module 8 Summary</h2>
+                <div class="two-columns">
+                    <div class="card">
+                        <h4>&#128220; Policy Fundamentals</h4>
+                        <ul>
+                            <li>Kubernetes flat network = default allow</li>
+                            <li>NetworkPolicy controls L3/L4 traffic</li>
+                            <li>podSelector targets, policyTypes declares</li>
+                            <li>Policies are additive (union of allow rules)</li>
+                            <li>Empty selector = all pods in namespace</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>&#128737;&#65039; Operational Strategy</h4>
+                        <ul>
+                            <li>Default deny first, allow rules second</li>
+                            <li>Always permit DNS in egress policies</li>
+                            <li>Verify CNI enforces NetworkPolicy</li>
+                            <li>Observe traffic before enforcing</li>
+                            <li>Treat policies as code in CI/CD</li>
+                        </ul>
+                    </div>
+                </div>
+                <aside class="notes">Two sides of network policies: the technical fundamentals of writing correct YAML, and the operational strategy of deploying them safely. Both matter equally. A perfect policy that breaks DNS is useless, and a well-deployed policy with the wrong selectors is a false sense of security.</aside>
+            </section>
+
+            <!-- Slide 31: Key Takeaways -->
+            <section>
+                <h2>&#127919; Key Takeaways</h2>
+                <div class="key-point fragment fade-up">
+                    <strong>1. Default deny is non-negotiable.</strong> Apply default-deny ingress and egress to every namespace. No exceptions for production workloads.
+                </div>
+                <div class="key-point fragment fade-up">
+                    <strong>2. Always allow DNS.</strong> Every egress policy must include UDP/TCP port 53. Forgetting this is the most common cause of policy-related outages.
+                </div>
+                <div class="key-point fragment fade-up">
+                    <strong>3. Know your CNI.</strong> Standard NetworkPolicy is L3/L4 only. For L7 filtering, DNS-based rules, or global policies, use Calico or Cilium extensions.
+                </div>
+                <div class="key-point fragment fade-up">
+                    <strong>4. Observe before enforcing.</strong> Enable flow logging, map real traffic, then write policies. Never guess at communication patterns.
+                </div>
+                <aside class="notes">Four takeaways to remember. Default deny is the foundation. DNS is the most common pitfall. Your CNI determines what's enforceable. And observing before enforcing prevents outages. These principles will serve you well as you implement network policies on the Verisign platform.</aside>
+            </section>
+
+            <!-- Slide 32: Lab Callout -->
+            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" class="lab-callout">
+                <h2>&#129489;&#8205;&#128187; Lab 8: Network Policies</h2>
+                <h3>Hands-On Exercise</h3>
+                <ul>
+                    <li class="fragment fade-up">Deploy a multi-tier application (frontend, API, database)</li>
+                    <li class="fragment fade-up">Verify default allow &mdash; all pods can reach all pods</li>
+                    <li class="fragment fade-up">Apply default-deny ingress and egress policies</li>
+                    <li class="fragment fade-up">Create targeted allow rules for the three-tier communication path</li>
+                    <li class="fragment fade-up">Implement database isolation with egress restrictions</li>
+                    <li class="fragment fade-up">Debug a broken policy (missing DNS rule)</li>
+                    <li class="fragment fade-up">Test cross-namespace isolation</li>
+                </ul>
+                <div class="highlight-box" style="margin-top: 20px;">
+                    <strong>Duration:</strong> ~45 minutes
+                </div>
+                <aside class="notes">This lab walks through the full lifecycle: deploy an app, observe default behavior, lock it down, and debug issues. The intentional DNS breakage exercise is designed to build muscle memory for the most common real-world problem. By the end, participants will have a working set of policies for a three-tier application.</aside>
+            </section>
+
+            <!-- Slide 33: Questions -->
+            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" class="questions-slide" style="text-align: center;">
+                <h2>&#10067; Questions &amp; Discussion</h2>
+                <p>Module 8: Network Policies</p>
+                <p style="font-size: 0.9em; margin-top: 30px;">Up Next: Module 9 &mdash; Advanced Scheduling &amp; Resource Management</p>
+                <aside class="notes">Let's discuss any questions. Common topics include: how to handle policies for dynamic workloads like Jobs and CronJobs, whether to use standard NetworkPolicy or Calico/Cilium CRDs, and strategies for migrating existing clusters to a zero-trust model incrementally.</aside>
+            </section>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/highlight/highlight.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/notes/notes.js"></script>
+    <script>
+        Reveal.initialize({ hash: true, slideNumber: true, transition: 'slide', plugins: [RevealHighlight, RevealNotes] });
+    </script>
+</body>
+</html>

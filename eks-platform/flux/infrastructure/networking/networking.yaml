@@ -1,0 +1,55 @@
+# ─── Envoy Gateway ─────────────────────────────────────────────────────────
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: envoy-gateway
+  namespace: flux-system
+spec:
+  interval: 30m
+  targetNamespace: envoy-gateway-system
+  install:
+    createNamespace: true
+  chart:
+    spec:
+      chart: gateway-helm
+      sourceRef:
+        kind: HelmRepository
+        name: envoy-gateway
+      version: "v1.2.0"
+---
+# ─── External DNS ──────────────────────────────────────────────────────────
+# REQUIRES DNS: Uncomment this block after configuring Route 53
+# Then set domain, txtOwnerId, and IRSA ARN from: terraform output irsa_roles
+#
+# apiVersion: helm.toolkit.fluxcd.io/v2
+# kind: HelmRelease
+# metadata:
+#   name: external-dns
+#   namespace: flux-system
+# spec:
+#   interval: 30m
+#   targetNamespace: external-dns
+#   install:
+#     createNamespace: true
+#   chart:
+#     spec:
+#       chart: external-dns
+#       sourceRef:
+#         kind: HelmRepository
+#         name: external-dns
+#       version: ">=1.14.0"
+#   values:
+#     provider:
+#       name: aws
+#     policy: sync
+#     registry: txt
+#     txtOwnerId: platform-lab
+#     domainFilters:
+#       - example.com
+#     sources:
+#       - gateway-httproute
+#       - service
+#       - ingress
+#     serviceAccount:
+#       annotations:
+#         eks.amazonaws.com/role-arn: "arn:aws:iam::ACCOUNT_ID:role/platform-lab-external-dns"

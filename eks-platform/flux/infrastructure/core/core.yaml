@@ -1,0 +1,45 @@
+# ─── Metrics Server ─────────────────────────────────────────────────────────
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: metrics-server
+  namespace: flux-system
+spec:
+  interval: 30m
+  targetNamespace: kube-system
+  chart:
+    spec:
+      chart: metrics-server
+      sourceRef:
+        kind: HelmRepository
+        name: metrics-server
+      version: ">=3.12.0"
+---
+# ─── Cert-Manager ──────────────────────────────────────────────────────────
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: cert-manager
+  namespace: flux-system
+spec:
+  interval: 30m
+  targetNamespace: cert-manager
+  install:
+    createNamespace: true
+  chart:
+    spec:
+      chart: cert-manager
+      sourceRef:
+        kind: HelmRepository
+        name: jetstack
+      version: ">=1.15.0"
+  values:
+    crds:
+      enabled: true
+    prometheus:
+      enabled: true
+    # IRSA annotation — only needed when DNS is configured for Let's Encrypt DNS-01
+    # Uncomment and set ARN from: terraform output irsa_roles
+    # serviceAccount:
+    #   annotations:
+    #     eks.amazonaws.com/role-arn: "arn:aws:iam::ACCOUNT_ID:role/platform-lab-cert-manager"

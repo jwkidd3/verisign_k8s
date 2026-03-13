@@ -1,0 +1,94 @@
+variable "aws_region" {
+  description = "AWS region"
+  type        = string
+  default     = "us-east-2"
+}
+
+variable "cluster_name" {
+  description = "EKS cluster name"
+  type        = string
+  default     = "platform-lab"
+}
+
+variable "cluster_version" {
+  description = "Kubernetes version"
+  type        = string
+  default     = "1.30"
+}
+
+variable "vpc_cidr" {
+  description = "VPC CIDR block"
+  type        = string
+  default     = "10.0.0.0/16"
+}
+
+variable "node_instance_type" {
+  description = "EC2 instance type for worker nodes"
+  type        = string
+  default     = "m5.xlarge"
+}
+
+variable "node_desired" {
+  type    = number
+  default = 3
+}
+
+variable "node_min" {
+  type    = number
+  default = 2
+}
+
+variable "node_max" {
+  type    = number
+  default = 5
+}
+
+variable "enable_dns" {
+  description = "Enable DNS features (cert-manager IRSA, external-dns, Let's Encrypt). Requires route53_zone_id and domain."
+  type        = bool
+  default     = false
+}
+
+variable "route53_zone_id" {
+  description = "Route 53 hosted zone ID — only required if enable_dns = true"
+  type        = string
+  default     = ""
+}
+
+variable "domain" {
+  description = "Base domain (e.g., example.com) — only required if enable_dns = true"
+  type        = string
+  default     = ""
+}
+
+variable "github_owner" {
+  description = "GitHub org or username for Flux repo"
+  type        = string
+  default     = "jwkidd3"
+}
+
+variable "github_token" {
+  description = "GitHub PAT for Flux bootstrap"
+  type        = string
+  sensitive   = true
+}
+
+variable "flux_repository_name" {
+  description = "Name of the Git repo Flux will manage"
+  type        = string
+  default     = "fleet-infra"
+}
+
+variable "splunk_hec_token" {
+  description = "Splunk HEC token (generated after Splunk deploys)"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "vault_root_token" {
+  description = "Vault dev root token"
+  type        = string
+  default     = "root"
+  sensitive   = true
+}

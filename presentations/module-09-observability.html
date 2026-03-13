@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Observability — Logging, Metrics &amp; Tracing | Intermediate Kubernetes</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reset.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/theme/white.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/highlight/monokai.css">
+    <style>
+        :root { --heading-color: #1a365d; --accent-color: #2b6cb0; --success-color: #2f855a; --warning-color: #c05621; --danger-color: #c53030; --text-color: #2d3748; }
+        .reveal { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: var(--text-color); font-size: 28px; }
+        .reveal .slides section { text-align: left; padding: 20px 40px; }
+        .reveal h1, .reveal h2, .reveal h3, .reveal h4 { color: var(--heading-color); font-weight: 700; text-transform: none; }
+        .reveal h1 { font-size: 2.2em; } .reveal h2 { font-size: 1.6em; } .reveal h3 { font-size: 1.3em; }
+        .title-slide { text-align: center !important; }
+        .title-slide h1 { color: #ffffff; font-size: 2.4em; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); margin-bottom: 0.3em; }
+        .title-slide h2 { color: #e2e8f0; font-size: 1.4em; font-weight: 400; }
+        .title-slide h3 { color: #cbd5e0; font-size: 1.1em; font-weight: 300; }
+        .section-divider { text-align: center !important; }
+        .section-divider h2 { color: #ffffff; font-size: 2.0em; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .section-divider h3 { color: #e2e8f0; font-size: 1.2em; font-weight: 400; }
+        .highlight-box { background: #ebf8ff; border-left: 4px solid var(--accent-color); padding: 20px 25px; border-radius: 0 8px 8px 0; margin: 15px 0; text-align: left; }
+        .highlight-box.success { background: #f0fff4; border-left-color: var(--success-color); }
+        .highlight-box.warning { background: #fffaf0; border-left-color: var(--warning-color); }
+        .highlight-box.danger { background: #fff5f5; border-left-color: var(--danger-color); }
+        .two-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: start; text-align: left; }
+        .three-columns { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; align-items: start; text-align: left; }
+        .card { background: #ffffff; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; text-align: left; }
+        .card h3, .card h4 { margin-top: 0; color: var(--accent-color); }
+        .concept-box { background: linear-gradient(135deg, #ebf8ff 0%, #e2e8f0 100%); border-radius: 12px; padding: 25px; margin: 15px 0; border: 1px solid #bee3f8; text-align: left; }
+        .concept-box h3, .concept-box h4 { color: var(--heading-color); margin-top: 0; }
+        .key-point { background: #ebf8ff; border: 2px solid var(--accent-color); border-radius: 12px; padding: 20px 25px; margin: 15px 0; text-align: left; font-size: 0.95em; }
+        .key-point strong { color: var(--accent-color); }
+        .lab-callout h2 { color: #ffffff; font-size: 1.8em; margin-bottom: 0.3em; }
+        .lab-callout h3 { color: #90cdf4; font-size: 1.3em; font-weight: 400; }
+        .lab-callout p { color: #e2e8f0; font-size: 1.0em; }
+        .lab-callout ul { color: #e2e8f0; text-align: left; display: inline-block; }
+        .lab-callout .highlight-box { background: rgba(255,255,255,0.1); border-left-color: #90cdf4; color: #e2e8f0; }
+        .questions-slide h2 { color: #ffffff; font-size: 2.2em; }
+        .questions-slide p { color: #e2e8f0; font-size: 1.2em; }
+        .module-progress { display: flex; justify-content: center; gap: 8px; margin-top: 20px; }
+        .module-progress .step { width: 30px; height: 6px; border-radius: 3px; background: #cbd5e0; }
+        .module-progress .step.active { background: var(--accent-color); }
+        .module-progress .step.completed { background: var(--success-color); }
+        .reveal table { border-collapse: collapse; width: 100%; font-size: 0.75em; margin: 15px 0; }
+        .reveal table th { background: var(--heading-color); color: #ffffff; padding: 12px 16px; text-align: left; font-weight: 600; }
+        .reveal table td { padding: 10px 16px; border-bottom: 1px solid #e2e8f0; text-align: left; }
+        .reveal table tr:nth-child(even) { background: #f7fafc; }
+        .reveal ul, .reveal ol { text-align: left; display: block; margin-left: 1em; }
+        .reveal li { margin-bottom: 0.5em; line-height: 1.5; font-size: 0.9em; }
+        .reveal p { line-height: 1.6; }
+        .reveal pre code { font-size: 0.7em; line-height: 1.4; max-height: 500px; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+
+            <!-- Slide 1: Title -->
+            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" class="title-slide">
+                <h1>&#128269; Observability</h1>
+                <h2>Logging, Metrics &amp; Tracing &mdash; Module 9 of 16</h2>
+                <h3>Verisign EKS Platform</h3>
+                <div class="module-progress">
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step active"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                </div>
+                <aside class="notes">Module 9 covers observability, the practice of understanding what's happening inside your systems from the outside. We'll explore the three pillars — logs, metrics, and traces — and how to implement each on EKS. This is foundational for running production workloads reliably.</aside>
+            </section>
+
+            <!-- Slide 2: Agenda -->
+            <section>
+                <h2>&#128203; Agenda</h2>
+                <div class="two-columns">
+                    <div class="card">
+                        <h4>&#128218; Concepts</h4>
+                        <ul>
+                            <li>Three Pillars of Observability</li>
+                            <li>Container Logging Model</li>
+                            <li>Kubernetes Metrics Architecture</li>
+                            <li>Distributed Tracing Fundamentals</li>
+                            <li>SLOs and Error Budgets</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>&#128736;&#65039; Hands-On</h4>
+                        <ul>
+                            <li>kubectl logs and centralized logging</li>
+                            <li>Prometheus &amp; Grafana stack</li>
+                            <li>OpenTelemetry instrumentation</li>
+                            <li>Alertmanager configuration</li>
+                            <li>CloudWatch Container Insights</li>
+                        </ul>
+                    </div>
+                </div>
+                <aside class="notes">We'll start with the conceptual framework of the three pillars, then go deep on each pillar with practical tooling. We'll finish with alerting, incident response, and a hands-on lab deploying a full observability stack.</aside>
+            </section>
+
+            <!-- Slide 3: Section — Three Pillars of Observability -->
+            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" class="section-divider">
+                <h2>&#127959;&#65039; Three Pillars of Observability</h2>
+                <h3>Logs, Metrics, and Traces</h3>
+                <aside class="notes">Observability is not the same as monitoring. Monitoring tells you when something is broken. Observability lets you ask arbitrary questions about your system's state — even questions you didn't anticipate when you built it.</aside>
+            </section>
+
+            <!-- Slide 4: Observability vs. Monitoring -->
+            <section>
+                <h2>&#129300; Observability vs. Monitoring</h2>
+                <div class="two-columns">
+                    <div class="card">
+                        <h4>Monitoring</h4>
+                        <ul>
+                            <li>Predefined dashboards and alerts</li>
+                            <li>Answers <strong>known</strong> questions</li>
+                            <li>"Is CPU above 80%?"</li>
+                            <li>Reactive: tells you <em>what</em> is broken</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>Observability</h4>
+                        <ul>
+                            <li>Explore system state dynamically</li>
+                            <li>Answers <strong>unknown</strong> questions</li>
+                            <li>"Why are requests from region X slow?"</li>
+                            <li>Proactive: tells you <em>why</em> it's broken</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="highlight-box fragment fade-up">
+                    <strong>Goal:</strong> Build systems where internal state is externally queryable without deploying new code.
+                </div>
+                <aside class="notes">Monitoring is a subset of observability. Think of monitoring as a fixed set of questions you've pre-configured answers for. Observability gives you the raw data and tools to answer questions you haven't thought of yet. In a microservices environment, you cannot predict every failure mode in advance.</aside>
+            </section>
+
+            <!-- Slide 5: Three Pillars Overview -->
+            <section>
+                <h2>&#128200; The Three Pillars</h2>
+                <div class="three-columns">
+                    <div class="card fragment fade-up">
+                        <h4>&#128220; Logs</h4>
+                        <p>Discrete, timestamped events</p>
+                        <ul>
+                            <li>What happened</li>
+                            <li>Immutable records</li>
+                            <li>High cardinality</li>
+                        </ul>
+                    </div>
+                    <div class="card fragment fade-up">
+                        <h4>&#128202; Metrics</h4>
+                        <p>Numeric measurements over time</p>
+                        <ul>
+                            <li>How much / how fast</li>
+                            <li>Aggregatable</li>
+                            <li>Low storage cost</li>
+                        </ul>
+                    </div>
+                    <div class="card fragment fade-up">
+                        <h4>&#128279; Traces</h4>
+                        <p>Request flow across services</p>
+                        <ul>
+                            <li>Where time is spent</li>
+                            <li>Causal relationships</li>
+                            <li>Cross-service visibility</li>
+                        </ul>
+                    </div>
+                </div>
+                <aside class="notes">Each pillar answers different questions. Logs tell you what happened at a specific point in time. Metrics tell you the aggregated health and performance characteristics. Traces tell you how a single request flows through your distributed system. You need all three for full observability.</aside>
+            </section>
+
+            <!-- Slide 6: How the Pillars Complement Each Other -->
+            <section>
+                <h2>&#128260; Pillars Working Together</h2>
+                <div class="concept-box">
+                    <h4>Typical Debugging Flow</h4>
+                    <ol>
+                        <li class="fragment fade-up"><strong>Metrics</strong> alert fires &mdash; error rate exceeds threshold</li>
+                        <li class="fragment fade-up"><strong>Traces</strong> reveal which service in the call chain is slow</li>
+                        <li class="fragment fade-up"><strong>Logs</strong> from that service show the root cause (e.g., DB timeout)</li>
+                    </ol>
+                </div>
+                <div class="highlight-box fragment fade-up">
+                    <strong>Correlation is key:</strong> Use trace IDs to link logs, metrics, and traces for the same request.
+                </div>
+                <aside class="notes">The real power comes when you correlate across all three pillars. A metric tells you something is wrong. A trace narrows it down to a service. Logs give you the exact error. Without correlation — like shared trace IDs — you're searching blindly across separate systems.</aside>
+            </section>
+
+            <!-- Slide 7: Section — Logging -->
+            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" class="section-divider">
+                <h2>&#128220; Logging in Kubernetes</h2>
+                <h3>Container stdout/stderr to centralized stores</h3>
+                <aside class="notes">Logging in Kubernetes follows a fundamentally different model than traditional servers. Containers write to stdout and stderr, and the platform is responsible for collecting, forwarding, and storing those logs.</aside>
+            </section>
+
+            <!-- Slide 8: Container Logging Model -->
+            <section>
+                <h2>&#128230; Container Logging Model</h2>
+                <div class="concept-box">
+                    <h4>How Kubernetes Captures Logs</h4>
+                    <ul>
+                        <li class="fragment fade-up">Containers write to <code>stdout</code> and <code>stderr</code></li>
+                        <li class="fragment fade-up">Container runtime redirects streams to a logging driver</li>
+                        <li class="fragment fade-up">Kubelet stores logs at <code>/var/log/containers/</code></li>
+                        <li class="fragment fade-up">Log rotation managed by kubelet (<code>containerLogMaxSize</code>, <code>containerLogMaxFiles</code>)</li>
+                        <li class="fragment fade-up">Logs are <strong>ephemeral</strong> &mdash; lost when pod is deleted</li>
+                    </ul>
+                </div>
+                <div class="highlight-box warning fragment fade-up">
+                    <strong>Key implication:</strong> Never rely on local container logs for production. Ship them to a durable store.
+                </div>
+                <aside class="notes">The twelve-factor app principle says applications should write logs to stdout. Kubernetes embraces this. The kubelet writes container logs to disk on the node, but those logs are ephemeral. When a pod is evicted or a node is replaced, the logs are gone. This is why centralized logging is mandatory for production.</aside>
+            </section>
+
+            <!-- Slide 9: kubectl logs -->
+            <section>
+                <h2>&#128187; kubectl logs</h2>
+                <pre><code class="bash"># Follow logs in real-time
+kubectl logs -f deployment/api-server
+
+# View logs from a previous container instance (after restart)
+kubectl logs pod/api-server-7d4f8b --previous
+
+# Logs from a specific container in a multi-container pod
+kubectl logs pod/api-server-7d4f8b -c sidecar-proxy
+
+# Logs from all pods matching a label
+kubectl logs -l app=api-server --all-containers=true
+
+# Last 100 lines with timestamps
+kubectl logs deployment/api-server --tail=100 --timestamps
+
+# Logs from the last 30 minutes
+kubectl logs deployment/api-server --since=30m</code></pre>
+                <div class="highlight-box fragment fade-up">
+                    <strong>Tip:</strong> Use <code>stern</code> for multi-pod log tailing with color-coded output per pod.
+                </div>
+                <aside class="notes">kubectl logs is your first-line debugging tool. The --previous flag is critical for crash loops — it shows logs from the container that just died. The -l flag lets you aggregate logs across all pods with a matching label. For production use, consider the stern tool which provides a much better multi-pod tailing experience with color coding.</aside>
+            </section>
+
+            <!-- Slide 10: Centralized Logging Architecture -->
+            <section>
+                <h2>&#127959;&#65039; Centralized Logging Architecture</h2>
+                <div class="concept-box">
+                    <h4>DaemonSet-based Collection Pattern</h4>
+                    <p>Node agent reads log files &rarr; enriches with K8s metadata &rarr; ships to backend</p>
+                </div>
+                <div class="two-columns fragment fade-up">
+                    <div class="card">
+                        <h4>&#128230; Collectors</h4>
+                        <ul>
+                            <li><strong>Fluent Bit</strong> &mdash; lightweight, C-based</li>
+                            <li><strong>Fluentd</strong> &mdash; flexible, plugin-rich</li>
+                            <li><strong>Vector</strong> &mdash; high-performance, Rust-based</li>
+                            <li><strong>CloudWatch Agent</strong> &mdash; AWS-native</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>&#128451;&#65039; Backends</h4>
+                        <ul>
+                            <li><strong>Elasticsearch + Kibana</strong> (ELK/EFK)</li>
+                            <li><strong>Grafana Loki</strong> &mdash; like Prometheus for logs</li>
+                            <li><strong>AWS CloudWatch Logs</strong></li>
+                            <li><strong>Datadog / Splunk</strong></li>
+                        </ul>
+                    </div>
+                </div>
+                <aside class="notes">The standard pattern deploys a log collector as a DaemonSet so every node has an agent. Fluent Bit is the most common choice for Kubernetes due to its low memory footprint. It reads log files from /var/log/containers, enriches them with Kubernetes metadata like namespace, pod name, and labels, then forwards to a backend. On EKS, Fluent Bit with CloudWatch Logs is a well-supported path.</aside>
+            </section>
+
+            <!-- Slide 11: Fluent Bit DaemonSet -->
+            <section>
+                <h2>&#128295; Fluent Bit on EKS</h2>
+                <pre><code class="yaml">apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: fluent-bit
+  namespace: amazon-cloudwatch
+spec:
+  selector:
+    matchLabels:
+      app: fluent-bit
+  template:
+    spec:
+      serviceAccountName: fluent-bit
+      containers:
+      - name: fluent-bit
+        image: amazon/aws-for-fluent-bit:2.31.12
+        volumeMounts:
+        - name: varlog
+          mountPath: /var/log
+        - name: config
+          mountPath: /fluent-bit/etc/
+      volumes:
+      - name: varlog
+        hostPath:
+          path: /var/log
+      - name: config
+        configMap:
+          name: fluent-bit-config</code></pre>
+                <aside class="notes">This is the standard Fluent Bit DaemonSet for EKS. It mounts /var/log from the host to read container logs. The AWS-provided image includes output plugins for CloudWatch, Kinesis, and S3. The configuration is loaded from a ConfigMap, making it easy to adjust parsing and routing rules without rebuilding the image.</aside>
+            </section>
+
+            <!-- Slide 12: Structured Logging Best Practices -->
+            <section>
+                <h2>&#128221; Structured Logging Best Practices</h2>
+                <div class="two-columns">
+                    <div class="card">
+                        <h4>&#10060; Unstructured</h4>
+                        <pre><code class="text">2024-03-15 ERROR: Failed to
+connect to database host
+db-primary port 5432 timeout
+after 30s for user api-svc</code></pre>
+                    </div>
+                    <div class="card">
+                        <h4>&#9989; Structured (JSON)</h4>
+                        <pre><code class="json">{
+  "timestamp": "2024-03-15T10:23:45Z",
+  "level": "error",
+  "message": "database connection failed",
+  "host": "db-primary",
+  "port": 5432,
+  "timeout_seconds": 30,
+  "service": "api-svc",
+  "trace_id": "abc123def456"
+}</code></pre>
+                    </div>
+                </div>
+                <div class="highlight-box success fragment fade-up">
+                    <strong>Why structured?</strong> Enables filtering, aggregation, and correlation. Always include <code>trace_id</code> for cross-pillar linkage.
+                </div>
+                <aside class="notes">Structured logging is non-negotiable for production. JSON logs can be parsed, indexed, and queried without custom regex. Include consistent fields: timestamp, level, message, service name, and trace ID. The trace ID is the key that links your logs to traces and enables cross-pillar correlation.</aside>
+            </section>
+
+            <!-- Slide 13: CloudWatch Logs Integration -->
+            <section>
+                <h2>&#9729;&#65039; CloudWatch Logs with EKS</h2>
+                <div class="concept-box">
+                    <h4>EKS Log Groups Structure</h4>
+                    <ul>
+                        <li class="fragment fade-up"><code>/aws/eks/cluster-name/cluster</code> &mdash; control plane logs</li>
+                        <li class="fragment fade-up"><code>/aws/containerinsights/cluster-name/application</code> &mdash; pod logs</li>
+                        <li class="fragment fade-up"><code>/aws/containerinsights/cluster-name/host</code> &mdash; node-level logs</li>
+                        <li class="fragment fade-up"><code>/aws/containerinsights/cluster-name/dataplane</code> &mdash; kubelet, kube-proxy</li>
+                    </ul>
+                </div>
+                <div class="highlight-box fragment fade-up">
+                    <strong>CloudWatch Logs Insights query:</strong>
+                    <pre style="margin: 10px 0 0 0;"><code class="sql">fields @timestamp, @message, kubernetes.pod_name
+| filter @message like /error/i
+| sort @timestamp desc
+| limit 50</code></pre>
+                </div>
+                <aside class="notes">EKS integrates with CloudWatch Logs using a consistent log group hierarchy. Control plane logs — API server, scheduler, controller manager — are available natively when enabled in the EKS cluster configuration. Application and node logs require Fluent Bit or the CloudWatch agent. CloudWatch Logs Insights provides a SQL-like query language for searching across log groups.</aside>
+            </section>
+
+            <!-- Slide 14: Section — Metrics -->
+            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" class="section-divider">
+                <h2>&#128202; Metrics in Kubernetes</h2>
+                <h3>Measuring system health and performance</h3>
+                <aside class="notes">Metrics are the backbone of alerting and capacity planning. Unlike logs, metrics are inherently aggregatable and cheap to store, making them ideal for dashboards, alerts, and trend analysis over weeks or months.</aside>
+            </section>
+
+            <!-- Slide 15: Kubernetes Metrics Architecture -->
+            <section>
+                <h2>&#127959;&#65039; Kubernetes Metrics Architecture</h2>
+                <div class="three-columns">
+                    <div class="card fragment fade-up">
+                        <h4>&#128207; Resource Metrics</h4>
+                        <p><code>metrics-server</code></p>
+                        <ul>
+                            <li>CPU &amp; memory per pod/node</li>
+                            <li>Powers HPA &amp; VPA</li>
+                            <li>Lightweight, in-memory</li>
+                        </ul>
+                    </div>
+                    <div class="card fragment fade-up">
+                        <h4>&#127919; Custom Metrics</h4>
+                        <p><code>custom.metrics.k8s.io</code></p>
+                        <ul>
+                            <li>App-specific (queue depth, etc.)</li>
+                            <li>Prometheus Adapter</li>
+                            <li>Enables custom HPA scaling</li>
+                        </ul>
+                    </div>
+                    <div class="card fragment fade-up">
+                        <h4>&#127758; External Metrics</h4>
+                        <p><code>external.metrics.k8s.io</code></p>
+                        <ul>
+                            <li>Outside-cluster sources</li>
+                            <li>SQS queue length, etc.</li>
+                            <li>CloudWatch metrics adapter</li>
+                        </ul>
+                    </div>
+                </div>
+                <aside class="notes">Kubernetes defines three categories of metrics through the metrics APIs. Resource metrics from metrics-server are the simplest — CPU and memory. Custom metrics come from your application, exposed via Prometheus and served through the Prometheus Adapter. External metrics come from outside the cluster entirely, like AWS SQS queue depths. All three can drive autoscaling decisions.</aside>
+            </section>
+
+            <!-- Slide 16: Prometheus Fundamentals -->
+            <section>
+                <h2>&#128293; Prometheus Fundamentals</h2>
+                <div class="concept-box">
+                    <h4>Pull-Based Architecture</h4>
+                    <ul>
+                        <li class="fragment fade-up">Prometheus <strong>scrapes</strong> /metrics endpoints on a schedule</li>
+                        <li class="fragment fade-up">Service discovery via Kubernetes API (pods, services, endpoints)</li>
+                        <li class="fragment fade-up">Time-series database with PromQL query language</li>
+                        <li class="fragment fade-up">Built-in alerting via Alertmanager integration</li>
+                    </ul>
+                </div>
+                <div class="key-point fragment fade-up">
+                    <strong>Four metric types:</strong> Counter (only goes up), Gauge (arbitrary values), Histogram (bucketed distributions), Summary (quantile calculations)
+                </div>
+                <aside class="notes">Prometheus uses a pull model — it actively scrapes endpoints rather than receiving pushed data. This is an important architectural choice: Prometheus controls the scrape interval, can detect when a target is down, and doesn't need an intermediary. The four metric types serve different purposes. Counters for things like total requests. Gauges for things like current memory usage. Histograms for latency distributions. Summaries for pre-calculated percentiles.</aside>
+            </section>
+
+            <!-- Slide 17: ServiceMonitor and Scraping -->
+            <section>
+                <h2>&#128301; ServiceMonitor Configuration</h2>
+                <pre><code class="yaml">apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: api-server-monitor
+  namespace: monitoring
+  labels:
+    release: prometheus
+spec:
+  namespaceSelector:
+    matchNames: [production]
+  selector:
+    matchLabels:
+      app: api-server
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 15s
+    scrapeTimeout: 10s</code></pre>
+                <div class="highlight-box fragment fade-up">
+                    <strong>ServiceMonitor</strong> is a CRD from the Prometheus Operator. It declaratively defines scrape targets instead of editing the Prometheus config directly.
+                </div>
+                <aside class="notes">The Prometheus Operator introduces CRDs like ServiceMonitor that let you define scrape targets declaratively. The operator watches for ServiceMonitor resources and automatically updates the Prometheus configuration. The label selector on the ServiceMonitor must match a Kubernetes Service, and the release label must match the Prometheus Operator's configuration. This is the standard approach when using kube-prometheus-stack.</aside>
+            </section>
+
+            <!-- Slide 18: PromQL Essentials -->
+            <section>
+                <h2>&#128270; PromQL Essentials</h2>
+                <pre><code class="promql"># Request rate per second over 5 minutes
+rate(http_requests_total{service="api"}[5m])
+
+# 99th percentile latency
+histogram_quantile(0.99,
+  rate(http_request_duration_seconds_bucket{service="api"}[5m]))
+
+# Error rate percentage
+sum(rate(http_requests_total{status=~"5.."}[5m]))
+  /
+sum(rate(http_requests_total[5m])) * 100
+
+# CPU usage by namespace
+sum by (namespace) (
+  rate(container_cpu_usage_seconds_total[5m])
+)
+
+# Memory usage vs. limits
+container_memory_working_set_bytes / container_spec_memory_limit_bytes</code></pre>
+                <aside class="notes">PromQL is how you query Prometheus. The rate function calculates per-second averages over a time window. histogram_quantile gives you percentile latency from histogram buckets. The error rate query divides 5xx requests by total requests. These are the queries you'll use most often for SLI calculations and dashboard panels.</aside>
+            </section>
+
+            <!-- Slide 19: Grafana Dashboards -->
+            <section>
+                <h2>&#128202; Grafana Dashboards</h2>
+                <div class="two-columns">
+                    <div class="card">
+                        <h4>&#127917; Essential Dashboards</h4>
+                        <ul>
+                            <li><strong>Cluster Overview</strong> &mdash; node health, capacity</li>
+                            <li><strong>Namespace Resources</strong> &mdash; CPU, memory, network</li>
+                            <li><strong>Pod Details</strong> &mdash; restarts, OOMKills, throttling</li>
+                            <li><strong>Persistent Volumes</strong> &mdash; usage, IOPS</li>
+                            <li><strong>Networking</strong> &mdash; DNS, ingress, service mesh</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>&#128203; USE &amp; RED Methods</h4>
+                        <div class="highlight-box" style="margin: 10px 0;">
+                            <strong>USE</strong> (Infrastructure):<br>
+                            Utilization, Saturation, Errors
+                        </div>
+                        <div class="highlight-box success" style="margin: 10px 0;">
+                            <strong>RED</strong> (Services):<br>
+                            Rate, Errors, Duration
+                        </div>
+                    </div>
+                </div>
+                <aside class="notes">Grafana is the visualization layer for Prometheus data. Rather than building dashboards from scratch, import community dashboards from grafana.com — dashboard IDs 315 for Kubernetes cluster overview, 6417 for pods, and 12740 for namespaces. The USE method applies to infrastructure: utilization, saturation, and errors. The RED method applies to services: rate, errors, and duration. Together they give you comprehensive coverage.</aside>
+            </section>
+
+            <!-- Slide 20: kube-state-metrics and node-exporter -->
+            <section>
+                <h2>&#128295; kube-state-metrics &amp; node-exporter</h2>
+                <div class="two-columns">
+                    <div class="card">
+                        <h4>&#9881;&#65039; kube-state-metrics</h4>
+                        <p>Generates metrics from Kubernetes API objects</p>
+                        <ul>
+                            <li>Deployment replicas desired vs. available</li>
+                            <li>Pod phase, conditions, restarts</li>
+                            <li>Job/CronJob success/failure counts</li>
+                            <li>Resource requests and limits</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>&#128187; node-exporter</h4>
+                        <p>Exports hardware and OS metrics from nodes</p>
+                        <ul>
+                            <li>CPU, memory, disk, network I/O</li>
+                            <li>Filesystem usage and inodes</li>
+                            <li>System load averages</li>
+                            <li>Runs as DaemonSet on each node</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="highlight-box fragment fade-up">
+                    <strong>Together:</strong> kube-state-metrics tells you what Kubernetes <em>thinks</em>; node-exporter tells you what the node <em>experiences</em>.
+                </div>
+                <aside class="notes">These two exporters are essential companions to Prometheus. kube-state-metrics generates metrics by listening to the Kubernetes API server. It knows about deployments, pods, nodes, and all other API objects. node-exporter runs on each node and exports hardware metrics. You need both: kube-state-metrics tells you a pod is in CrashLoopBackOff; node-exporter tells you the node is running out of disk space.</aside>
+            </section>
+
+            <!-- Slide 21: CloudWatch Container Insights -->
+            <section>
+                <h2>&#9729;&#65039; CloudWatch Container Insights</h2>
+                <div class="concept-box">
+                    <h4>AWS-Native Observability for EKS</h4>
+                    <ul>
+                        <li class="fragment fade-up">Pre-built dashboards for clusters, nodes, pods, services</li>
+                        <li class="fragment fade-up">Automatic collection of CPU, memory, disk, network metrics</li>
+                        <li class="fragment fade-up">Deployed via <strong>CloudWatch Agent</strong> or <strong>ADOT Collector</strong> (DaemonSet)</li>
+                        <li class="fragment fade-up">Integrated with CloudWatch Alarms and SNS notifications</li>
+                        <li class="fragment fade-up">Enhanced observability mode adds Prometheus-compatible metrics</li>
+                    </ul>
+                </div>
+                <pre class="fragment fade-up"><code class="bash"># Enable Container Insights with the ADOT add-on
+aws eks create-addon --cluster-name verisign-prod \
+  --addon-name amazon-cloudwatch-observability \
+  --addon-version v1.5.0-eksbuild.1</code></pre>
+                <aside class="notes">Container Insights is the AWS-native option for EKS monitoring. It requires no Prometheus stack — metrics go directly to CloudWatch. The newer ADOT-based approach uses the AWS Distro for OpenTelemetry, which can collect both metrics and traces. For teams already invested in CloudWatch for other AWS services, Container Insights provides a unified pane of glass. The trade-off is cost at scale — CloudWatch custom metrics can become expensive with high-cardinality workloads.</aside>
+            </section>
+
+            <!-- Slide 22: Section — Distributed Tracing -->
+            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" class="section-divider">
+                <h2>&#128279; Distributed Tracing</h2>
+                <h3>Following requests across service boundaries</h3>
+                <aside class="notes">In a microservices architecture, a single user request might touch ten or more services. When that request is slow or fails, you need to know which service in the chain is responsible. Distributed tracing solves this by propagating context through every hop.</aside>
+            </section>
+
+            <!-- Slide 23: Tracing Concepts -->
+            <section>
+                <h2>&#128301; Tracing Concepts</h2>
+                <div class="two-columns">
+                    <div class="concept-box">
+                        <h4>Key Terminology</h4>
+                        <ul>
+                            <li><strong>Trace</strong> &mdash; end-to-end journey of a request</li>
+                            <li><strong>Span</strong> &mdash; a single operation within a trace</li>
+                            <li><strong>Parent/Child</strong> &mdash; spans form a tree structure</li>
+                            <li><strong>Context Propagation</strong> &mdash; passing trace IDs across service boundaries</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <div class="card">
+                            <h4>&#128337;&#65039; Anatomy of a Trace</h4>
+                            <pre><code class="text">Trace: abc-123
+├─ Span: API Gateway    [0ms - 250ms]
+│  ├─ Span: Auth Svc    [10ms - 40ms]
+│  └─ Span: Order Svc   [50ms - 240ms]
+│     ├─ Span: DB Query  [60ms - 120ms]
+│     └─ Span: Cache     [130ms - 140ms]</code></pre>
+                        </div>
+                    </div>
+                </div>
+                <aside class="notes">A trace represents the full lifecycle of a request. Each service creates a span — a named, timed operation. Spans are organized in a parent-child tree. The critical mechanism is context propagation: when service A calls service B, it passes a trace ID and parent span ID in HTTP headers. This is how the tracing backend reconstructs the full picture from spans collected across different services.</aside>
+            </section>
+
+            <!-- Slide 24: OpenTelemetry Overview -->
+            <section>
+                <h2>&#127758; OpenTelemetry (OTel)</h2>
+                <div class="concept-box">
+                    <h4>The Industry Standard for Observability Data</h4>
+                    <p>Vendor-neutral APIs, SDKs, and tools for generating and collecting telemetry data</p>
+                </div>
+                <div class="three-columns fragment fade-up">
+                    <div class="card">
+                        <h4>&#128218; SDKs</h4>
+                        <ul>
+                            <li>Auto-instrumentation</li>
+                            <li>Manual span creation</li>
+                            <li>Java, Python, Go, Node.js</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>&#128230; Collector</h4>
+                        <ul>
+                            <li>Receives, processes, exports</li>
+                            <li>Pipeline: receivers &rarr; processors &rarr; exporters</li>
+                            <li>Deploy as sidecar or DaemonSet</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>&#128268; OTLP</h4>
+                        <ul>
+                            <li>Standard wire protocol</li>
+                            <li>gRPC and HTTP transport</li>
+                            <li>Covers logs, metrics, traces</li>
+                        </ul>
+                    </div>
+                </div>
+                <aside class="notes">OpenTelemetry is the CNCF project that has unified the observability instrumentation landscape. It merges the former OpenTracing and OpenCensus projects. The key insight is that OTel separates instrumentation from backend choice. You instrument your code once with OTel SDKs, and the Collector routes data to whatever backend you choose — Jaeger, X-Ray, Datadog, or any OTLP-compatible backend. ADOT is the AWS distribution of the OTel Collector.</aside>
+            </section>
+
+            <!-- Slide 25: OTel Collector Configuration -->
+            <section>
+                <h2>&#128295; OTel Collector Pipeline</h2>
+                <pre><code class="yaml">apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-collector-config
+data:
+  config.yaml: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+    processors:
+      batch:
+        timeout: 5s
+        send_batch_size: 1024
+      memory_limiter:
+        limit_mib: 512
+    exporters:
+      awsxray:
+        region: us-east-1
+      prometheus:
+        endpoint: 0.0.0.0:8889
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [memory_limiter, batch]
+          exporters: [awsxray]</code></pre>
+                <aside class="notes">The OTel Collector config defines pipelines with three stages: receivers accept data, processors transform it, and exporters send it to backends. This example receives traces over OTLP gRPC and HTTP, applies memory limiting and batching, then exports to AWS X-Ray. You can have multiple pipelines — one for traces to X-Ray, another for metrics to Prometheus. The memory limiter is critical to prevent the collector from consuming unbounded memory under load.</aside>
+            </section>
+
+            <!-- Slide 26: Jaeger and X-Ray -->
+            <section>
+                <h2>&#128301; Tracing Backends</h2>
+                <div class="two-columns">
+                    <div class="card">
+                        <h4>&#128270; Jaeger</h4>
+                        <ul>
+                            <li>CNCF graduated project</li>
+                            <li>Full trace search and comparison</li>
+                            <li>Dependency graph visualization</li>
+                            <li>Supports Elasticsearch or Cassandra storage</li>
+                            <li>Self-hosted, full control</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>&#9729;&#65039; AWS X-Ray</h4>
+                        <ul>
+                            <li>Managed service, no infrastructure</li>
+                            <li>Native AWS service integration</li>
+                            <li>Service map auto-generated</li>
+                            <li>Trace groups and filter expressions</li>
+                            <li>Integrates via ADOT Collector</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="highlight-box fragment fade-up">
+                    <strong>Recommendation:</strong> Use X-Ray on EKS for AWS-native visibility. Add Jaeger if you need advanced trace analysis or self-hosted retention control.
+                </div>
+                <aside class="notes">Jaeger gives you full control and deep analysis capabilities. X-Ray gives you a managed service with zero infrastructure overhead and native integration with other AWS services like Lambda, API Gateway, and RDS. On EKS, you can use the ADOT Collector to export traces to both simultaneously if needed. For Verisign's EKS environment, X-Ray is the natural starting point with Jaeger as an option for teams that need more advanced trace querying.</aside>
+            </section>
+
+            <!-- Slide 27: Section — Alerting & Incident Response -->
+            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" class="section-divider">
+                <h2>&#128680; Alerting &amp; Incident Response</h2>
+                <h3>From detection to resolution</h3>
+                <aside class="notes">Observability data is only useful if it drives action. This section covers how to configure meaningful alerts that reduce noise, route them to the right teams, and define SLOs that give you an objective framework for when to respond.</aside>
+            </section>
+
+            <!-- Slide 28: Alertmanager Configuration -->
+            <section>
+                <h2>&#128276; Alertmanager Configuration</h2>
+                <pre><code class="yaml">apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: api-server-alerts
+  labels:
+    release: prometheus
+spec:
+  groups:
+  - name: api-server
+    rules:
+    - alert: HighErrorRate
+      expr: |
+        sum(rate(http_requests_total{status=~"5..",job="api"}[5m]))
+        / sum(rate(http_requests_total{job="api"}[5m])) > 0.05
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: "API error rate above 5%"
+        runbook_url: "https://wiki.internal/runbooks/api-errors"</code></pre>
+                <div class="highlight-box warning fragment fade-up">
+                    <strong>Key fields:</strong> <code>for</code> prevents flapping, <code>severity</code> drives routing, <code>runbook_url</code> links to remediation steps.
+                </div>
+                <aside class="notes">PrometheusRule is the CRD for defining alerting rules when using the Prometheus Operator. The for clause requires the condition to be true for 5 minutes before firing — this prevents transient spikes from triggering pages. Severity labels control routing in Alertmanager. The runbook URL is critical — every alert should link to documentation that explains what the alert means and how to resolve it.</aside>
+            </section>
+
+            <!-- Slide 29: Alert Routing and Notification Channels -->
+            <section>
+                <h2>&#128232; Alert Routing</h2>
+                <pre><code class="yaml"># Alertmanager configuration
+route:
+  receiver: default-slack
+  group_by: [alertname, namespace]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+  - match:
+      severity: critical
+    receiver: pagerduty-oncall
+    repeat_interval: 1h
+  - match:
+      severity: warning
+    receiver: slack-platform
+  - match_re:
+      namespace: "production|staging"
+    receiver: team-leads
+
+receivers:
+- name: pagerduty-oncall
+  pagerduty_configs:
+  - service_key_file: /etc/alertmanager/secrets/pd-key
+- name: slack-platform
+  slack_configs:
+  - channel: '#platform-alerts'
+    send_resolved: true</code></pre>
+                <aside class="notes">Alertmanager routes alerts based on label matching. The route tree is hierarchical — more specific matches override the default. group_by batches related alerts into a single notification to reduce noise. group_wait delays the first notification slightly to catch related alerts that fire around the same time. Critical severity goes to PagerDuty for immediate response; warnings go to Slack for awareness. The send_resolved flag sends a recovery notification when the alert clears.</aside>
+            </section>
+
+            <!-- Slide 30: SLOs and Error Budgets -->
+            <section>
+                <h2>&#127919; SLOs and Error Budgets</h2>
+                <div class="two-columns">
+                    <div class="concept-box">
+                        <h4>Definitions</h4>
+                        <ul>
+                            <li><strong>SLI</strong> &mdash; Service Level Indicator (measured metric)</li>
+                            <li><strong>SLO</strong> &mdash; Service Level Objective (target value)</li>
+                            <li><strong>SLA</strong> &mdash; Service Level Agreement (contractual)</li>
+                            <li><strong>Error Budget</strong> &mdash; tolerable failure amount</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>&#128200; Example</h4>
+                        <table>
+                            <tr><th>Component</th><th>Value</th></tr>
+                            <tr><td>SLI</td><td>% requests &lt; 200ms</td></tr>
+                            <tr><td>SLO</td><td>99.9% over 30 days</td></tr>
+                            <tr><td>Error Budget</td><td>43.2 min/month</td></tr>
+                        </table>
+                        <div class="highlight-box success" style="margin-top: 10px;">
+                            Budget remaining: 28.7 min
+                        </div>
+                    </div>
+                </div>
+                <aside class="notes">SLOs provide an objective framework for reliability decisions. Instead of arguing about whether a service is "reliable enough," you define a measurable target. The error budget is the inverse — if your SLO is 99.9%, you have a 0.1% error budget, which translates to about 43 minutes of downtime per month. When the budget is healthy, you ship features faster. When it's depleted, you focus on reliability. This removes subjective debates from engineering prioritization.</aside>
+            </section>
+
+            <!-- Slide 31: Burn Rate Alerts -->
+            <section>
+                <h2>&#128293; Burn Rate Alerting</h2>
+                <div class="concept-box">
+                    <h4>Multi-Window Burn Rate Strategy</h4>
+                    <p>Alert based on how fast you're consuming your error budget, not just on raw error rate</p>
+                </div>
+                <table class="fragment fade-up">
+                    <tr>
+                        <th>Severity</th>
+                        <th>Burn Rate</th>
+                        <th>Long Window</th>
+                        <th>Short Window</th>
+                        <th>Budget Consumed</th>
+                    </tr>
+                    <tr>
+                        <td><span style="color: var(--danger-color); font-weight: bold;">Page</span></td>
+                        <td>14.4x</td>
+                        <td>1 hour</td>
+                        <td>5 min</td>
+                        <td>2% in 1 hour</td>
+                    </tr>
+                    <tr>
+                        <td><span style="color: var(--danger-color); font-weight: bold;">Page</span></td>
+                        <td>6x</td>
+                        <td>6 hours</td>
+                        <td>30 min</td>
+                        <td>5% in 6 hours</td>
+                    </tr>
+                    <tr>
+                        <td><span style="color: var(--warning-color); font-weight: bold;">Ticket</span></td>
+                        <td>3x</td>
+                        <td>1 day</td>
+                        <td>2 hours</td>
+                        <td>10% in 1 day</td>
+                    </tr>
+                    <tr>
+                        <td><span style="color: var(--warning-color); font-weight: bold;">Ticket</span></td>
+                        <td>1x</td>
+                        <td>3 days</td>
+                        <td>6 hours</td>
+                        <td>10% in 3 days</td>
+                    </tr>
+                </table>
+                <aside class="notes">Burn rate alerting is the Google SRE approach to SLO-based alerts. Instead of alerting on raw error rate, you alert on the rate at which you're consuming your error budget. A 14.4x burn rate means you'll exhaust your entire monthly budget in about two days — that's a page-worthy event. A 1x burn rate is normal consumption. The multi-window approach requires both the long window and short window to be in violation, which prevents alerts from firing on brief spikes that have already recovered.</aside>
+            </section>
+
+            <!-- Slide 32: Debugging Workflow -->
+            <section>
+                <h2>&#128736;&#65039; Systematic Debugging Workflow</h2>
+                <div class="concept-box">
+                    <h4>Step-by-Step Approach</h4>
+                    <ol>
+                        <li class="fragment fade-up"><strong>Alert fires</strong> &mdash; check severity, read runbook</li>
+                        <li class="fragment fade-up"><strong>Metrics</strong> &mdash; identify affected service, scope of impact</li>
+                        <li class="fragment fade-up"><strong>Traces</strong> &mdash; find slow/failing spans, isolate the service</li>
+                        <li class="fragment fade-up"><strong>Logs</strong> &mdash; search by trace ID for exact error details</li>
+                        <li class="fragment fade-up"><strong>Kubernetes state</strong> &mdash; <code>kubectl get events</code>, pod status, resource pressure</li>
+                        <li class="fragment fade-up"><strong>Mitigate</strong> &mdash; rollback, scale, or isolate, then fix root cause</li>
+                    </ol>
+                </div>
+                <div class="highlight-box danger fragment fade-up">
+                    <strong>Anti-pattern:</strong> Jumping straight to <code>kubectl logs</code> without first narrowing the scope via metrics and traces.
+                </div>
+                <aside class="notes">A systematic workflow prevents thrashing during incidents. Start broad with metrics to understand the scope, narrow with traces to identify the responsible service, then use logs for the exact error. Checking Kubernetes events reveals infrastructure issues like OOMKills, failed scheduling, or image pull errors. The anti-pattern is going directly to log searching — without narrowing the scope first, you waste time reading irrelevant logs from healthy services.</aside>
+            </section>
+
+            <!-- Slide 33: Essential kubectl Debugging Commands -->
+            <section>
+                <h2>&#128187; kubectl Debugging Commands</h2>
+                <pre><code class="bash"># Check recent events for anomalies
+kubectl get events --sort-by='.lastTimestamp' -n production
+
+# Identify resource pressure on nodes
+kubectl top nodes
+kubectl top pods -n production --sort-by=cpu
+
+# Check pod conditions and status
+kubectl get pods -n production -o wide
+kubectl describe pod &lt;pod-name&gt; -n production
+
+# Check for OOMKilled containers
+kubectl get pods -n production -o json | \
+  jq '.items[] | select(.status.containerStatuses[]?.lastState.terminated.reason == "OOMKilled") | .metadata.name'
+
+# Debug networking with ephemeral containers
+kubectl debug -it &lt;pod-name&gt; --image=nicolaka/netshoot -- bash</code></pre>
+                <aside class="notes">These are the kubectl commands you'll reach for during an incident after you've narrowed the scope with metrics and traces. Events are the single most underused debugging tool — they surface OOMKills, failed mounts, scheduling failures, and image pull errors. The top command shows real-time resource consumption. The jq one-liner finds all pods that were recently OOMKilled. Ephemeral containers let you attach debugging tools to a running pod without modifying its spec.</aside>
+            </section>
+
+            <!-- Slide 34: Module Summary -->
+            <section>
+                <h2>&#128218; Module 9 Summary</h2>
+                <div class="two-columns">
+                    <div class="card">
+                        <h4>&#128220; Data Collection</h4>
+                        <ul>
+                            <li>Logs: stdout/stderr, Fluent Bit, CloudWatch</li>
+                            <li>Metrics: metrics-server, Prometheus, Container Insights</li>
+                            <li>Traces: OpenTelemetry, X-Ray, Jaeger</li>
+                            <li>Structured logging with trace IDs for correlation</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>&#128680; Operational Response</h4>
+                        <ul>
+                            <li>Alertmanager routes alerts by severity</li>
+                            <li>SLOs define measurable reliability targets</li>
+                            <li>Burn rate alerts catch budget consumption trends</li>
+                            <li>Systematic debugging: metrics &rarr; traces &rarr; logs</li>
+                        </ul>
+                    </div>
+                </div>
+                <aside class="notes">Module 9 covered the full observability stack: three pillars of data collection, the tools to implement each, and the operational framework to turn data into action. The key insight is that these pillars are most powerful when correlated — trace IDs linking logs to traces, metrics driving alerts that lead to targeted trace and log investigation.</aside>
+            </section>
+
+            <!-- Slide 35: Key Takeaways -->
+            <section>
+                <h2>&#127919; Key Takeaways</h2>
+                <div class="key-point fragment fade-up">
+                    <strong>1. Correlate across all three pillars.</strong> Use trace IDs to link logs, metrics, and traces. Without correlation, you have three separate data silos.
+                </div>
+                <div class="key-point fragment fade-up">
+                    <strong>2. Structured logging is non-negotiable.</strong> JSON logs with consistent fields enable automated parsing, filtering, and alerting at scale.
+                </div>
+                <div class="key-point fragment fade-up">
+                    <strong>3. Alert on SLOs, not symptoms.</strong> Burn rate alerting reduces noise and focuses attention on user-facing impact rather than infrastructure fluctuations.
+                </div>
+                <div class="key-point fragment fade-up">
+                    <strong>4. Instrument with OpenTelemetry.</strong> Vendor-neutral instrumentation lets you change backends without re-instrumenting your code.
+                </div>
+                <aside class="notes">Four takeaways from this module. Correlation is what turns three data streams into actual observability. Structured logging is the foundation for searchable, queryable log data. SLO-based alerting reduces alert fatigue and focuses on what matters to users. And OpenTelemetry future-proofs your instrumentation investment by decoupling it from any specific vendor.</aside>
+            </section>
+
+            <!-- Slide 36: Lab Callout -->
+            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" class="lab-callout">
+                <h2>&#129489;&#8205;&#128187; Lab 9: Observability</h2>
+                <h3>Hands-On Exercise</h3>
+                <ul>
+                    <li class="fragment fade-up">Deploy Prometheus and Grafana using kube-prometheus-stack</li>
+                    <li class="fragment fade-up">Configure ServiceMonitor for a sample application</li>
+                    <li class="fragment fade-up">Write PromQL queries for RED metrics (rate, errors, duration)</li>
+                    <li class="fragment fade-up">Deploy Fluent Bit and ship logs to CloudWatch</li>
+                    <li class="fragment fade-up">Instrument an application with OpenTelemetry SDK</li>
+                    <li class="fragment fade-up">Create a PrometheusRule alert and verify it fires in Alertmanager</li>
+                    <li class="fragment fade-up">Correlate a simulated failure across metrics, traces, and logs</li>
+                </ul>
+                <div class="highlight-box" style="margin-top: 20px;">
+                    <strong>Duration:</strong> ~45 minutes
+                </div>
+                <aside class="notes">This lab deploys a full observability stack and walks through the complete workflow. Participants will install Prometheus and Grafana, configure scraping, write queries, deploy log collection, instrument a sample app with OpenTelemetry, and create alerts. The final exercise simulates a failure and requires using all three pillars to diagnose it — reinforcing the correlation workflow covered in the lecture.</aside>
+            </section>
+
+            <!-- Slide 37: Questions -->
+            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" class="questions-slide" style="text-align: center;">
+                <h2>&#10067; Questions &amp; Discussion</h2>
+                <p>Module 9: Observability &mdash; Logging, Metrics &amp; Tracing</p>
+                <p style="font-size: 0.9em; margin-top: 30px;">Up Next: Module 10 &mdash; CI/CD &amp; GitOps</p>
+                <aside class="notes">Let's discuss any questions. Common topics include: choosing between CloudWatch and the Prometheus/Grafana stack, log retention policies and cost management, how to handle high-cardinality metrics, and strategies for incrementally rolling out tracing across an existing microservices fleet.</aside>
+            </section>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/highlight/highlight.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/notes/notes.js"></script>
+    <script>
+        Reveal.initialize({ hash: true, slideNumber: true, transition: 'slide', plugins: [RevealHighlight, RevealNotes] });
+    </script>
+</body>
+</html>

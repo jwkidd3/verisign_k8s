@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab 2: Configuring Autoscaling | Intermediate Kubernetes</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reset.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/theme/white.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/highlight/monokai.css">
+    <style>
+        :root {
+            --heading-color: #1a365d;
+            --accent-color: #2b6cb0;
+            --success-color: #2f855a;
+            --warning-color: #c05621;
+            --danger-color: #c53030;
+            --text-color: #2d3748;
+        }
+
+        .reveal {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text-color);
+            font-size: 28px;
+        }
+
+        .reveal h1, .reveal h2, .reveal h3, .reveal h4 {
+            color: var(--heading-color);
+            font-weight: 700;
+            text-transform: none;
+        }
+
+        .reveal h1 { font-size: 2.2em; }
+        .reveal h2 { font-size: 1.6em; }
+        .reveal h3 { font-size: 1.3em; }
+
+        /* Title Slide */
+        .title-slide h1 {
+            color: #ffffff;
+            font-size: 2.4em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            margin-bottom: 0.3em;
+        }
+        .title-slide h2 {
+            color: #e2e8f0;
+            font-size: 1.4em;
+            font-weight: 400;
+            margin-bottom: 0.2em;
+        }
+        .title-slide h3 {
+            color: #cbd5e0;
+            font-size: 1.1em;
+            font-weight: 300;
+        }
+
+        /* Section Divider */
+        .section-divider h2 {
+            color: #ffffff;
+            font-size: 2.0em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .section-divider h3 {
+            color: #e2e8f0;
+            font-size: 1.2em;
+            font-weight: 400;
+        }
+
+        /* Highlight Boxes */
+        .highlight-box {
+            background: #ebf8ff;
+            border-left: 4px solid var(--accent-color);
+            padding: 20px 25px;
+            border-radius: 0 8px 8px 0;
+            margin: 15px 0;
+            text-align: left;
+        }
+        .highlight-box.success {
+            background: #f0fff4;
+            border-left-color: var(--success-color);
+        }
+        .highlight-box.warning {
+            background: #fffaf0;
+            border-left-color: var(--warning-color);
+        }
+        .highlight-box.danger {
+            background: #fff5f5;
+            border-left-color: var(--danger-color);
+        }
+
+        /* Two Columns */
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            align-items: start;
+            text-align: left;
+        }
+
+        /* Three Columns */
+        .three-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            align-items: start;
+            text-align: left;
+        }
+
+        /* Card */
+        .card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid #e2e8f0;
+            text-align: left;
+        }
+        .card h3, .card h4 {
+            margin-top: 0;
+            color: var(--accent-color);
+        }
+
+        /* Concept Box */
+        .concept-box {
+            background: linear-gradient(135deg, #ebf8ff 0%, #e2e8f0 100%);
+            border-radius: 12px;
+            padding: 25px;
+            margin: 15px 0;
+            border: 1px solid #bee3f8;
+            text-align: left;
+        }
+        .concept-box h3, .concept-box h4 {
+            color: var(--heading-color);
+            margin-top: 0;
+        }
+
+        /* Emoji Header */
+        .emoji-header {
+            font-size: 1.8em;
+            margin-bottom: 0.5em;
+        }
+
+        /* Key Point */
+        .key-point {
+            background: #ebf8ff;
+            border: 2px solid var(--accent-color);
+            border-radius: 12px;
+            padding: 20px 25px;
+            margin: 15px 0;
+            text-align: left;
+            font-size: 0.95em;
+        }
+        .key-point strong {
+            color: var(--accent-color);
+        }
+
+        /* Lab Callout */
+        .lab-callout h2 {
+            color: #ffffff;
+            font-size: 1.8em;
+            margin-bottom: 0.3em;
+        }
+        .lab-callout h3 {
+            color: #90cdf4;
+            font-size: 1.3em;
+            font-weight: 400;
+        }
+        .lab-callout p {
+            color: #e2e8f0;
+            font-size: 1.0em;
+        }
+        .lab-callout ul {
+            color: #e2e8f0;
+            text-align: left;
+            display: inline-block;
+        }
+        .lab-callout .highlight-box {
+            background: rgba(255,255,255,0.1);
+            border-left-color: #90cdf4;
+            color: #e2e8f0;
+        }
+
+        /* Questions Slide */
+        .questions-slide h2 {
+            color: #ffffff;
+            font-size: 2.2em;
+        }
+        .questions-slide p {
+            color: #e2e8f0;
+            font-size: 1.2em;
+        }
+
+        /* Takeaway List */
+        .takeaway-list {
+            text-align: left;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .takeaway-list li {
+            margin-bottom: 12px;
+            line-height: 1.6;
+            list-style: none;
+            padding-left: 10px;
+        }
+
+        /* Module Progress */
+        .module-progress {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 20px;
+        }
+        .module-progress .step {
+            width: 30px;
+            height: 6px;
+            border-radius: 3px;
+            background: #cbd5e0;
+        }
+        .module-progress .step.active {
+            background: var(--accent-color);
+        }
+        .module-progress .step.completed {
+            background: var(--success-color);
+        }
+
+        /* Table Styles */
+        .reveal table {
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 0.75em;
+            margin: 15px 0;
+        }
+        .reveal table th {
+            background: var(--heading-color);
+            color: #ffffff;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+        }
+        .reveal table td {
+            padding: 10px 16px;
+            border-bottom: 1px solid #e2e8f0;
+            text-align: left;
+        }
+        .reveal table tr:nth-child(even) {
+            background: #f7fafc;
+        }
+        .reveal table tr:hover {
+            background: #ebf8ff;
+        }
+
+        /* General list styling */
+        .reveal ul, .reveal ol {
+            text-align: left;
+            display: block;
+            margin-left: 1em;
+        }
+        .reveal li {
+            margin-bottom: 0.5em;
+            line-height: 1.5;
+            font-size: 0.9em;
+        }
+
+        .reveal p {
+            line-height: 1.6;
+        }
+
+        .reveal .small-text {
+            font-size: 0.7em;
+            color: #718096;
+        }
+
+        /* Code blocks */
+        .reveal pre code {
+            font-size: 0.65em;
+            max-height: 450px;
+            overflow-y: auto;
+            line-height: 1.4;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+
+            <!-- Title Slide -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="title-slide">
+                <h1>Lab 2: Configuring Autoscaling</h1>
+                <h2>HPA, VPA, and Cluster Autoscaler in Practice</h2>
+                <h3>Intermediate Kubernetes &mdash; Module 2 of 16</h3>
+                <div class="module-progress">
+                    <div class="step completed"></div>
+                    <div class="step active"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                </div>
+                <aside class="notes">
+                    Welcome to Lab 2. This lab builds on Lab 1 by introducing automated scaling mechanisms. Autoscaling is critical for production workloads at Verisign to handle traffic spikes without manual intervention. Ensure metrics-server is available before starting.
+                </aside>
+            </section>
+
+            <!-- Lab Overview -->
+            <section>
+                <h2>&#x1F4CB; Lab Overview</h2>
+                <div class="two-columns">
+                    <div class="card">
+                        <h4>Objectives</h4>
+                        <ul>
+                            <li class="fragment">Verify metrics-server is operational</li>
+                            <li class="fragment">Configure Horizontal Pod Autoscaler (HPA)</li>
+                            <li class="fragment">Generate load and observe automatic scaling</li>
+                            <li class="fragment">Create HPA with custom metrics (v2 API)</li>
+                            <li class="fragment">Explore Vertical Pod Autoscaler (VPA)</li>
+                            <li class="fragment">Understand Cluster Autoscaler behavior</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>Prerequisites</h4>
+                        <ul>
+                            <li>Completed Lab 1</li>
+                            <li>kubectl configured with cluster access</li>
+                            <li>metrics-server installed in the cluster</li>
+                        </ul>
+                        <div class="highlight-box warning" style="margin-top: 15px;">
+                            <strong>&#x23F1; Duration:</strong> ~45 minutes
+                        </div>
+                    </div>
+                </div>
+                <aside class="notes">
+                    VPA and Cluster Autoscaler steps may be optional depending on cluster configuration. If VPA is not installed, students can review the manifests without applying. Cluster Autoscaler requires EKS node groups with auto-scaling enabled.
+                </aside>
+            </section>
+
+            <!-- Autoscaling Concepts -->
+            <section>
+                <h2>&#x1F4A1; Autoscaling in Kubernetes</h2>
+                <div class="three-columns">
+                    <div class="card">
+                        <h4>&#x2194; HPA</h4>
+                        <p>Scales the <strong>number of pods</strong> based on CPU, memory, or custom metrics</p>
+                    </div>
+                    <div class="card">
+                        <h4>&#x2195; VPA</h4>
+                        <p>Adjusts <strong>resource requests/limits</strong> for individual containers</p>
+                    </div>
+                    <div class="card">
+                        <h4>&#x1F4E6; Cluster Autoscaler</h4>
+                        <p>Scales the <strong>number of nodes</strong> when pods cannot be scheduled</p>
+                    </div>
+                </div>
+                <div class="key-point fragment">
+                    <strong>&#x1F511; Key Point:</strong> These three autoscalers work at different layers and can be used together. HPA adjusts pod count, VPA adjusts pod size, and Cluster Autoscaler adjusts infrastructure capacity.
+                </div>
+                <aside class="notes">
+                    Draw the relationship: HPA triggers more pods, which may trigger Cluster Autoscaler if nodes are full. VPA resizes pods vertically. Note that HPA and VPA should not target the same metric on the same deployment.
+                </aside>
+            </section>
+
+            <!-- ========== STEP 1: Verify Metrics Server ========== -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="section-divider">
+                <h2>Step 1</h2>
+                <h3>Verify Metrics Server</h3>
+                <div class="module-progress">
+                    <div class="step active"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                </div>
+                <aside class="notes">
+                    Metrics-server is a hard dependency for HPA. If it is not running, HPA will not function. Verify this before proceeding.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F4CA; Verify Metrics Server</h2>
+                <p>HPA requires metrics-server to collect resource usage data:</p>
+                <pre><code class="bash" data-trim>
+# Check if metrics-server is running
+kubectl get pods -n kube-system | grep metrics-server
+
+# Verify the metrics API is available
+kubectl get apiservices | grep metrics
+
+# Test that metrics are being collected
+kubectl top nodes
+kubectl top pods -A
+                </code></pre>
+                <div class="highlight-box success fragment">
+                    <strong>&#x2705; Expected Output:</strong> The metrics-server pod should be <code>Running</code> with <code>1/1</code> ready. The apiservice <code>v1beta1.metrics.k8s.io</code> should show <code>True</code> in the AVAILABLE column. <code>kubectl top</code> should return CPU and memory data.
+                </div>
+                <div class="highlight-box danger fragment">
+                    <strong>&#x26A0; If metrics-server is not installed:</strong>
+                    <pre><code class="bash" data-trim>
+# Install metrics-server (if you have permissions)
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+
+# Wait for it to be ready
+kubectl wait --for=condition=ready pod -l k8s-app=metrics-server -n kube-system --timeout=120s
+                    </code></pre>
+                </div>
+                <aside class="notes">
+                    On EKS, metrics-server is typically pre-installed. If not, the apply command will install it. It may take 1-2 minutes for metrics to start populating after installation.
+                </aside>
+            </section>
+
+            <!-- ========== STEP 2: Deploy CPU-Intensive Application ========== -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="section-divider">
+                <h2>Step 2</h2>
+                <h3>Deploy a CPU-Intensive Application</h3>
+                <div class="module-progress">
+                    <div class="step completed"></div>
+                    <div class="step active"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                </div>
+                <aside class="notes">
+                    We use the php-apache image from the Kubernetes documentation. It is designed to consume CPU under load, making it ideal for demonstrating HPA.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F680; Deploy the php-apache Application</h2>
+                <p>Create a namespace and deploy an application with resource requests:</p>
+                <pre><code class="bash" data-trim>
+# Create lab namespace
+kubectl create namespace lab02
+kubectl config set-context --current --namespace=lab02
+                </code></pre>
+                <div class="fragment">
+                    <p>Create the deployment manifest:</p>
+                    <pre><code class="yaml" data-trim>
+# Save as php-apache-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: php-apache
+  namespace: lab02
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: php-apache
+  template:
+    metadata:
+      labels:
+        app: php-apache
+    spec:
+      containers:
+      - name: php-apache
+        image: registry.k8s.io/hpa-example
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 200m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
+                    </code></pre>
+                </div>
+                <aside class="notes">
+                    Emphasize that resource requests are REQUIRED for HPA to work with CPU metrics. Without requests, HPA cannot calculate utilization percentage.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F680; Apply and Expose the Application</h2>
+                <pre><code class="bash" data-trim>
+# Apply the deployment
+kubectl apply -f php-apache-deployment.yaml
+
+# Expose it as a service
+kubectl expose deployment php-apache --port=80 --target-port=80
+
+# Verify everything is running
+kubectl get all -n lab02
+                </code></pre>
+                <div class="highlight-box success fragment">
+                    <strong>&#x2705; Expected Output:</strong> One pod in <code>Running</code> state, one deployment with <code>1/1</code> ready, and a ClusterIP service on port 80.
+                </div>
+                <div class="highlight-box warning fragment">
+                    <strong>&#x1F4DD; Important:</strong> The <code>resources.requests.cpu: 200m</code> field is critical. HPA calculates utilization as <code>current_usage / request</code>. Without a CPU request, HPA cannot determine the scaling target percentage.
+                </div>
+                <aside class="notes">
+                    Wait for the pod to be fully running before proceeding. Have students verify with kubectl get pods -w.
+                </aside>
+            </section>
+
+            <!-- ========== STEP 3: Create an HPA ========== -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="section-divider">
+                <h2>Step 3</h2>
+                <h3>Create a Horizontal Pod Autoscaler</h3>
+                <div class="module-progress">
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step active"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                </div>
+                <aside class="notes">
+                    This is the core of the lab. Students will create their first HPA and observe it in action.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x2194; Create an HPA</h2>
+                <p>Create an HPA targeting 50% average CPU utilization:</p>
+                <pre><code class="bash" data-trim>
+# Create HPA using imperative command
+kubectl autoscale deployment php-apache \
+  --cpu-percent=50 \
+  --min=1 \
+  --max=10 \
+  -n lab02
+
+# Examine the HPA
+kubectl get hpa -n lab02
+
+# View detailed HPA information
+kubectl describe hpa php-apache -n lab02
+                </code></pre>
+                <div class="highlight-box success fragment">
+                    <strong>&#x2705; Expected Output:</strong> The HPA should show <code>TARGETS: &lt;current&gt;/50%</code>, <code>MINPODS: 1</code>, <code>MAXPODS: 10</code>, and <code>REPLICAS: 1</code>. The current value may show <code>&lt;unknown&gt;/50%</code> for the first 15-30 seconds while metrics are collected.
+                </div>
+                <div class="highlight-box warning fragment">
+                    <strong>&#x26A0; Common Mistake:</strong> If TARGETS shows <code>&lt;unknown&gt;</code> for more than 60 seconds, check that metrics-server is running and that the deployment has CPU resource requests defined.
+                </div>
+                <aside class="notes">
+                    The unknown target is normal for the first metrics collection interval (typically 15 seconds). If it persists, troubleshoot metrics-server connectivity.
+                </aside>
+            </section>
+
+            <!-- ========== STEP 4: Generate Load ========== -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="section-divider">
+                <h2>Step 4</h2>
+                <h3>Generate Load</h3>
+                <div class="module-progress">
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step active"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                </div>
+                <aside class="notes">
+                    Now we generate artificial load to trigger the HPA. Students should run this in one terminal and monitor in another.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F525; Generate Load on the Application</h2>
+                <p>Run a load generator in a separate pod:</p>
+                <pre><code class="bash" data-trim>
+# Start a load generator pod (run in Terminal 1)
+kubectl run load-generator \
+  --image=busybox:1.36 \
+  --restart=Never \
+  -n lab02 \
+  -- /bin/sh -c "while sleep 0.01; do wget -q -O- http://php-apache; done"
+                </code></pre>
+                <div class="highlight-box warning fragment">
+                    <strong>&#x1F4DD; Important:</strong> Open a <strong>second terminal</strong> for the next step. Keep the load generator running in this terminal. You will need to monitor the HPA from the second terminal.
+                </div>
+                <div class="concept-box fragment">
+                    <h4>&#x1F4A1; How This Works</h4>
+                    <p>The busybox pod sends continuous HTTP requests to the php-apache service. Each request triggers PHP computation, driving CPU usage above the 50% target threshold, which signals the HPA to scale up.</p>
+                </div>
+                <aside class="notes">
+                    The load generator runs a tight loop hitting the php-apache endpoint. It takes about 1-2 minutes for CPU utilization to rise enough to trigger scaling. Have students keep this running.
+                </aside>
+            </section>
+
+            <!-- ========== STEP 5: Observe Horizontal Scaling ========== -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="section-divider">
+                <h2>Step 5</h2>
+                <h3>Observe Horizontal Scaling</h3>
+                <div class="module-progress">
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step active"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                </div>
+                <aside class="notes">
+                    This is the exciting part. Students will see the HPA react to load in real-time. Give it 2-3 minutes for the full scaling effect.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F4C8; Observe Horizontal Scaling</h2>
+                <p>In your <strong>second terminal</strong>, watch the HPA and pods respond:</p>
+                <pre><code class="bash" data-trim>
+# Watch HPA status (updates every 15 seconds)
+kubectl get hpa php-apache -n lab02 --watch
+
+# In yet another terminal, watch pods scale up
+kubectl get pods -n lab02 --watch
+                </code></pre>
+                <div class="highlight-box success fragment">
+                    <strong>&#x2705; Expected Output:</strong> Within 1-3 minutes you should see:
+                    <ul>
+                        <li>TARGETS increasing above 50% (e.g., <code>250%/50%</code>)</li>
+                        <li>REPLICAS increasing from 1 to multiple pods (up to 10)</li>
+                        <li>New pods appearing in <code>Pending</code> then <code>Running</code> state</li>
+                    </ul>
+                </div>
+                <div class="key-point fragment">
+                    <strong>&#x1F511; Key Point:</strong> The HPA evaluates metrics every 15 seconds by default. It uses the formula: <code>desiredReplicas = ceil(currentReplicas * (currentMetric / targetMetric))</code>. Scaling up happens quickly, but scale-down has a default stabilization window of 5 minutes to prevent flapping.
+                </div>
+                <aside class="notes">
+                    Walk around and verify that students see replicas increasing. The exact number depends on how much CPU the load generates. Discuss the scaling formula on the slide.
+                </aside>
+            </section>
+
+            <!-- ========== STEP 6: Examine HPA Events ========== -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="section-divider">
+                <h2>Step 6</h2>
+                <h3>Examine HPA Events and Status</h3>
+                <div class="module-progress">
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step active"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                </div>
+                <aside class="notes">
+                    Understanding HPA events is key to troubleshooting autoscaling issues in production.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F50E; Examine HPA Events and Status</h2>
+                <p>Inspect the HPA decision-making process:</p>
+                <pre><code class="bash" data-trim>
+# Detailed HPA description with events
+kubectl describe hpa php-apache -n lab02
+
+# View HPA in YAML format for full status
+kubectl get hpa php-apache -n lab02 -o yaml
+                </code></pre>
+                <div class="concept-box fragment">
+                    <h4>&#x1F4A1; Key Fields in HPA Status</h4>
+                    <ul>
+                        <li><strong>Events</strong> &mdash; shows each scaling decision with reason and timestamp</li>
+                        <li><strong>currentMetrics</strong> &mdash; actual resource utilization observed</li>
+                        <li><strong>desiredReplicas</strong> &mdash; what HPA wants to scale to</li>
+                        <li><strong>conditions</strong> &mdash; AbleToScale, ScalingActive, ScalingLimited</li>
+                    </ul>
+                </div>
+                <div class="highlight-box success fragment">
+                    <strong>&#x2705; Checkpoint:</strong> In the Events section, you should see messages like: <code>New size: X; reason: cpu resource utilization (percentage of request) above target</code>. This confirms HPA is actively scaling based on CPU metrics.
+                </div>
+                <aside class="notes">
+                    Have students look at the Events section specifically. Each scaling event shows the old and new replica counts and the reason. Also point out the conditions section which shows if scaling is limited by min/max bounds.
+                </aside>
+            </section>
+
+            <!-- ========== STEP 7: Stop Load and Observe Scale-Down ========== -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="section-divider">
+                <h2>Step 7</h2>
+                <h3>Stop Load and Observe Scale-Down</h3>
+                <div class="module-progress">
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step active"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                </div>
+                <aside class="notes">
+                    Scale-down is slower than scale-up by design. This prevents oscillation when load fluctuates. Students should observe this behavior.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F4C9; Stop Load and Observe Scale-Down</h2>
+                <p>Stop the load generator and watch the HPA scale down:</p>
+                <pre><code class="bash" data-trim>
+# Delete the load generator pod
+kubectl delete pod load-generator -n lab02
+
+# Watch the HPA scale down (this takes ~5 minutes)
+kubectl get hpa php-apache -n lab02 --watch
+
+# In another terminal, watch pods terminate
+kubectl get pods -n lab02 --watch
+                </code></pre>
+                <div class="highlight-box success fragment">
+                    <strong>&#x2705; Expected Output:</strong> After approximately 5 minutes, you should see:
+                    <ul>
+                        <li>TARGETS dropping below 50% (eventually to <code>0%/50%</code>)</li>
+                        <li>REPLICAS gradually decreasing back to <code>1</code></li>
+                        <li>Pods entering <code>Terminating</code> state</li>
+                    </ul>
+                </div>
+                <div class="highlight-box warning fragment">
+                    <strong>&#x1F4DD; Why So Slow?</strong> The default <code>--horizontal-pod-autoscaler-downscale-stabilization</code> window is 5 minutes. This prevents rapid scale-down/scale-up oscillation (thrashing) during variable load patterns.
+                </div>
+                <aside class="notes">
+                    While waiting for scale-down, use this time to discuss stabilization windows and why asymmetric scaling behavior (fast up, slow down) is desirable in production.
+                </aside>
+            </section>
+
+            <!-- ========== STEP 8: HPA with v2 API ========== -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="section-divider">
+                <h2>Step 8</h2>
+                <h3>HPA with Custom Metrics (v2 API)</h3>
+                <div class="module-progress">
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step active"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                </div>
+                <aside class="notes">
+                    The v2 HPA API supports multiple metrics, custom metrics, and more granular scaling behavior. This is what production deployments should use.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F4DD; HPA v2 API with Multiple Metrics</h2>
+                <p>Delete the existing HPA and create a more advanced one:</p>
+                <pre><code class="bash" data-trim>
+# Remove the existing HPA
+kubectl delete hpa php-apache -n lab02
+                </code></pre>
+                <div class="fragment">
+                    <p>Create the v2 HPA manifest:</p>
+                    <pre><code class="yaml" data-trim>
+# Save as hpa-v2.yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: php-apache-v2
+  namespace: lab02
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: php-apache
+  minReplicas: 1
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 50
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 15
+      - type: Pods
+        value: 4
+        periodSeconds: 15
+      selectPolicy: Max
+                    </code></pre>
+                </div>
+                <aside class="notes">
+                    Walk through each section of the YAML. Highlight the behavior section, which gives fine-grained control over scale-up and scale-down rates. The selectPolicy: Max means it picks whichever policy allows more scaling.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F680; Apply and Examine the v2 HPA</h2>
+                <pre><code class="bash" data-trim>
+# Apply the v2 HPA
+kubectl apply -f hpa-v2.yaml
+
+# Examine the HPA
+kubectl get hpa php-apache-v2 -n lab02
+
+# View the full spec
+kubectl describe hpa php-apache-v2 -n lab02
+                </code></pre>
+                <div class="highlight-box success fragment">
+                    <strong>&#x2705; Expected Output:</strong> The HPA should show two metrics targets: <code>cpu: &lt;current&gt;/50%</code> and <code>memory: &lt;current&gt;/80%</code>. The REFERENCE should point to <code>Deployment/php-apache</code>.
+                </div>
+                <div class="concept-box fragment">
+                    <h4>&#x1F4A1; v2 API Advantages</h4>
+                    <ul>
+                        <li><strong>Multiple metrics</strong> &mdash; scale on CPU <em>and</em> memory simultaneously</li>
+                        <li><strong>Scaling behavior</strong> &mdash; control scale-up/down speed and stabilization</li>
+                        <li><strong>Custom metrics</strong> &mdash; scale on application-specific metrics (requests/sec, queue depth)</li>
+                        <li><strong>External metrics</strong> &mdash; scale on metrics from outside the cluster (SQS queue length, etc.)</li>
+                    </ul>
+                </div>
+                <aside class="notes">
+                    Point out that the behavior section allows different policies for scale-up vs scale-down. In the manifest, scale-up is aggressive (100% increase every 15s) while scale-down is conservative (50% decrease every 60s with 5-min stabilization).
+                </aside>
+            </section>
+
+            <!-- ========== STEP 9: Vertical Pod Autoscaler ========== -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="section-divider">
+                <h2>Step 9</h2>
+                <h3>Vertical Pod Autoscaler (VPA)</h3>
+                <div class="module-progress">
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step active"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                </div>
+                <aside class="notes">
+                    VPA may not be installed in all clusters. If it is not available, walk through the manifest as a review exercise. Students can still learn the concepts.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x2195; Configure Vertical Pod Autoscaler</h2>
+                <p>First, check if VPA is available in your cluster:</p>
+                <pre><code class="bash" data-trim>
+# Check for VPA CRDs
+kubectl get crd | grep verticalpodautoscaler
+
+# Check for VPA components
+kubectl get pods -n kube-system | grep vpa
+                </code></pre>
+                <div class="highlight-box warning fragment">
+                    <strong>&#x1F4DD; Note:</strong> VPA is an optional component. If the CRDs are not installed, review the manifest below as a reference but skip the apply step.
+                </div>
+                <div class="fragment">
+                    <p>Create a VPA resource in <code>Off</code> mode (recommendation only):</p>
+                    <pre><code class="yaml" data-trim>
+# Save as vpa.yaml
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: php-apache-vpa
+  namespace: lab02
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: php-apache
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+    - containerName: php-apache
+      minAllowed:
+        cpu: 100m
+        memory: 64Mi
+      maxAllowed:
+        cpu: 1000m
+        memory: 512Mi
+                    </code></pre>
+                </div>
+                <aside class="notes">
+                    Off mode is the safest way to start with VPA. It provides recommendations without making changes. In production, you can switch to Auto mode once you trust the recommendations.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F50E; Examine VPA Recommendations</h2>
+                <pre><code class="bash" data-trim>
+# Apply the VPA (only if CRDs are installed)
+kubectl apply -f vpa.yaml
+
+# Check VPA recommendations (may take a few minutes to populate)
+kubectl describe vpa php-apache-vpa -n lab02
+
+# View recommendations in JSON
+kubectl get vpa php-apache-vpa -n lab02 -o jsonpath='{.status.recommendation}' | python3 -m json.tool
+                </code></pre>
+                <div class="highlight-box success fragment">
+                    <strong>&#x2705; Expected Output:</strong> The VPA status should show three recommendation levels:
+                    <ul>
+                        <li><strong>lowerBound</strong> &mdash; minimum recommended resources</li>
+                        <li><strong>target</strong> &mdash; optimal recommended resources</li>
+                        <li><strong>upperBound</strong> &mdash; maximum recommended resources</li>
+                    </ul>
+                </div>
+                <div class="highlight-box danger fragment">
+                    <strong>&#x26A0; Warning:</strong> Do not use VPA in <code>Auto</code> mode with HPA on the same CPU/memory metrics. VPA will resize pods while HPA tries to change pod count, creating conflicts. Use VPA for right-sizing resource requests, and HPA for scaling replicas.
+                </div>
+                <aside class="notes">
+                    If VPA is not installed, discuss the recommendations concept and how teams can use Off mode VPA to gather data before setting resource requests. This is a common pattern at Verisign for right-sizing workloads.
+                </aside>
+            </section>
+
+            <!-- ========== STEP 10: Cluster Autoscaler ========== -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="section-divider">
+                <h2>Step 10</h2>
+                <h3>Cluster Autoscaler Behavior</h3>
+                <div class="module-progress">
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step active"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                </div>
+                <aside class="notes">
+                    Cluster Autoscaler adds or removes nodes. On EKS this integrates with Auto Scaling Groups. This step may not trigger actual node scaling depending on cluster capacity, but the concepts are essential.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F4E6; Test Cluster Autoscaler Behavior</h2>
+                <p>Deploy a workload that requests more resources than currently available:</p>
+                <pre><code class="yaml" data-trim>
+# Save as inflate-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inflate
+  namespace: lab02
+spec:
+  replicas: 20
+  selector:
+    matchLabels:
+      app: inflate
+  template:
+    metadata:
+      labels:
+        app: inflate
+    spec:
+      containers:
+      - name: inflate
+        image: public.ecr.aws/eks-distro/kubernetes/pause:3.7
+        resources:
+          requests:
+            cpu: 250m
+            memory: 256Mi
+                </code></pre>
+                <pre><code class="bash" data-trim>
+kubectl apply -f inflate-deployment.yaml
+                </code></pre>
+                <aside class="notes">
+                    The pause container consumes almost no resources but reserves them via requests. 20 replicas requesting 250m CPU each means 5 full CPU cores worth of requests. This will likely exceed available capacity on a small cluster.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F50D; Monitor Cluster Autoscaler Activity</h2>
+                <pre><code class="bash" data-trim>
+# Watch pods - some should be Pending if cluster is at capacity
+kubectl get pods -n lab02 -l app=inflate --watch
+
+# Check for Pending pods
+kubectl get pods -n lab02 -l app=inflate --field-selector=status.phase=Pending
+
+# Examine why pods are pending
+kubectl describe pod &lt;PENDING_POD_NAME&gt; -n lab02 | grep -A 5 "Events:"
+
+# Check Cluster Autoscaler logs (if available)
+kubectl logs -n kube-system -l app=cluster-autoscaler --tail=50
+                </code></pre>
+                <div class="highlight-box success fragment">
+                    <strong>&#x2705; Expected Output:</strong> Some pods will show <code>Pending</code> status with events showing <code>FailedScheduling: 0/X nodes are available: insufficient cpu</code>. If Cluster Autoscaler is active, you may see new nodes joining within 2-5 minutes.
+                </div>
+                <div class="concept-box fragment">
+                    <h4>&#x1F4A1; Cluster Autoscaler Logic</h4>
+                    <ul>
+                        <li><strong>Scale Up</strong> &mdash; triggered when pods are <code>Pending</code> due to insufficient resources</li>
+                        <li><strong>Scale Down</strong> &mdash; triggered when nodes are underutilized for 10+ minutes</li>
+                        <li><strong>EKS Integration</strong> &mdash; modifies the ASG desired count for the managed node group</li>
+                    </ul>
+                </div>
+                <aside class="notes">
+                    If nodes do not scale, explain that the Cluster Autoscaler may not be configured or the ASG max may already be reached. Use this as a discussion point about capacity planning and ASG configuration.
+                </aside>
+            </section>
+
+            <!-- ========== STEP 11: Clean Up ========== -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="section-divider">
+                <h2>Step 11</h2>
+                <h3>Clean Up All Resources</h3>
+                <div class="module-progress">
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step active"></div>
+                    <div class="step"></div>
+                </div>
+                <aside class="notes">
+                    Important to clean up, especially the inflate deployment which reserves significant cluster resources.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F9F9; Clean Up All Resources</h2>
+                <p>Remove everything created during this lab:</p>
+                <pre><code class="bash" data-trim>
+# Reset namespace context
+kubectl config set-context --current --namespace=default
+
+# Delete the entire lab namespace
+kubectl delete namespace lab02
+
+# Verify cleanup
+kubectl get namespaces
+kubectl get hpa -A | grep lab02
+                </code></pre>
+                <div class="highlight-box success fragment">
+                    <strong>&#x2705; Checkpoint:</strong> The <code>lab02</code> namespace should be gone. No HPA resources should reference lab02. If Cluster Autoscaler added nodes, they will scale down automatically after the workloads are removed (this may take 10+ minutes).
+                </div>
+                <div class="highlight-box warning fragment">
+                    <strong>&#x1F4DD; Note:</strong> Also delete any YAML files you created locally if you no longer need them, or keep them as reference material.
+                </div>
+                <aside class="notes">
+                    Verify that all students have cleaned up. The inflate deployment especially should be removed promptly to free cluster resources for other labs.
+                </aside>
+            </section>
+
+            <!-- ========== Summary ========== -->
+            <section>
+                <h2>&#x1F4DD; Autoscaling Best Practices</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Practice</th>
+                            <th>Recommendation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Always set resource requests</td>
+                            <td>HPA cannot calculate utilization without them</td>
+                        </tr>
+                        <tr>
+                            <td>Use v2 HPA API</td>
+                            <td>Supports multiple metrics and scaling behavior control</td>
+                        </tr>
+                        <tr>
+                            <td>Start with conservative targets</td>
+                            <td>50-70% CPU utilization is a good starting point</td>
+                        </tr>
+                        <tr>
+                            <td>Set realistic min/max replicas</td>
+                            <td>Min handles baseline load; max prevents runaway scaling</td>
+                        </tr>
+                        <tr>
+                            <td>Use VPA in Off mode first</td>
+                            <td>Gather recommendations before enabling auto-adjustment</td>
+                        </tr>
+                        <tr>
+                            <td>Do not mix HPA + VPA on same metric</td>
+                            <td>They will conflict; use HPA for scaling, VPA for right-sizing</td>
+                        </tr>
+                        <tr>
+                            <td>Configure scaling behavior</td>
+                            <td>Fast scale-up, slow scale-down prevents thrashing</td>
+                        </tr>
+                        <tr>
+                            <td>Monitor HPA events</td>
+                            <td>Use <code>kubectl describe hpa</code> to debug scaling decisions</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <aside class="notes">
+                    Review these best practices. They represent production lessons learned. Emphasize that autoscaling is not set-and-forget; it requires tuning based on application behavior.
+                </aside>
+            </section>
+
+            <!-- Takeaway Slide -->
+            <section>
+                <h2>&#x1F3AF; Key Takeaways</h2>
+                <ul class="takeaway-list">
+                    <li class="fragment">&#x2705; HPA scales pod count based on CPU, memory, or custom metrics</li>
+                    <li class="fragment">&#x2705; Resource requests are mandatory for HPA to function correctly</li>
+                    <li class="fragment">&#x2705; The v2 API provides fine-grained control over scaling behavior</li>
+                    <li class="fragment">&#x2705; Scale-up is fast; scale-down is deliberately slow to prevent thrashing</li>
+                    <li class="fragment">&#x2705; VPA right-sizes resource requests; use Off mode to gather data first</li>
+                    <li class="fragment">&#x2705; Cluster Autoscaler adds nodes when pods cannot be scheduled</li>
+                    <li class="fragment">&#x2705; All three autoscalers work at different layers and complement each other</li>
+                </ul>
+                <aside class="notes">
+                    Reinforce the layered autoscaling model. In production at Verisign, teams typically use HPA for most workloads, VPA in Off mode for recommendations, and rely on Cluster Autoscaler for infrastructure elasticity.
+                </aside>
+            </section>
+
+            <!-- Questions Slide -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="questions-slide">
+                <h2>&#x2753; Questions?</h2>
+                <p>Lab 2 Complete &mdash; Configuring Autoscaling</p>
+                <p class="small-text" style="color: #cbd5e0;">Up Next: Lab 3</p>
+                <div class="module-progress">
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                </div>
+                <aside class="notes">
+                    Congratulations to all students on completing Lab 2. This lab covered the three pillars of Kubernetes autoscaling. The HPA skills practiced here are essential for production workloads. Proceed to the next module when ready.
+                </aside>
+            </section>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/highlight/highlight.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/notes/notes.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            slideNumber: true,
+            transition: 'slide',
+            plugins: [RevealHighlight, RevealNotes]
+        });
+    </script>
+</body>
+</html>

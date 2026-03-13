@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab 1: Exploring Your Kubernetes Cluster | Intermediate Kubernetes</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reset.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/theme/white.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/highlight/monokai.css">
+    <style>
+        :root {
+            --heading-color: #1a365d;
+            --accent-color: #2b6cb0;
+            --success-color: #2f855a;
+            --warning-color: #c05621;
+            --danger-color: #c53030;
+            --text-color: #2d3748;
+        }
+
+        .reveal {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text-color);
+            font-size: 28px;
+        }
+
+        .reveal h1, .reveal h2, .reveal h3, .reveal h4 {
+            color: var(--heading-color);
+            font-weight: 700;
+            text-transform: none;
+        }
+
+        .reveal h1 { font-size: 2.2em; }
+        .reveal h2 { font-size: 1.6em; }
+        .reveal h3 { font-size: 1.3em; }
+
+        /* Title Slide */
+        .title-slide h1 {
+            color: #ffffff;
+            font-size: 2.4em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            margin-bottom: 0.3em;
+        }
+        .title-slide h2 {
+            color: #e2e8f0;
+            font-size: 1.4em;
+            font-weight: 400;
+            margin-bottom: 0.2em;
+        }
+        .title-slide h3 {
+            color: #cbd5e0;
+            font-size: 1.1em;
+            font-weight: 300;
+        }
+
+        /* Section Divider */
+        .section-divider h2 {
+            color: #ffffff;
+            font-size: 2.0em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .section-divider h3 {
+            color: #e2e8f0;
+            font-size: 1.2em;
+            font-weight: 400;
+        }
+
+        /* Highlight Boxes */
+        .highlight-box {
+            background: #ebf8ff;
+            border-left: 4px solid var(--accent-color);
+            padding: 20px 25px;
+            border-radius: 0 8px 8px 0;
+            margin: 15px 0;
+            text-align: left;
+        }
+        .highlight-box.success {
+            background: #f0fff4;
+            border-left-color: var(--success-color);
+        }
+        .highlight-box.warning {
+            background: #fffaf0;
+            border-left-color: var(--warning-color);
+        }
+        .highlight-box.danger {
+            background: #fff5f5;
+            border-left-color: var(--danger-color);
+        }
+
+        /* Two Columns */
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            align-items: start;
+            text-align: left;
+        }
+
+        /* Three Columns */
+        .three-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            align-items: start;
+            text-align: left;
+        }
+
+        /* Card */
+        .card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid #e2e8f0;
+            text-align: left;
+        }
+        .card h3, .card h4 {
+            margin-top: 0;
+            color: var(--accent-color);
+        }
+
+        /* Concept Box */
+        .concept-box {
+            background: linear-gradient(135deg, #ebf8ff 0%, #e2e8f0 100%);
+            border-radius: 12px;
+            padding: 25px;
+            margin: 15px 0;
+            border: 1px solid #bee3f8;
+            text-align: left;
+        }
+        .concept-box h3, .concept-box h4 {
+            color: var(--heading-color);
+            margin-top: 0;
+        }
+
+        /* Emoji Header */
+        .emoji-header {
+            font-size: 1.8em;
+            margin-bottom: 0.5em;
+        }
+
+        /* Key Point */
+        .key-point {
+            background: #ebf8ff;
+            border: 2px solid var(--accent-color);
+            border-radius: 12px;
+            padding: 20px 25px;
+            margin: 15px 0;
+            text-align: left;
+            font-size: 0.95em;
+        }
+        .key-point strong {
+            color: var(--accent-color);
+        }
+
+        /* Lab Callout */
+        .lab-callout h2 {
+            color: #ffffff;
+            font-size: 1.8em;
+            margin-bottom: 0.3em;
+        }
+        .lab-callout h3 {
+            color: #90cdf4;
+            font-size: 1.3em;
+            font-weight: 400;
+        }
+        .lab-callout p {
+            color: #e2e8f0;
+            font-size: 1.0em;
+        }
+        .lab-callout ul {
+            color: #e2e8f0;
+            text-align: left;
+            display: inline-block;
+        }
+        .lab-callout .highlight-box {
+            background: rgba(255,255,255,0.1);
+            border-left-color: #90cdf4;
+            color: #e2e8f0;
+        }
+
+        /* Questions Slide */
+        .questions-slide h2 {
+            color: #ffffff;
+            font-size: 2.2em;
+        }
+        .questions-slide p {
+            color: #e2e8f0;
+            font-size: 1.2em;
+        }
+
+        /* Takeaway List */
+        .takeaway-list {
+            text-align: left;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .takeaway-list li {
+            margin-bottom: 12px;
+            line-height: 1.6;
+            list-style: none;
+            padding-left: 10px;
+        }
+
+        /* Module Progress */
+        .module-progress {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 20px;
+        }
+        .module-progress .step {
+            width: 30px;
+            height: 6px;
+            border-radius: 3px;
+            background: #cbd5e0;
+        }
+        .module-progress .step.active {
+            background: var(--accent-color);
+        }
+        .module-progress .step.completed {
+            background: var(--success-color);
+        }
+
+        /* Table Styles */
+        .reveal table {
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 0.75em;
+            margin: 15px 0;
+        }
+        .reveal table th {
+            background: var(--heading-color);
+            color: #ffffff;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+        }
+        .reveal table td {
+            padding: 10px 16px;
+            border-bottom: 1px solid #e2e8f0;
+            text-align: left;
+        }
+        .reveal table tr:nth-child(even) {
+            background: #f7fafc;
+        }
+        .reveal table tr:hover {
+            background: #ebf8ff;
+        }
+
+        /* General list styling */
+        .reveal ul, .reveal ol {
+            text-align: left;
+            display: block;
+            margin-left: 1em;
+        }
+        .reveal li {
+            margin-bottom: 0.5em;
+            line-height: 1.5;
+            font-size: 0.9em;
+        }
+
+        .reveal p {
+            line-height: 1.6;
+        }
+
+        .reveal .small-text {
+            font-size: 0.7em;
+            color: #718096;
+        }
+
+        /* Code blocks */
+        .reveal pre code {
+            font-size: 0.65em;
+            max-height: 450px;
+            overflow-y: auto;
+            line-height: 1.4;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+
+            <!-- Title Slide -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="title-slide">
+                <h1>Lab 1: Exploring Your Kubernetes Cluster</h1>
+                <h2>Hands-On Cluster Navigation and kubectl Fundamentals</h2>
+                <h3>Intermediate Kubernetes &mdash; Module 1 of 16</h3>
+                <div class="module-progress">
+                    <div class="step active"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                </div>
+                <aside class="notes">
+                    Welcome to Lab 1. This is the foundational lab where students get comfortable navigating a Kubernetes cluster using kubectl. Everyone should have cluster access configured before starting. Walk around and verify connectivity before proceeding.
+                </aside>
+            </section>
+
+            <!-- Lab Overview -->
+            <section>
+                <h2>&#x1F4CB; Lab Overview</h2>
+                <div class="two-columns">
+                    <div class="card">
+                        <h4>Objectives</h4>
+                        <ul>
+                            <li class="fragment">Verify cluster connectivity and authentication</li>
+                            <li class="fragment">Navigate cluster nodes, namespaces, and workloads</li>
+                            <li class="fragment">Deploy, inspect, scale, and access an application</li>
+                            <li class="fragment">Use essential kubectl commands confidently</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>Prerequisites</h4>
+                        <ul>
+                            <li>kubectl installed and configured</li>
+                            <li>Access to a Kubernetes cluster (EKS)</li>
+                            <li>Terminal / shell access</li>
+                        </ul>
+                        <div class="highlight-box warning" style="margin-top: 15px;">
+                            <strong>&#x23F1; Duration:</strong> ~30 minutes
+                        </div>
+                    </div>
+                </div>
+                <aside class="notes">
+                    Review the objectives and confirm everyone has the prerequisites. If anyone lacks cluster access, help them configure kubeconfig before moving on.
+                </aside>
+            </section>
+
+            <!-- ========== STEP 1: Verify Cluster Connectivity ========== -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="section-divider">
+                <h2>Step 1</h2>
+                <h3>Verify Cluster Connectivity</h3>
+                <div class="module-progress">
+                    <div class="step active"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                </div>
+                <aside class="notes">
+                    This is the most important step. If connectivity fails here, nothing else will work. Help students troubleshoot kubeconfig issues.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F50C; Verify Cluster Connectivity</h2>
+                <p>Confirm your kubectl is configured and can reach the cluster:</p>
+                <pre><code class="bash" data-trim>
+# Check cluster endpoint information
+kubectl cluster-info
+
+# Verify client and server versions
+kubectl version
+
+# Confirm current context
+kubectl config current-context
+                </code></pre>
+                <div class="highlight-box success fragment">
+                    <strong>&#x2705; Expected Output:</strong> You should see the Kubernetes control plane address and the CoreDNS service address. The <code>kubectl version</code> command should show both Client and Server versions.
+                </div>
+                <div class="highlight-box danger fragment">
+                    <strong>&#x26A0; Troubleshooting:</strong> If you see "Unable to connect to the server", verify your kubeconfig is set correctly: <code>export KUBECONFIG=~/.kube/config</code> and ensure your AWS credentials are valid.
+                </div>
+                <aside class="notes">
+                    If students get connection errors, common causes are: expired AWS credentials, wrong context selected, or VPN not connected. Have them run aws sts get-caller-identity to verify AWS auth.
+                </aside>
+            </section>
+
+            <!-- ========== STEP 2: Explore Cluster Nodes ========== -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="section-divider">
+                <h2>Step 2</h2>
+                <h3>Explore Cluster Nodes</h3>
+                <div class="module-progress">
+                    <div class="step completed"></div>
+                    <div class="step active"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                </div>
+                <aside class="notes">
+                    Nodes are the foundation of the cluster. Understanding node status, labels, and taints is critical for scheduling decisions.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F5A5; Explore Cluster Nodes</h2>
+                <p>Examine the nodes that form your cluster:</p>
+                <pre><code class="bash" data-trim>
+# List all nodes with extended information
+kubectl get nodes -o wide
+
+# Describe a specific node (replace with your node name)
+kubectl describe node &lt;NODE_NAME&gt;
+                </code></pre>
+                <div class="highlight-box success fragment">
+                    <strong>&#x2705; Expected Output:</strong> You should see nodes listed with STATUS <code>Ready</code>, along with their ROLES, AGE, VERSION, INTERNAL-IP, OS-IMAGE, and CONTAINER-RUNTIME.
+                </div>
+                <aside class="notes">
+                    Point out the different columns in the wide output. Explain that INTERNAL-IP is the node's VPC address and EXTERNAL-IP may be none for private clusters.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F3F7; Node Labels and Taints</h2>
+                <p>Labels and taints control pod scheduling:</p>
+                <pre><code class="bash" data-trim>
+# View all labels on nodes
+kubectl get nodes --show-labels
+
+# View labels in a cleaner format for a specific node
+kubectl describe node &lt;NODE_NAME&gt; | grep -A 20 "Labels:"
+
+# Check for taints on nodes
+kubectl describe node &lt;NODE_NAME&gt; | grep -A 5 "Taints:"
+                </code></pre>
+                <div class="concept-box fragment">
+                    <h4>&#x1F4A1; Key Concepts</h4>
+                    <ul>
+                        <li><strong>Labels</strong> &mdash; key/value pairs for selecting and organizing nodes (e.g., <code>node.kubernetes.io/instance-type</code>)</li>
+                        <li><strong>Taints</strong> &mdash; repel pods unless they have matching tolerations (e.g., <code>NoSchedule</code>)</li>
+                    </ul>
+                </div>
+                <aside class="notes">
+                    Have students identify EKS-specific labels like eks.amazonaws.com/nodegroup and kubernetes.io/arch. Discuss how taints are used for dedicated node pools.
+                </aside>
+            </section>
+
+            <!-- ========== STEP 3: Explore Namespaces ========== -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="section-divider">
+                <h2>Step 3</h2>
+                <h3>Explore Namespaces</h3>
+                <div class="module-progress">
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step active"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                </div>
+                <aside class="notes">
+                    Namespaces provide logical isolation within a cluster. This is a critical concept for multi-team environments like Verisign.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F4C2; Explore Namespaces</h2>
+                <p>Namespaces provide logical isolation within the cluster:</p>
+                <pre><code class="bash" data-trim>
+# List all namespaces
+kubectl get namespaces
+
+# View namespace details
+kubectl describe namespace default
+                </code></pre>
+                <div class="highlight-box success fragment">
+                    <strong>&#x2705; Expected Output:</strong> You should see at least: <code>default</code>, <code>kube-system</code>, <code>kube-public</code>, and <code>kube-node-lease</code>.
+                </div>
+                <div class="fragment">
+                    <p>Now explore the system namespace:</p>
+                    <pre><code class="bash" data-trim>
+# List system components running in kube-system
+kubectl get pods -n kube-system
+
+# View system services
+kubectl get services -n kube-system
+                    </code></pre>
+                </div>
+                <div class="highlight-box warning fragment">
+                    <strong>&#x1F4DD; Note:</strong> The <code>kube-system</code> namespace contains critical cluster components like CoreDNS, kube-proxy, and the AWS VPC CNI plugin. Never modify resources here without understanding the impact.
+                </div>
+                <aside class="notes">
+                    Highlight the system pods running in kube-system. On EKS, students will see aws-node (VPC CNI), coredns, and kube-proxy. Explain each one briefly.
+                </aside>
+            </section>
+
+            <!-- ========== STEP 4: Explore Running Workloads ========== -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="section-divider">
+                <h2>Step 4</h2>
+                <h3>Explore Running Workloads</h3>
+                <div class="module-progress">
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step active"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                </div>
+                <aside class="notes">
+                    Now students get a holistic view of everything running in the cluster before they deploy their own workload.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F50D; Explore Running Workloads</h2>
+                <p>Get a full picture of what is running in the cluster:</p>
+                <pre><code class="bash" data-trim>
+# List all pods across all namespaces
+kubectl get pods -A
+
+# List all deployments across all namespaces
+kubectl get deployments -A
+
+# List all services across all namespaces
+kubectl get services -A
+
+# View all resources in a single command
+kubectl get all -A
+                </code></pre>
+                <div class="highlight-box success fragment">
+                    <strong>&#x2705; Expected Output:</strong> You should see system pods in <code>kube-system</code> and possibly workloads in other namespaces. All system pods should show <code>Running</code> status with all containers ready (e.g., <code>1/1</code>).
+                </div>
+                <div class="key-point fragment">
+                    <strong>&#x1F511; Key Point:</strong> The <code>-A</code> flag (short for <code>--all-namespaces</code>) lets you see resources across the entire cluster. Without it, kubectl only shows the <code>default</code> namespace.
+                </div>
+                <aside class="notes">
+                    Have students count how many pods are running cluster-wide. This gives them a sense of the operational overhead of running Kubernetes itself.
+                </aside>
+            </section>
+
+            <!-- ========== STEP 5: Deploy Your First Application ========== -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="section-divider">
+                <h2>Step 5</h2>
+                <h3>Deploy Your First Application</h3>
+                <div class="module-progress">
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step active"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                </div>
+                <aside class="notes">
+                    Now the hands-on portion begins. Students will create their own namespace and deploy a simple application. This establishes the deployment workflow they will use throughout the course.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F680; Create a Namespace and Deploy nginx</h2>
+                <p>Create an isolated namespace for your work:</p>
+                <pre><code class="bash" data-trim>
+# Create your personal namespace
+kubectl create namespace lab01
+
+# Set it as your default context (optional but convenient)
+kubectl config set-context --current --namespace=lab01
+
+# Verify you are in the correct namespace
+kubectl config view --minify | grep namespace
+                </code></pre>
+                <div class="fragment">
+                    <p>Deploy an nginx application:</p>
+                    <pre><code class="bash" data-trim>
+# Create an nginx deployment with 2 replicas
+kubectl create deployment nginx-lab --image=nginx:1.25 --replicas=2
+
+# Expose the deployment as a ClusterIP service
+kubectl expose deployment nginx-lab --port=80 --target-port=80
+
+# Verify resources were created
+kubectl get all -n lab01
+                    </code></pre>
+                </div>
+                <div class="highlight-box success fragment">
+                    <strong>&#x2705; Expected Output:</strong> You should see 2 pods in <code>Running</code> state, 1 deployment with <code>2/2</code> ready, 1 replica set, and 1 ClusterIP service.
+                </div>
+                <aside class="notes">
+                    Walk students through each command. Explain that create deployment is imperative but useful for quick tasks. Later labs will use declarative YAML manifests exclusively.
+                </aside>
+            </section>
+
+            <!-- ========== STEP 6: Examine Pod Details ========== -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="section-divider">
+                <h2>Step 6</h2>
+                <h3>Examine Pod Details</h3>
+                <div class="module-progress">
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step active"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                </div>
+                <aside class="notes">
+                    Describe, logs, and exec are the three most important troubleshooting commands. Students must become comfortable with all three.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F50E; Examine Pod Details</h2>
+                <p>Inspect your running pods in depth:</p>
+                <pre><code class="bash" data-trim>
+# Get pod names
+kubectl get pods -n lab01
+
+# Describe a pod (replace with actual pod name)
+kubectl describe pod &lt;POD_NAME&gt; -n lab01
+                </code></pre>
+                <div class="concept-box fragment">
+                    <h4>&#x1F4A1; What to Look For in describe</h4>
+                    <ul>
+                        <li><strong>Status</strong> &mdash; current pod phase (Running, Pending, etc.)</li>
+                        <li><strong>Conditions</strong> &mdash; Ready, Initialized, PodScheduled</li>
+                        <li><strong>Events</strong> &mdash; scheduling decisions, image pulls, container starts</li>
+                        <li><strong>IP</strong> &mdash; the pod's cluster-internal IP address</li>
+                    </ul>
+                </div>
+                <aside class="notes">
+                    Walk through the describe output section by section. Point out the Events at the bottom, which are the most useful for debugging.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F4DC; Logs and Interactive Access</h2>
+                <p>View container logs and exec into a running container:</p>
+                <pre><code class="bash" data-trim>
+# View logs from a pod
+kubectl logs &lt;POD_NAME&gt; -n lab01
+
+# Follow logs in real-time (Ctrl+C to exit)
+kubectl logs &lt;POD_NAME&gt; -n lab01 --follow
+
+# Execute a command inside the container
+kubectl exec -it &lt;POD_NAME&gt; -n lab01 -- /bin/bash
+
+# Inside the container, explore:
+cat /etc/nginx/nginx.conf
+curl localhost:80
+exit
+                </code></pre>
+                <div class="highlight-box success fragment">
+                    <strong>&#x2705; Checkpoint:</strong> You should be able to see the nginx welcome page HTML when running <code>curl localhost:80</code> from inside the container.
+                </div>
+                <div class="highlight-box warning fragment">
+                    <strong>&#x1F4DD; Note:</strong> The <code>--</code> separator before <code>/bin/bash</code> is required. It tells kubectl that everything after it is the command to run inside the container, not a kubectl argument.
+                </div>
+                <aside class="notes">
+                    Emphasize that exec is for debugging only, not for making production changes. Changes inside a container are ephemeral and will be lost when the pod restarts.
+                </aside>
+            </section>
+
+            <!-- ========== STEP 7: Scale the Deployment ========== -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="section-divider">
+                <h2>Step 7</h2>
+                <h3>Scale the Deployment</h3>
+                <div class="module-progress">
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step active"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                </div>
+                <aside class="notes">
+                    Scaling is one of the core benefits of Kubernetes. This step demonstrates imperative scaling; later labs will cover HPA for automated scaling.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x2195; Scale the Deployment</h2>
+                <p>Scale your deployment up and observe the changes:</p>
+                <pre><code class="bash" data-trim>
+# Scale up to 5 replicas
+kubectl scale deployment nginx-lab --replicas=5 -n lab01
+
+# Watch pods come up in real-time (Ctrl+C to exit)
+kubectl get pods -n lab01 -w
+
+# Verify the deployment status
+kubectl get deployment nginx-lab -n lab01
+                </code></pre>
+                <div class="highlight-box success fragment">
+                    <strong>&#x2705; Expected Output:</strong> The deployment should show <code>5/5</code> ready replicas. All 5 pods should be in <code>Running</code> state within a few seconds.
+                </div>
+                <div class="fragment">
+                    <p>Now scale back down:</p>
+                    <pre><code class="bash" data-trim>
+# Scale down to 2 replicas
+kubectl scale deployment nginx-lab --replicas=2 -n lab01
+
+# Watch pods terminate
+kubectl get pods -n lab01 -w
+                    </code></pre>
+                </div>
+                <div class="key-point fragment">
+                    <strong>&#x1F511; Key Point:</strong> Kubernetes uses the ReplicaSet controller to maintain the desired number of replicas. When you scale down, it selects pods for termination based on a defined algorithm (newest pods on nodes with the most replicas are terminated first).
+                </div>
+                <aside class="notes">
+                    Have students watch the -w output carefully. They should see the pod lifecycle: Pending, ContainerCreating, Running. On scale-down they will see Terminating status.
+                </aside>
+            </section>
+
+            <!-- ========== STEP 8: Access the Application ========== -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="section-divider">
+                <h2>Step 8</h2>
+                <h3>Access the Application</h3>
+                <div class="module-progress">
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step active"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                </div>
+                <aside class="notes">
+                    Port-forwarding is the simplest way to access a service during development. Later labs will cover Ingress controllers and load balancers.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F310; Access the Application</h2>
+                <p>Use port-forwarding to access your service locally:</p>
+                <pre><code class="bash" data-trim>
+# Forward local port 8080 to the service port 80
+kubectl port-forward service/nginx-lab 8080:80 -n lab01
+                </code></pre>
+                <div class="fragment">
+                    <p>Open a <strong>second terminal</strong> and test the connection:</p>
+                    <pre><code class="bash" data-trim>
+# Test the application
+curl http://localhost:8080
+
+# View just the HTTP headers
+curl -I http://localhost:8080
+                    </code></pre>
+                </div>
+                <div class="highlight-box success fragment">
+                    <strong>&#x2705; Expected Output:</strong> You should see the default nginx welcome page HTML. The headers should show <code>HTTP/1.1 200 OK</code> and <code>Server: nginx/1.25.x</code>.
+                </div>
+                <div class="highlight-box warning fragment">
+                    <strong>&#x1F4DD; Note:</strong> Press <code>Ctrl+C</code> in the first terminal to stop port-forwarding when done. Port-forwarding only lasts as long as the command is running.
+                </div>
+                <aside class="notes">
+                    Remind students that port-forward is for development and debugging. In production, services are exposed via Ingress or LoadBalancer type services.
+                </aside>
+            </section>
+
+            <!-- ========== STEP 9: Explore Resource Usage ========== -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="section-divider">
+                <h2>Step 9</h2>
+                <h3>Explore Resource Usage</h3>
+                <div class="module-progress">
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step active"></div>
+                    <div class="step"></div>
+                </div>
+                <aside class="notes">
+                    Resource monitoring is critical for capacity planning. The kubectl top command requires metrics-server to be installed.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F4CA; Explore Resource Usage</h2>
+                <p>Check resource consumption across the cluster:</p>
+                <pre><code class="bash" data-trim>
+# View node resource usage
+kubectl top nodes
+
+# View pod resource usage in your namespace
+kubectl top pods -n lab01
+
+# View pod resource usage across all namespaces
+kubectl top pods -A --sort-by=cpu
+                </code></pre>
+                <div class="highlight-box success fragment">
+                    <strong>&#x2705; Expected Output:</strong> You should see CPU (in millicores) and memory usage for each node and pod. Nodes will show both usage and percentage of allocatable capacity.
+                </div>
+                <div class="highlight-box warning fragment">
+                    <strong>&#x26A0; If kubectl top fails:</strong> The metrics-server may not be installed. Check with:
+                    <pre><code class="bash" data-trim>
+kubectl get pods -n kube-system | grep metrics-server
+                    </code></pre>
+                    If missing, this is expected in some environments. You can skip this step and proceed to cleanup.
+                </div>
+                <aside class="notes">
+                    If metrics-server is not available, use this as a teaching moment. Explain that metrics-server is a required component for HPA, which students will configure in Lab 2.
+                </aside>
+            </section>
+
+            <!-- ========== STEP 10: Clean Up Resources ========== -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="section-divider">
+                <h2>Step 10</h2>
+                <h3>Clean Up Resources</h3>
+                <div class="module-progress">
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step active"></div>
+                </div>
+                <aside class="notes">
+                    Always clean up lab resources. Deleting the namespace removes everything inside it, which is the cleanest approach.
+                </aside>
+            </section>
+
+            <section>
+                <h2>&#x1F9F9; Clean Up Resources</h2>
+                <p>Remove all resources created during this lab:</p>
+                <pre><code class="bash" data-trim>
+# Reset your default namespace context
+kubectl config set-context --current --namespace=default
+
+# Delete the entire lab namespace (and everything in it)
+kubectl delete namespace lab01
+
+# Verify it is gone
+kubectl get namespaces
+                </code></pre>
+                <div class="highlight-box success fragment">
+                    <strong>&#x2705; Checkpoint:</strong> The <code>lab01</code> namespace should no longer appear in the namespace list. All deployments, pods, and services within it are automatically deleted.
+                </div>
+                <div class="key-point fragment">
+                    <strong>&#x1F511; Key Point:</strong> Deleting a namespace cascades the deletion to <em>all</em> resources within it. This is the cleanest way to tear down an environment, but be careful &mdash; it cannot be undone.
+                </div>
+                <aside class="notes">
+                    Remind students to always clean up lab resources to avoid interfering with other labs or using unnecessary cluster resources.
+                </aside>
+            </section>
+
+            <!-- ========== Summary ========== -->
+            <section>
+                <h2>&#x1F4DD; Summary &mdash; Key kubectl Commands</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Command</th>
+                            <th>Purpose</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>kubectl cluster-info</code></td>
+                            <td>Verify cluster connectivity</td>
+                        </tr>
+                        <tr>
+                            <td><code>kubectl get nodes -o wide</code></td>
+                            <td>List nodes with details</td>
+                        </tr>
+                        <tr>
+                            <td><code>kubectl get pods -A</code></td>
+                            <td>List all pods in all namespaces</td>
+                        </tr>
+                        <tr>
+                            <td><code>kubectl describe &lt;resource&gt;</code></td>
+                            <td>Detailed info with events</td>
+                        </tr>
+                        <tr>
+                            <td><code>kubectl logs &lt;pod&gt;</code></td>
+                            <td>View container logs</td>
+                        </tr>
+                        <tr>
+                            <td><code>kubectl exec -it &lt;pod&gt; -- bash</code></td>
+                            <td>Interactive shell in container</td>
+                        </tr>
+                        <tr>
+                            <td><code>kubectl scale deployment &lt;name&gt;</code></td>
+                            <td>Adjust replica count</td>
+                        </tr>
+                        <tr>
+                            <td><code>kubectl port-forward</code></td>
+                            <td>Access services locally</td>
+                        </tr>
+                        <tr>
+                            <td><code>kubectl top nodes/pods</code></td>
+                            <td>View resource usage</td>
+                        </tr>
+                        <tr>
+                            <td><code>kubectl delete namespace</code></td>
+                            <td>Cascade-delete all resources</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <aside class="notes">
+                    This table is a handy reference. Encourage students to bookmark or save it for future use throughout the course.
+                </aside>
+            </section>
+
+            <!-- Takeaway Slide -->
+            <section>
+                <h2>&#x1F3AF; Key Takeaways</h2>
+                <ul class="takeaway-list">
+                    <li class="fragment">&#x2705; kubectl is your primary interface for interacting with Kubernetes clusters</li>
+                    <li class="fragment">&#x2705; Namespaces provide logical isolation &mdash; always work in a dedicated namespace</li>
+                    <li class="fragment">&#x2705; <code>describe</code>, <code>logs</code>, and <code>exec</code> are your core troubleshooting triad</li>
+                    <li class="fragment">&#x2705; Deployments manage ReplicaSets which manage Pods &mdash; the hierarchy matters</li>
+                    <li class="fragment">&#x2705; Port-forward is a development tool; production uses Ingress or LoadBalancer services</li>
+                    <li class="fragment">&#x2705; Always clean up lab resources by deleting the namespace</li>
+                </ul>
+                <aside class="notes">
+                    Reinforce these takeaways. This lab establishes the foundation for every subsequent lab in the course. Make sure everyone is comfortable with these commands before moving on.
+                </aside>
+            </section>
+
+            <!-- Questions Slide -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="questions-slide">
+                <h2>&#x2753; Questions?</h2>
+                <p>Lab 1 Complete &mdash; Cluster Exploration</p>
+                <p class="small-text" style="color: #cbd5e0;">Up Next: Lab 2 &mdash; Configuring Autoscaling</p>
+                <div class="module-progress">
+                    <div class="step completed"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                </div>
+                <aside class="notes">
+                    Congratulations to all students on completing Lab 1. This lab established the foundational kubectl skills that will be used in every subsequent lab. Ensure everyone is comfortable navigating the cluster before proceeding to Lab 2 on Autoscaling.
+                </aside>
+            </section>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/highlight/highlight.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/notes/notes.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            slideNumber: true,
+            transition: 'slide',
+            plugins: [RevealHighlight, RevealNotes]
+        });
+    </script>
+</body>
+</html>

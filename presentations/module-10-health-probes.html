@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Checks &amp; Probes | Intermediate Kubernetes</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reset.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/theme/white.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/highlight/monokai.css">
+    <style>
+        :root { --heading-color: #1a365d; --accent-color: #2b6cb0; --success-color: #2f855a; --warning-color: #c05621; --danger-color: #c53030; --text-color: #2d3748; }
+        .reveal { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: var(--text-color); font-size: 28px; }
+        .reveal .slides section { text-align: left; padding: 20px 40px; }
+        .reveal h1, .reveal h2, .reveal h3, .reveal h4 { color: var(--heading-color); font-weight: 700; text-transform: none; }
+        .reveal h1 { font-size: 2.2em; } .reveal h2 { font-size: 1.6em; } .reveal h3 { font-size: 1.3em; }
+        .title-slide { text-align: center !important; }
+        .title-slide h1 { color: #ffffff; font-size: 2.4em; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); margin-bottom: 0.3em; }
+        .title-slide h2 { color: #e2e8f0; font-size: 1.4em; font-weight: 400; }
+        .title-slide h3 { color: #cbd5e0; font-size: 1.1em; font-weight: 300; }
+        .section-divider { text-align: center !important; }
+        .section-divider h2 { color: #ffffff; font-size: 2.0em; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .section-divider h3 { color: #e2e8f0; font-size: 1.2em; font-weight: 400; }
+        .highlight-box { background: #ebf8ff; border-left: 4px solid var(--accent-color); padding: 20px 25px; border-radius: 0 8px 8px 0; margin: 15px 0; text-align: left; }
+        .highlight-box.success { background: #f0fff4; border-left-color: var(--success-color); }
+        .highlight-box.warning { background: #fffaf0; border-left-color: var(--warning-color); }
+        .highlight-box.danger { background: #fff5f5; border-left-color: var(--danger-color); }
+        .two-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: start; text-align: left; }
+        .three-columns { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; align-items: start; text-align: left; }
+        .card { background: #ffffff; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; text-align: left; }
+        .card h3, .card h4 { margin-top: 0; color: var(--accent-color); }
+        .concept-box { background: linear-gradient(135deg, #ebf8ff 0%, #e2e8f0 100%); border-radius: 12px; padding: 25px; margin: 15px 0; border: 1px solid #bee3f8; text-align: left; }
+        .concept-box h3, .concept-box h4 { color: var(--heading-color); margin-top: 0; }
+        .key-point { background: #ebf8ff; border: 2px solid var(--accent-color); border-radius: 12px; padding: 20px 25px; margin: 15px 0; text-align: left; font-size: 0.95em; }
+        .key-point strong { color: var(--accent-color); }
+        .lab-callout h2 { color: #ffffff; font-size: 1.8em; margin-bottom: 0.3em; }
+        .lab-callout h3 { color: #90cdf4; font-size: 1.3em; font-weight: 400; }
+        .lab-callout p { color: #e2e8f0; font-size: 1.0em; }
+        .lab-callout ul { color: #e2e8f0; text-align: left; display: inline-block; }
+        .lab-callout .highlight-box { background: rgba(255,255,255,0.1); border-left-color: #90cdf4; color: #e2e8f0; }
+        .questions-slide h2 { color: #ffffff; font-size: 2.2em; }
+        .questions-slide p { color: #e2e8f0; font-size: 1.2em; }
+        .module-progress { display: flex; justify-content: center; gap: 8px; margin-top: 20px; }
+        .module-progress .step { width: 30px; height: 6px; border-radius: 3px; background: #cbd5e0; }
+        .module-progress .step.active { background: var(--accent-color); }
+        .module-progress .step.completed { background: var(--success-color); }
+        .reveal table { border-collapse: collapse; width: 100%; font-size: 0.75em; margin: 15px 0; }
+        .reveal table th { background: var(--heading-color); color: #ffffff; padding: 12px 16px; text-align: left; font-weight: 600; }
+        .reveal table td { padding: 10px 16px; border-bottom: 1px solid #e2e8f0; text-align: left; }
+        .reveal table tr:nth-child(even) { background: #f7fafc; }
+        .reveal ul, .reveal ol { text-align: left; display: block; margin-left: 1em; }
+        .reveal li { margin-bottom: 0.5em; line-height: 1.5; font-size: 0.9em; }
+        .reveal p { line-height: 1.6; }
+        .reveal pre code { font-size: 0.7em; line-height: 1.4; max-height: 500px; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+
+            <!-- Slide 1: Title -->
+            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" class="title-slide">
+                <h1>&#129657; Health Checks &amp; Probes</h1>
+                <h2>Keeping Applications Resilient &mdash; Module 10 of 16</h2>
+                <h3>Verisign EKS Platform</h3>
+                <div class="module-progress">
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step completed"></div>
+                    <div class="step active"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                </div>
+                <aside class="notes">Welcome to Module 10. Health checks and probes are how Kubernetes knows whether your application is alive, ready to serve traffic, and has finished starting up. Without them, Kubernetes is essentially flying blind — it can only tell if a process is running, not if it's actually healthy. Today we'll master all three probe types and learn how to configure them for production workloads.</aside>
+            </section>
+
+            <!-- Slide 2: Agenda -->
+            <section>
+                <h2>&#128203; Module Agenda</h2>
+                <ul>
+                    <li class="fragment fade-up">Why Health Checks Matter</li>
+                    <li class="fragment fade-up">Probe Types: Liveness, Readiness, Startup</li>
+                    <li class="fragment fade-up">Probe Configuration &amp; Parameters</li>
+                    <li class="fragment fade-up">HTTP, TCP, Exec, and gRPC Probes</li>
+                    <li class="fragment fade-up">Probe Best Practices &amp; Anti-Patterns</li>
+                    <li class="fragment fade-up">Graceful Shutdown &amp; Pod Disruption Budgets</li>
+                    <li class="fragment fade-up">Debugging Probe Failures</li>
+                </ul>
+                <aside class="notes">We'll start by understanding why probes are essential, then cover each probe type in depth with YAML examples. We'll dive into configuration parameters, best practices, and real-world patterns. The module wraps up with debugging techniques and a hands-on lab.</aside>
+            </section>
+
+            <!-- Slide 3: Section — Why Health Checks Matter -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #2c5282 100%)" class="section-divider">
+                <h2>&#128147; Why Health Checks Matter</h2>
+                <h3>From Process Status to Application Health</h3>
+                <aside class="notes">Let's start with the fundamental question: why do we need probes at all? Can't Kubernetes just check if the container process is running? The answer reveals a critical gap in container orchestration.</aside>
+            </section>
+
+            <!-- Slide 4: Pod Lifecycle and Restart Policies -->
+            <section>
+                <h2>&#128260; Pod Lifecycle &amp; Restart Policies</h2>
+                <div class="concept-box">
+                    <h4>Pod Phase Progression</h4>
+                    <p><strong>Pending</strong> &rarr; <strong>Running</strong> &rarr; <strong>Succeeded</strong> / <strong>Failed</strong></p>
+                </div>
+                <ul>
+                    <li class="fragment fade-up"><strong>Always:</strong> Restart container regardless of exit code (default for Deployments)</li>
+                    <li class="fragment fade-up"><strong>OnFailure:</strong> Restart only on non-zero exit (common for Jobs)</li>
+                    <li class="fragment fade-up"><strong>Never:</strong> Never restart &mdash; let the pod enter Failed state</li>
+                </ul>
+                <div class="fragment fade-up highlight-box warning">
+                    <strong>Key Insight:</strong> Restart policies only respond to <em>process exits</em> &mdash; they cannot detect a hung process, a deadlock, or a broken database connection.
+                </div>
+                <aside class="notes">The pod lifecycle is straightforward — pods move through phases and restart policies determine what happens on container exit. But notice the gap: restart policies only trigger when the process actually dies. If your app is stuck in an infinite loop or can't reach its database, the process is still "running" from Kubernetes' perspective.</aside>
+            </section>
+
+            <!-- Slide 5: What Happens Without Probes -->
+            <section>
+                <h2>&#128165; What Happens Without Probes</h2>
+                <div class="two-columns">
+                    <div class="card">
+                        <h4>&#128308; Cascading Failure Scenario</h4>
+                        <ol>
+                            <li class="fragment fade-up">App loses database connection</li>
+                            <li class="fragment fade-up">Process stays running, returns 500s</li>
+                            <li class="fragment fade-up">Service keeps routing traffic to unhealthy pod</li>
+                            <li class="fragment fade-up">Users experience errors across the cluster</li>
+                            <li class="fragment fade-up">Load balancer spreads failure further</li>
+                        </ol>
+                    </div>
+                    <div class="card">
+                        <h4>&#9989; With Probes Configured</h4>
+                        <ol>
+                            <li class="fragment fade-up">App loses database connection</li>
+                            <li class="fragment fade-up">Readiness probe fails &rarr; pod removed from Service</li>
+                            <li class="fragment fade-up">Liveness probe fails &rarr; container restarted</li>
+                            <li class="fragment fade-up">Traffic routed only to healthy pods</li>
+                            <li class="fragment fade-up">Self-healing with zero manual intervention</li>
+                        </ol>
+                    </div>
+                </div>
+                <aside class="notes">This side-by-side comparison shows the real impact. Without probes, a single unhealthy pod can poison your entire service. With probes, Kubernetes automatically routes traffic away from unhealthy pods and restarts them — true self-healing infrastructure.</aside>
+            </section>
+
+            <!-- Slide 6: Section — Probe Types -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #2c5282 100%)" class="section-divider">
+                <h2>&#128269; Probe Types</h2>
+                <h3>Liveness, Readiness, and Startup</h3>
+                <aside class="notes">Now let's look at the three probe types Kubernetes provides. Each serves a distinct purpose, and understanding when to use which is critical for production reliability.</aside>
+            </section>
+
+            <!-- Slide 7: Liveness Probes -->
+            <section>
+                <h2>&#128154; Liveness Probes</h2>
+                <div class="key-point">
+                    <strong>Purpose:</strong> Detect when a container is <em>stuck</em> and needs to be <em>restarted</em>. Answers: "Is the application still alive?"
+                </div>
+                <pre><code class="language-yaml">apiVersion: v1
+kind: Pod
+metadata:
+  name: web-app
+spec:
+  containers:
+  - name: app
+    image: myapp:1.0
+    livenessProbe:
+      httpGet:
+        path: /healthz
+        port: 8080
+      initialDelaySeconds: 15
+      periodSeconds: 10
+      failureThreshold: 3</code></pre>
+                <ul>
+                    <li class="fragment fade-up">Failure action: <strong>kubelet restarts the container</strong></li>
+                    <li class="fragment fade-up">Use for deadlocks, infinite loops, unrecoverable states</li>
+                    <li class="fragment fade-up">Should check <em>internal</em> health only &mdash; not external dependencies</li>
+                </ul>
+                <aside class="notes">Liveness probes are your safety net against zombie processes. When the probe fails, kubelet kills and restarts the container. The key design principle: liveness probes should only check the application's own health, never external dependencies. If you check a database in your liveness probe and the DB goes down, every pod gets restarted — making things worse.</aside>
+            </section>
+
+            <!-- Slide 8: Liveness Probe — TCP and Exec Examples -->
+            <section>
+                <h2>&#128154; Liveness: TCP &amp; Exec Variants</h2>
+                <div class="two-columns">
+                    <div>
+                        <h4>TCP Socket Probe</h4>
+                        <pre><code class="language-yaml">livenessProbe:
+  tcpSocket:
+    port: 3306
+  initialDelaySeconds: 30
+  periodSeconds: 10</code></pre>
+                        <p style="font-size:0.8em;">Succeeds if TCP connection opens. Ideal for databases, message brokers.</p>
+                    </div>
+                    <div>
+                        <h4>Exec Command Probe</h4>
+                        <pre><code class="language-yaml">livenessProbe:
+  exec:
+    command:
+    - /bin/sh
+    - -c
+    - pg_isready -U postgres
+  initialDelaySeconds: 30
+  periodSeconds: 15</code></pre>
+                        <p style="font-size:0.8em;">Runs command inside container. Exit code 0 = success.</p>
+                    </div>
+                </div>
+                <aside class="notes">TCP probes simply try to open a socket — useful when HTTP endpoints aren't available, such as databases or Redis instances. Exec probes run a command inside the container, giving you maximum flexibility. Here we use pg_isready to check PostgreSQL health from within the container.</aside>
+            </section>
+
+            <!-- Slide 9: Readiness Probes -->
+            <section>
+                <h2>&#128309; Readiness Probes</h2>
+                <div class="key-point">
+                    <strong>Purpose:</strong> Control when a pod <em>receives traffic</em> from a Service. Answers: "Is the application ready to accept requests?"
+                </div>
+                <pre><code class="language-yaml">apiVersion: v1
+kind: Pod
+metadata:
+  name: web-app
+spec:
+  containers:
+  - name: app
+    image: myapp:1.0
+    readinessProbe:
+      httpGet:
+        path: /ready
+        port: 8080
+      initialDelaySeconds: 5
+      periodSeconds: 5
+      successThreshold: 1
+      failureThreshold: 3</code></pre>
+                <ul>
+                    <li class="fragment fade-up">Failure action: <strong>pod removed from Service endpoints</strong> (not restarted)</li>
+                    <li class="fragment fade-up">Can check downstream dependencies (caches warmed, connections established)</li>
+                    <li class="fragment fade-up">Pod stays running &mdash; can recover and rejoin the Service</li>
+                </ul>
+                <aside class="notes">Readiness probes are fundamentally different from liveness probes. When a readiness probe fails, the pod is removed from the Service's endpoint list — no traffic gets routed to it. But the pod stays running and can recover. This is perfect for temporary issues like cache warming or brief dependency outages. Unlike liveness probes, readiness probes CAN check external dependencies.</aside>
+            </section>
+
+            <!-- Slide 10: Startup Probes -->
+            <section>
+                <h2>&#128311; Startup Probes</h2>
+                <div class="key-point">
+                    <strong>Purpose:</strong> Protect slow-starting containers from being killed by liveness probes before they're ready.
+                </div>
+                <pre><code class="language-yaml">apiVersion: v1
+kind: Pod
+metadata:
+  name: legacy-app
+spec:
+  containers:
+  - name: app
+    image: legacy-app:2.0
+    startupProbe:
+      httpGet:
+        path: /healthz
+        port: 8080
+      failureThreshold: 30
+      periodSeconds: 10
+    livenessProbe:
+      httpGet:
+        path: /healthz
+        port: 8080
+      periodSeconds: 10</code></pre>
+                <ul>
+                    <li class="fragment fade-up">Liveness and readiness probes <strong>disabled until startup probe succeeds</strong></li>
+                    <li class="fragment fade-up">Max startup time = <code>failureThreshold &times; periodSeconds</code> (300s above)</li>
+                    <li class="fragment fade-up">Ideal for legacy apps, Java apps with long JVM warmup, ML model loading</li>
+                </ul>
+                <aside class="notes">Startup probes solve the classic problem of slow-starting applications. Before startup probes existed, you had to set a very large initialDelaySeconds on your liveness probe, which meant slow detection of actual failures. With startup probes, you get a generous window for startup but fast failure detection once the app is running. In this example, the app gets up to 300 seconds to start, but once running, liveness checks happen every 10 seconds.</aside>
+            </section>
+
+            <!-- Slide 11: Three-Way Comparison Table -->
+            <section>
+                <h2>&#128200; Probe Comparison</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Aspect</th>
+                            <th>Liveness</th>
+                            <th>Readiness</th>
+                            <th>Startup</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Question</strong></td>
+                            <td>Is it alive?</td>
+                            <td>Can it serve traffic?</td>
+                            <td>Has it finished starting?</td>
+                        </tr>
+                        <tr>
+                            <td><strong>On Failure</strong></td>
+                            <td>Restart container</td>
+                            <td>Remove from Service</td>
+                            <td>Restart container</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Check Dependencies?</strong></td>
+                            <td>No</td>
+                            <td>Yes</td>
+                            <td>No</td>
+                        </tr>
+                        <tr>
+                            <td><strong>When Active</strong></td>
+                            <td>After startup succeeds</td>
+                            <td>After startup succeeds</td>
+                            <td>Container start only</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Default if Omitted</strong></td>
+                            <td>Assumed alive</td>
+                            <td>Assumed ready</td>
+                            <td>Assumed started</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="fragment fade-up highlight-box success">
+                    <strong>Production Recommendation:</strong> Use all three probes together for maximum resilience. Startup handles initialization, liveness catches deadlocks, readiness controls traffic flow.
+                </div>
+                <aside class="notes">This table is your reference guide. The critical difference is the failure action: liveness and startup kill the container, while readiness just removes it from traffic rotation. Notice that liveness and readiness probes don't even activate until the startup probe has succeeded — this is the coordination mechanism that makes all three work together.</aside>
+            </section>
+
+            <!-- Slide 12: Section — Probe Configuration -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #2c5282 100%)" class="section-divider">
+                <h2>&#9881;&#65039; Probe Configuration</h2>
+                <h3>Parameters, Protocols, and Tuning</h3>
+                <aside class="notes">Now that we understand the three probe types, let's dive into the configuration parameters that control their behavior. Getting these right is the difference between a resilient application and one that flaps between healthy and unhealthy states.</aside>
+            </section>
+
+            <!-- Slide 13: Probe Parameters -->
+            <section>
+                <h2>&#9881;&#65039; Probe Parameters</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Default</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>initialDelaySeconds</code></td>
+                            <td>0</td>
+                            <td>Seconds to wait before first probe</td>
+                        </tr>
+                        <tr>
+                            <td><code>periodSeconds</code></td>
+                            <td>10</td>
+                            <td>Interval between consecutive probes</td>
+                        </tr>
+                        <tr>
+                            <td><code>timeoutSeconds</code></td>
+                            <td>1</td>
+                            <td>Max seconds to wait for probe response</td>
+                        </tr>
+                        <tr>
+                            <td><code>successThreshold</code></td>
+                            <td>1</td>
+                            <td>Consecutive successes to be considered healthy</td>
+                        </tr>
+                        <tr>
+                            <td><code>failureThreshold</code></td>
+                            <td>3</td>
+                            <td>Consecutive failures before taking action</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="fragment fade-up highlight-box">
+                    <strong>Time to failure:</strong> <code>initialDelaySeconds + (periodSeconds &times; failureThreshold)</code> &mdash; e.g., 15 + (10 &times; 3) = <strong>45 seconds</strong> before restart.
+                </div>
+                <aside class="notes">These five parameters control all probe timing. The most important formula to understand is the total time before action is taken. With defaults, it takes 30 seconds of failed probes before a restart. For liveness probes, successThreshold must be 1 — Kubernetes enforces this. For readiness probes, you can require multiple consecutive successes before adding the pod back to the Service.</aside>
+            </section>
+
+            <!-- Slide 14: HTTP Probe Deep Dive -->
+            <section>
+                <h2>&#127760; HTTP Probe Deep Dive</h2>
+                <pre><code class="language-yaml">livenessProbe:
+  httpGet:
+    path: /healthz
+    port: 8080
+    scheme: HTTPS
+    httpHeaders:
+    - name: Authorization
+      value: Bearer abc123
+    - name: X-Custom-Header
+      value: probe-check
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 3</code></pre>
+                <ul>
+                    <li class="fragment fade-up"><strong>Success:</strong> HTTP status code &ge; 200 and &lt; 400</li>
+                    <li class="fragment fade-up"><strong>port:</strong> Container port number or named port reference</li>
+                    <li class="fragment fade-up"><strong>scheme:</strong> HTTP (default) or HTTPS &mdash; does <em>not</em> verify certificates</li>
+                    <li class="fragment fade-up"><strong>httpHeaders:</strong> Custom headers for auth or routing</li>
+                    <li class="fragment fade-up"><strong>path:</strong> Dedicated health endpoint, not a business endpoint</li>
+                </ul>
+                <aside class="notes">HTTP probes are the most common type for web applications. The kubelet makes an HTTP GET request to the specified path and port. Any 2xx or 3xx response is considered success; 4xx and 5xx mean failure. When using HTTPS, certificate validation is skipped, so self-signed certs work fine. Custom headers are useful when your app requires authentication even for health endpoints.</aside>
+            </section>
+
+            <!-- Slide 15: TCP Probe Deep Dive -->
+            <section>
+                <h2>&#128268; TCP Probe Deep Dive</h2>
+                <pre><code class="language-yaml">spec:
+  containers:
+  - name: redis
+    image: redis:7
+    ports:
+    - containerPort: 6379
+    readinessProbe:
+      tcpSocket:
+        port: 6379
+      initialDelaySeconds: 5
+      periodSeconds: 10
+    livenessProbe:
+      tcpSocket:
+        port: 6379
+      initialDelaySeconds: 15
+      periodSeconds: 20</code></pre>
+                <div class="two-columns">
+                    <div class="highlight-box success">
+                        <strong>Best For:</strong> Databases, caches, message brokers, and any service that doesn't speak HTTP.
+                    </div>
+                    <div class="highlight-box warning">
+                        <strong>Limitation:</strong> Only confirms the port is open &mdash; does not verify the application is functioning correctly.
+                    </div>
+                </div>
+                <aside class="notes">TCP probes attempt to open a TCP connection to the specified port. If the connection succeeds, the probe passes. This is the simplest probe type — useful when HTTP isn't available. The trade-off is that it only tells you the process is listening on a port, not that it's actually processing requests correctly. A database might accept connections but be in a read-only state, for instance.</aside>
+            </section>
+
+            <!-- Slide 16: Exec Probe Deep Dive -->
+            <section>
+                <h2>&#128187; Exec Probe Deep Dive</h2>
+                <pre><code class="language-yaml">spec:
+  containers:
+  - name: app
+    image: myapp:1.0
+    livenessProbe:
+      exec:
+        command:
+        - /bin/sh
+        - -c
+        - |
+          test -f /tmp/healthy &&
+          find /tmp/healthy -mmin -1 | grep -q healthy
+      initialDelaySeconds: 10
+      periodSeconds: 15
+      timeoutSeconds: 5</code></pre>
+                <ul>
+                    <li class="fragment fade-up"><strong>Exit code 0</strong> = success, any other code = failure</li>
+                    <li class="fragment fade-up">Runs <em>inside</em> the container &mdash; must have required binaries</li>
+                    <li class="fragment fade-up">Useful for custom checks: file existence, process state, script validation</li>
+                    <li class="fragment fade-up">Each exec probe creates a process &mdash; watch for <strong>PID pressure</strong> in high-frequency probes</li>
+                </ul>
+                <aside class="notes">Exec probes give you complete flexibility — you can run any command or script inside the container. The example checks both that a file exists and that it was modified within the last minute, which is a common pattern where the application touches a file periodically to signal health. Be aware that exec probes spawn a process each time, so setting periodSeconds too low can cause PID exhaustion in containers with low PID limits.</aside>
+            </section>
+
+            <!-- Slide 17: gRPC Probes -->
+            <section>
+                <h2>&#128752; gRPC Probes</h2>
+                <div class="concept-box">
+                    <h4>Native gRPC Health Checking (Kubernetes 1.24+)</h4>
+                    <p>Kubernetes can natively call the <strong>gRPC Health Checking Protocol</strong> without needing a sidecar or exec workaround.</p>
+                </div>
+                <pre><code class="language-yaml">spec:
+  containers:
+  - name: grpc-service
+    image: mygrpc:1.0
+    ports:
+    - containerPort: 50051
+    livenessProbe:
+      grpc:
+        port: 50051
+        service: "myservice"
+      initialDelaySeconds: 10
+      periodSeconds: 10
+    readinessProbe:
+      grpc:
+        port: 50051
+      initialDelaySeconds: 5
+      periodSeconds: 5</code></pre>
+                <ul>
+                    <li class="fragment fade-up"><strong>service:</strong> Optional &mdash; specifies which gRPC service to check (empty = overall status)</li>
+                    <li class="fragment fade-up">App must implement the <code>grpc.health.v1.Health</code> service</li>
+                    <li class="fragment fade-up">Returns <code>SERVING</code>, <code>NOT_SERVING</code>, or <code>UNKNOWN</code></li>
+                </ul>
+                <aside class="notes">gRPC probes are a relatively recent addition to Kubernetes. Before this feature, you had to use exec probes with grpc_health_probe or a sidecar container. Now Kubernetes natively speaks the gRPC health protocol. Your application just needs to implement the standard grpc.health.v1.Health service interface. The optional service field lets you check specific services within a multi-service gRPC server.</aside>
+            </section>
+
+            <!-- Slide 18: Section — Probe Best Practices -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #2c5282 100%)" class="section-divider">
+                <h2>&#127919; Probe Best Practices</h2>
+                <h3>Patterns, Anti-Patterns, and Production Wisdom</h3>
+                <aside class="notes">Configuring probes correctly is surprisingly nuanced. Let's look at the patterns that work, the anti-patterns to avoid, and real-world examples from production environments.</aside>
+            </section>
+
+            <!-- Slide 19: Common Anti-Patterns -->
+            <section>
+                <h2>&#9888;&#65039; Common Anti-Patterns</h2>
+                <div class="three-columns">
+                    <div class="card">
+                        <h4>&#128308; Too Aggressive</h4>
+                        <ul>
+                            <li><code>periodSeconds: 1</code></li>
+                            <li><code>failureThreshold: 1</code></li>
+                            <li>Causes restart loops on transient issues</li>
+                            <li>Wastes kubelet CPU cycles</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>&#128308; Checking Dependencies</h4>
+                        <ul>
+                            <li>Liveness checks DB connection</li>
+                            <li>DB goes down &rarr; all pods restart</li>
+                            <li>DB comes back &rarr; thundering herd</li>
+                            <li>Self-inflicted cascading failure</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>&#128308; Expensive Operations</h4>
+                        <ul>
+                            <li>Running full test suites</li>
+                            <li>Heavy database queries</li>
+                            <li>Probe takes longer than <code>timeoutSeconds</code></li>
+                            <li>Causes false failures</li>
+                        </ul>
+                    </div>
+                </div>
+                <aside class="notes">These are the three most common mistakes teams make with probes. Aggressive probes cause restart storms — a brief network hiccup shouldn't kill every pod. Checking dependencies in liveness probes creates a domino effect where an external outage becomes a self-inflicted cluster-wide restart. And expensive probes that exceed the timeout cause false positives — the app is healthy but the probe thinks it's dead because the check itself is too slow.</aside>
+            </section>
+
+            <!-- Slide 20: Probe Design Guidelines -->
+            <section>
+                <h2>&#128736;&#65039; Probe Design Guidelines</h2>
+                <div class="two-columns">
+                    <div>
+                        <h4>&#128154; Liveness Probe Rules</h4>
+                        <ul>
+                            <li class="fragment fade-up">Check only <em>internal</em> application state</li>
+                            <li class="fragment fade-up">Keep it lightweight (&lt; 100ms)</li>
+                            <li class="fragment fade-up">Use generous thresholds (<code>failureThreshold: 3+</code>)</li>
+                            <li class="fragment fade-up">Never call external services</li>
+                            <li class="fragment fade-up">Consider: "Would a restart fix this?"</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4>&#128309; Readiness Probe Rules</h4>
+                        <ul>
+                            <li class="fragment fade-up">Check dependencies if needed</li>
+                            <li class="fragment fade-up">Verify cache is warmed</li>
+                            <li class="fragment fade-up">Can be more thorough than liveness</li>
+                            <li class="fragment fade-up">Consider: "Can I serve a good response?"</li>
+                            <li class="fragment fade-up">Use <code>successThreshold: 2+</code> to avoid flapping</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="fragment fade-up key-point">
+                    <strong>Golden Rule:</strong> Liveness answers "should I restart?" &mdash; Readiness answers "should I receive traffic?"
+                </div>
+                <aside class="notes">The fundamental distinction: liveness probes determine if a restart will help, readiness probes determine if the pod can serve valid responses right now. Use different endpoints for each — /healthz for liveness that checks internal state, and /ready for readiness that can verify downstream connectivity. A common pattern is having liveness return 200 as long as the event loop is responsive, while readiness checks the connection pool and cache state.</aside>
+            </section>
+
+            <!-- Slide 21: Real-World Examples — Web App -->
+            <section>
+                <h2>&#127758; Real-World: Web Application</h2>
+                <pre><code class="language-yaml">spec:
+  containers:
+  - name: web
+    image: web-app:3.2
+    ports:
+    - containerPort: 8080
+    startupProbe:
+      httpGet:
+        path: /healthz
+        port: 8080
+      failureThreshold: 30
+      periodSeconds: 5
+    livenessProbe:
+      httpGet:
+        path: /healthz
+        port: 8080
+      periodSeconds: 10
+      timeoutSeconds: 3
+      failureThreshold: 3
+    readinessProbe:
+      httpGet:
+        path: /ready
+        port: 8080
+      periodSeconds: 5
+      timeoutSeconds: 3
+      successThreshold: 2
+      failureThreshold: 3</code></pre>
+                <div class="highlight-box">
+                    <strong>Startup:</strong> 150s max to start &bull; <strong>Liveness:</strong> restart after 30s unresponsive &bull; <strong>Readiness:</strong> remove from LB within 15s
+                </div>
+                <aside class="notes">This is a production-ready configuration for a typical web application. The startup probe gives 150 seconds for initialization — enough for dependency injection and cache warming. Liveness checks a lightweight internal endpoint every 10 seconds. Readiness uses a separate endpoint that verifies downstream services, and requires 2 consecutive successes before adding the pod back to the Service, preventing flapping.</aside>
+            </section>
+
+            <!-- Slide 22: Real-World Examples — Microservice and Database Sidecar -->
+            <section>
+                <h2>&#128640; Real-World: Microservice &amp; Sidecar</h2>
+                <div class="two-columns">
+                    <div>
+                        <h4>Microservice with gRPC</h4>
+                        <pre><code class="language-yaml">containers:
+- name: order-svc
+  image: order-service:1.5
+  livenessProbe:
+    grpc:
+      port: 50051
+    periodSeconds: 10
+  readinessProbe:
+    grpc:
+      port: 50051
+      service: "orders"
+    periodSeconds: 5</code></pre>
+                    </div>
+                    <div>
+                        <h4>Database Sidecar</h4>
+                        <pre><code class="language-yaml">containers:
+- name: pgbouncer
+  image: pgbouncer:1.20
+  livenessProbe:
+    tcpSocket:
+      port: 6432
+    periodSeconds: 15
+  readinessProbe:
+    exec:
+      command:
+      - /bin/sh
+      - -c
+      - psql -h 127.0.0.1
+        -p 6432 -U probe
+        -c "SELECT 1"
+    periodSeconds: 10</code></pre>
+                    </div>
+                </div>
+                <aside class="notes">Two more real-world patterns. The gRPC microservice uses native gRPC probes — liveness checks the server is responsive, readiness checks the specific "orders" service. The database sidecar pattern shows a common approach: TCP for liveness (is PgBouncer listening?) and exec for readiness (can it actually execute a query?). This layered approach catches both process-level and application-level failures.</aside>
+            </section>
+
+            <!-- Slide 23: Debugging Probe Failures -->
+            <section>
+                <h2>&#128270; Debugging Probe Failures</h2>
+                <h4>Step 1: Check Pod Events</h4>
+                <pre><code class="language-bash"># See probe failure events
+kubectl describe pod my-app | grep -A 5 "Events"
+
+# Look for Warning events
+kubectl get events --field-selector reason=Unhealthy \
+  --sort-by='.lastTimestamp'</code></pre>
+                <h4>Step 2: Check Container Logs</h4>
+                <pre><code class="language-bash"># Current container logs
+kubectl logs my-app -c app --tail=50
+
+# Previous container logs (after restart)
+kubectl logs my-app -c app --previous</code></pre>
+                <h4 class="fragment fade-up">Step 3: Test the Probe Manually</h4>
+                <pre class="fragment fade-up"><code class="language-bash"># Exec into pod and test the health endpoint
+kubectl exec my-app -- curl -s http://localhost:8080/healthz
+kubectl exec my-app -- wget -qO- http://localhost:8080/ready</code></pre>
+                <aside class="notes">When probes fail, follow this three-step debugging process. First, describe the pod to see events — Kubernetes logs every probe failure as a Warning event with details about the failure. Second, check container logs, especially previous logs if the container was restarted. Third, exec into the pod and manually test the health endpoints to see what they return. Often the issue is a misconfigured port, wrong path, or the endpoint returning a 503 during initialization.</aside>
+            </section>
+
+            <!-- Slide 24: Graceful Shutdown and preStop Hooks -->
+            <section>
+                <h2>&#128721; Graceful Shutdown &amp; preStop Hooks</h2>
+                <div class="concept-box">
+                    <h4>Pod Termination Sequence</h4>
+                    <p><strong>1.</strong> Pod set to Terminating &rarr; <strong>2.</strong> preStop hook runs &rarr; <strong>3.</strong> SIGTERM sent &rarr; <strong>4.</strong> Grace period countdown &rarr; <strong>5.</strong> SIGKILL if still running</p>
+                </div>
+                <pre><code class="language-yaml">spec:
+  terminationGracePeriodSeconds: 60
+  containers:
+  - name: app
+    image: myapp:1.0
+    lifecycle:
+      preStop:
+        exec:
+          command:
+          - /bin/sh
+          - -c
+          - |
+            # Signal app to stop accepting connections
+            curl -s http://localhost:8080/shutdown
+            # Wait for in-flight requests to drain
+            sleep 15</code></pre>
+                <ul>
+                    <li class="fragment fade-up"><strong>preStop + SIGTERM:</strong> Happen concurrently with endpoint removal from Services</li>
+                    <li class="fragment fade-up"><strong>Race condition:</strong> Add a <code>sleep 5</code> in preStop to let endpoints propagate</li>
+                    <li class="fragment fade-up"><strong>terminationGracePeriodSeconds:</strong> Must exceed preStop + drain time</li>
+                </ul>
+                <aside class="notes">Graceful shutdown is tightly coupled with probes. When Kubernetes terminates a pod, it removes the pod from Service endpoints and runs the preStop hook simultaneously. This creates a race condition — the kube-proxy might still route traffic for a few seconds after termination starts. The sleep in preStop ensures existing connections drain before the app shuts down. Always set terminationGracePeriodSeconds high enough to cover your preStop hook plus your application's drain time.</aside>
+            </section>
+
+            <!-- Slide 25: Pod Disruption Budgets -->
+            <section>
+                <h2>&#128737;&#65039; Pod Disruption Budgets (PDBs)</h2>
+                <div class="key-point">
+                    <strong>PDBs</strong> limit how many pods in a Deployment can be unavailable during <em>voluntary disruptions</em> (node drains, cluster upgrades, autoscaling).
+                </div>
+                <div class="two-columns">
+                    <div>
+                        <h4>Min Available</h4>
+                        <pre><code class="language-yaml">apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: web-pdb
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: web</code></pre>
+                    </div>
+                    <div>
+                        <h4>Max Unavailable</h4>
+                        <pre><code class="language-yaml">apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: api-pdb
+spec:
+  maxUnavailable: "25%"
+  selector:
+    matchLabels:
+      app: api</code></pre>
+                    </div>
+                </div>
+                <ul>
+                    <li class="fragment fade-up">Works with <code>kubectl drain</code>, cluster autoscaler, and upgrade controllers</li>
+                    <li class="fragment fade-up">Does <strong>not</strong> protect against involuntary disruptions (node crashes, OOM kills)</li>
+                    <li class="fragment fade-up">Combine with readiness probes &mdash; unready pods count as unavailable</li>
+                </ul>
+                <aside class="notes">PDBs are the bridge between health probes and operational safety. They ensure that when you're draining nodes or upgrading your cluster, you don't accidentally take down too many pods at once. Note the interaction with readiness probes: a pod that fails its readiness probe counts as unavailable, which can block further voluntary disruptions. Use minAvailable for small replica counts and maxUnavailable with percentages for larger deployments.</aside>
+            </section>
+
+            <!-- Slide 26: Putting It All Together -->
+            <section>
+                <h2>&#128640; Production-Ready Pod Spec</h2>
+                <pre><code class="language-yaml">apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: production-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: production-app
+  template:
+    spec:
+      terminationGracePeriodSeconds: 45
+      containers:
+      - name: app
+        image: myapp:2.0
+        resources:
+          requests: { cpu: "250m", memory: "256Mi" }
+          limits: { cpu: "1000m", memory: "512Mi" }
+        startupProbe:
+          httpGet: { path: /healthz, port: 8080 }
+          failureThreshold: 20
+          periodSeconds: 5
+        livenessProbe:
+          httpGet: { path: /healthz, port: 8080 }
+          periodSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet: { path: /ready, port: 8080 }
+          periodSeconds: 5
+          failureThreshold: 3
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh", "-c", "sleep 10"]</code></pre>
+                <aside class="notes">Here's a complete, production-ready pod spec that combines everything we've covered. Three probes for comprehensive health checking, resource limits, a termination grace period, and a preStop hook for clean shutdown. This template is a solid starting point for any production deployment — adjust the timing parameters based on your application's characteristics.</aside>
+            </section>
+
+            <!-- Slide 27: Quick Reference Cheat Sheet -->
+            <section>
+                <h2>&#128221; Quick Reference</h2>
+                <div class="two-columns">
+                    <div class="card">
+                        <h4>Probe Selection Guide</h4>
+                        <table>
+                            <thead>
+                                <tr><th>Scenario</th><th>Probe Type</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>App hangs/deadlocks</td><td>Liveness</td></tr>
+                                <tr><td>Warming cache on startup</td><td>Readiness</td></tr>
+                                <tr><td>Slow JVM/ML model load</td><td>Startup</td></tr>
+                                <tr><td>Dependency unavailable</td><td>Readiness</td></tr>
+                                <tr><td>Memory leak detected</td><td>Liveness</td></tr>
+                                <tr><td>Rolling update safety</td><td>Readiness</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="card">
+                        <h4>Protocol Selection Guide</h4>
+                        <table>
+                            <thead>
+                                <tr><th>Workload</th><th>Protocol</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>Web apps / REST APIs</td><td>HTTP</td></tr>
+                                <tr><td>gRPC microservices</td><td>gRPC</td></tr>
+                                <tr><td>Databases / Caches</td><td>TCP</td></tr>
+                                <tr><td>Custom validation</td><td>Exec</td></tr>
+                                <tr><td>Legacy apps</td><td>Exec / TCP</td></tr>
+                                <tr><td>Multi-check logic</td><td>Exec</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <aside class="notes">Keep this reference handy for your lab work and real projects. On the left, match your failure scenario to the right probe type. On the right, pick the probe protocol based on your workload type. Most modern web services use HTTP probes, but don't overlook exec probes for complex health validation logic.</aside>
+            </section>
+
+            <!-- Slide 28: Lab Callout -->
+            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" class="lab-callout" style="text-align: center;">
+                <h2>&#129489;&#8205;&#128187; Lab 10: Health Checks and Probes</h2>
+                <h3>Estimated Time: ~40 minutes</h3>
+                <ul>
+                    <li>Configure liveness, readiness, and startup probes for a multi-container deployment</li>
+                    <li>Simulate application failures and observe probe-driven recovery</li>
+                    <li>Debug failing probes using events, logs, and manual testing</li>
+                    <li>Implement graceful shutdown with preStop hooks</li>
+                    <li>Create Pod Disruption Budgets for safe cluster operations</li>
+                </ul>
+                <div class="highlight-box">
+                    <strong>Lab Guide:</strong> Follow the step-by-step instructions in <code>labs/lab-10-health-probes/</code>
+                </div>
+                <aside class="notes">Time for hands-on practice. In this lab you'll configure all three probe types on a web application, deliberately break the application to watch Kubernetes self-heal, debug probe failures using the techniques we covered, and set up PDBs. Take your time with the debugging section — understanding probe events is a critical operational skill.</aside>
+            </section>
+
+            <!-- Slide 29: Key Takeaways -->
+            <section>
+                <h2>&#127919; Key Takeaways</h2>
+                <ul>
+                    <li class="fragment fade-up"><strong>Liveness probes</strong> detect stuck containers and trigger restarts &mdash; never check external dependencies</li>
+                    <li class="fragment fade-up"><strong>Readiness probes</strong> control traffic routing &mdash; can and should check if the app can serve good responses</li>
+                    <li class="fragment fade-up"><strong>Startup probes</strong> protect slow-starting apps from premature liveness kills</li>
+                    <li class="fragment fade-up"><strong>Use all three together</strong> for comprehensive health management</li>
+                    <li class="fragment fade-up"><strong>Tune parameters carefully</strong> &mdash; too aggressive causes flapping, too relaxed delays recovery</li>
+                    <li class="fragment fade-up"><strong>Graceful shutdown</strong> requires coordination between preStop hooks, SIGTERM handling, and PDBs</li>
+                </ul>
+                <aside class="notes">Let's recap the core lessons. The three probe types serve distinct purposes and work best together. The most common mistake is checking dependencies in liveness probes. Tune your parameters based on your application's actual behavior, and always implement graceful shutdown to prevent dropped connections during termination.</aside>
+            </section>
+
+            <!-- Slide 30: Questions -->
+            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" class="questions-slide" style="text-align: center;">
+                <h2>&#10067; Questions &amp; Discussion</h2>
+                <p>Health Checks &amp; Probes</p>
+                <p style="font-size: 0.8em; margin-top: 40px;">Up Next: Module 11</p>
+                <aside class="notes">Open the floor for questions. Common questions include: when to use exec vs HTTP probes, how to handle probe timeouts during garbage collection pauses, and whether to use the same endpoint for liveness and readiness. If time permits, discuss how probes interact with Horizontal Pod Autoscaler scaling decisions.</aside>
+            </section>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/highlight/highlight.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/notes/notes.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            slideNumber: true,
+            transition: 'slide',
+            plugins: [RevealHighlight, RevealNotes]
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<<<<<<< HEAD
+    <title>Why Kubernetes | Intermediate Kubernetes</title>
+=======
+    <title>Module 1: Kubernetes for Application Developers — Why We Use It | Intermediate Kubernetes</title>
+>>>>>>> e7e0dd4937630aca9107087d93bdcef32cbb8143
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reset.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/theme/white.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/highlight/monokai.css">
+    <style>
+        :root {
+            --heading-color: #1a365d;
+            --accent-color: #2b6cb0;
+            --success-color: #2f855a;
+            --warning-color: #c05621;
+            --danger-color: #c53030;
+            --text-color: #2d3748;
+        }
+<<<<<<< HEAD
+        .reveal { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: var(--text-color); font-size: 28px; }
+        .reveal .slides section { text-align: left; padding: 20px 40px; }
+        .reveal h1, .reveal h2, .reveal h3, .reveal h4 { color: var(--heading-color); font-weight: 700; text-transform: none; }
+        .reveal h1 { font-size: 2.2em; } .reveal h2 { font-size: 1.6em; } .reveal h3 { font-size: 1.3em; }
+        .title-slide { text-align: center !important; }
+        .title-slide h1 { color: #ffffff; font-size: 2.4em; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); margin-bottom: 0.3em; }
+        .title-slide h2 { color: #e2e8f0; font-size: 1.4em; font-weight: 400; }
+        .title-slide h3 { color: #cbd5e0; font-size: 1.1em; font-weight: 300; }
+        .section-divider { text-align: center !important; }
+        .section-divider h2 { color: #ffffff; font-size: 2.0em; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .section-divider h3 { color: #e2e8f0; font-size: 1.2em; font-weight: 400; }
+        .highlight-box { background: #ebf8ff; border-left: 4px solid var(--accent-color); padding: 20px 25px; border-radius: 0 8px 8px 0; margin: 15px 0; text-align: left; }
+        .highlight-box.success { background: #f0fff4; border-left-color: var(--success-color); }
+        .highlight-box.warning { background: #fffaf0; border-left-color: var(--warning-color); }
+        .highlight-box.danger { background: #fff5f5; border-left-color: var(--danger-color); }
+        .two-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: start; text-align: left; }
+        .three-columns { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; align-items: start; text-align: left; }
+        .card { background: #ffffff; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; text-align: left; }
+        .card h3, .card h4 { margin-top: 0; color: var(--accent-color); }
+        .concept-box { background: linear-gradient(135deg, #ebf8ff 0%, #e2e8f0 100%); border-radius: 12px; padding: 25px; margin: 15px 0; border: 1px solid #bee3f8; text-align: left; }
+        .concept-box h3, .concept-box h4 { color: var(--heading-color); margin-top: 0; }
+        .key-point { background: #ebf8ff; border: 2px solid var(--accent-color); border-radius: 12px; padding: 20px 25px; margin: 15px 0; text-align: left; font-size: 0.95em; }
+        .key-point strong { color: var(--accent-color); }
+        .lab-callout h2 { color: #ffffff; font-size: 1.8em; margin-bottom: 0.3em; }
+        .lab-callout h3 { color: #90cdf4; font-size: 1.3em; font-weight: 400; }
+        .lab-callout p { color: #e2e8f0; font-size: 1.0em; }
+        .lab-callout ul { color: #e2e8f0; text-align: left; display: inline-block; }
+        .lab-callout .highlight-box { background: rgba(255,255,255,0.1); border-left-color: #90cdf4; color: #e2e8f0; }
+        .questions-slide h2 { color: #ffffff; font-size: 2.2em; }
+        .questions-slide p { color: #e2e8f0; font-size: 1.2em; }
+        .module-progress { display: flex; justify-content: center; gap: 8px; margin-top: 20px; }
+        .module-progress .step { width: 30px; height: 6px; border-radius: 3px; background: #cbd5e0; }
+        .module-progress .step.active { background: var(--accent-color); }
+        .module-progress .step.completed { background: var(--success-color); }
+        .reveal table { border-collapse: collapse; width: 100%; font-size: 0.75em; margin: 15px 0; }
+        .reveal table th { background: var(--heading-color); color: #ffffff; padding: 12px 16px; text-align: left; font-weight: 600; }
+        .reveal table td { padding: 10px 16px; border-bottom: 1px solid #e2e8f0; text-align: left; }
+        .reveal table tr:nth-child(even) { background: #f7fafc; }
+        .reveal ul, .reveal ol { text-align: left; display: block; margin-left: 1em; }
+        .reveal li { margin-bottom: 0.5em; line-height: 1.5; font-size: 0.9em; }
+        .reveal p { line-height: 1.6; }
+        .reveal pre code { font-size: 0.7em; line-height: 1.4; max-height: 500px; border-radius: 8px; }
+=======
+
+        .reveal {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text-color);
+            font-size: 28px;
+        }
+
+        .reveal h1, .reveal h2, .reveal h3, .reveal h4 {
+            color: var(--heading-color);
+            font-weight: 700;
+            text-transform: none;
+        }
+
+        .reveal h1 { font-size: 2.2em; }
+        .reveal h2 { font-size: 1.6em; }
+        .reveal h3 { font-size: 1.3em; }
+
+        /* Title Slide */
+        .title-slide h1 {
+            color: #ffffff;
+            font-size: 2.4em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            margin-bottom: 0.3em;
+        }
+        .title-slide h2 {
+            color: #e2e8f0;
+            font-size: 1.4em;
+            font-weight: 400;
+            margin-bottom: 0.2em;
+        }
+        .title-slide h3 {
+            color: #cbd5e0;
+            font-size: 1.1em;
+            font-weight: 300;
+        }
+
+        /* Section Divider */
+        .section-divider h2 {
+            color: #ffffff;
+            font-size: 2.0em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .section-divider h3 {
+            color: #e2e8f0;
+            font-size: 1.2em;
+            font-weight: 400;
+        }
+
+        /* Highlight Boxes */
+        .highlight-box {
+            background: #ebf8ff;
+            border-left: 4px solid var(--accent-color);
+            padding: 20px 25px;
+            border-radius: 0 8px 8px 0;
+            margin: 15px 0;
+            text-align: left;
+        }
+        .highlight-box.success {
+            background: #f0fff4;
+            border-left-color: var(--success-color);
+        }
+        .highlight-box.warning {
+            background: #fffaf0;
+            border-left-color: var(--warning-color);
+        }
+        .highlight-box.danger {
+            background: #fff5f5;
+            border-left-color: var(--danger-color);
+        }
+
+        /* Two Columns */
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            align-items: start;
+            text-align: left;
+        }
+
+        /* Three Columns */
+        .three-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            align-items: start;
+            text-align: left;
+        }
+
+        /* Card */
+        .card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid #e2e8f0;
+            text-align: left;
+        }
+        .card h3, .card h4 {
+            margin-top: 0;
+            color: var(--accent-color);
+        }
+
+        /* Concept Box */
+        .concept-box {
+            background: linear-gradient(135deg, #ebf8ff 0%, #e2e8f0 100%);
+            border-radius: 12px;
+            padding: 25px;
+            margin: 15px 0;
+            border: 1px solid #bee3f8;
+            text-align: left;
+        }
+        .concept-box h3, .concept-box h4 {
+            color: var(--heading-color);
+            margin-top: 0;
+        }
+
+        /* Emoji Header */
+        .emoji-header {
+            font-size: 1.8em;
+            margin-bottom: 0.5em;
+        }
+
+        /* Key Point */
+        .key-point {
+            background: #ebf8ff;
+            border: 2px solid var(--accent-color);
+            border-radius: 12px;
+            padding: 20px 25px;
+            margin: 15px 0;
+            text-align: left;
+            font-size: 0.95em;
+        }
+        .key-point strong {
+            color: var(--accent-color);
+        }
+
+        /* Lab Callout */
+        .lab-callout h2 {
+            color: #ffffff;
+            font-size: 1.8em;
+            margin-bottom: 0.3em;
+        }
+        .lab-callout h3 {
+            color: #90cdf4;
+            font-size: 1.3em;
+            font-weight: 400;
+        }
+        .lab-callout p {
+            color: #e2e8f0;
+            font-size: 1.0em;
+        }
+        .lab-callout ul {
+            color: #e2e8f0;
+            text-align: left;
+            display: inline-block;
+        }
+        .lab-callout .highlight-box {
+            background: rgba(255,255,255,0.1);
+            border-left-color: #90cdf4;
+            color: #e2e8f0;
+        }
+
+        /* Questions Slide */
+        .questions-slide h2 {
+            color: #ffffff;
+            font-size: 2.2em;
+        }
+        .questions-slide p {
+            color: #e2e8f0;
+            font-size: 1.2em;
+        }
+
+        /* Takeaway List */
+        .takeaway-list {
+            text-align: left;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .takeaway-list li {
+            margin-bottom: 12px;
+            line-height: 1.6;
+            list-style: none;
+            padding-left: 10px;
+        }
+
+        /* Module Progress */
+        .module-progress {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 20px;
+        }
+        .module-progress .step {
+            width: 30px;
+            height: 6px;
+            border-radius: 3px;
+            background: #cbd5e0;
+        }
+        .module-progress .step.active {
+            background: var(--accent-color);
+        }
+        .module-progress .step.completed {
+            background: var(--success-color);
+        }
+
+        /* Table Styles */
+        .reveal table {
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 0.75em;
+            margin: 15px 0;
+        }
+        .reveal table th {
+            background: var(--heading-color);
+            color: #ffffff;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+        }
+        .reveal table td {
+            padding: 10px 16px;
+            border-bottom: 1px solid #e2e8f0;
+            text-align: left;
+        }
+        .reveal table tr:nth-child(even) {
+            background: #f7fafc;
+        }
+        .reveal table tr:hover {
+            background: #ebf8ff;
+        }
+
+        /* General list styling */
+        .reveal ul, .reveal ol {
+            text-align: left;
+            display: block;
+            margin-left: 1em;
+        }
+        .reveal li {
+            margin-bottom: 0.5em;
+            line-height: 1.5;
+            font-size: 0.9em;
+        }
+
+        .reveal p {
+            line-height: 1.6;
+        }
+
+        .reveal .small-text {
+            font-size: 0.7em;
+            color: #718096;
+        }
+>>>>>>> e7e0dd4937630aca9107087d93bdcef32cbb8143
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+
+            <!-- Title Slide -->
+<<<<<<< HEAD
+            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" class="title-slide">
+                <h1>&#128640; Kubernetes for Application Developers</h1>
+=======
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="title-slide">
+                <h1>Kubernetes for Application Developers</h1>
+>>>>>>> e7e0dd4937630aca9107087d93bdcef32cbb8143
+                <h2>Why We Use It</h2>
+                <h3>Intermediate Kubernetes &mdash; Module 1 of 16</h3>
+                <div class="module-progress">
+                    <div class="step active"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                    <div class="step"></div>
+                </div>
+<<<<<<< HEAD
+                <aside class="notes">Welcome to the Intermediate Kubernetes course. This first module sets the foundation by exploring WHY Kubernetes exists from a developer's perspective — not just what it does, but why it matters for your daily workflow. We'll map every abstraction to a real developer need.</aside>
+            </section>
+
+            <!-- Objectives -->
+            <section>
+                <h2>&#127919; Module Objectives</h2>
+                <ul>
+                    <li class="fragment fade-up">Articulate the developer value proposition of Kubernetes</li>
+                    <li class="fragment fade-up">Trace the journey from source code to running cluster workload</li>
+                    <li class="fragment fade-up">Define the developer-platform contract and responsibilities</li>
+                    <li class="fragment fade-up">Review core abstractions (Pod, Deployment, Service) through a developer lens</li>
+                    <li class="fragment fade-up">Compare declarative vs. imperative approaches</li>
+                    <li class="fragment fade-up">Connect 12-factor app principles to Kubernetes patterns</li>
+                    <li class="fragment fade-up">Preview the full 16-module course roadmap</li>
+                </ul>
+                <aside class="notes">These objectives establish the mental model we'll use throughout the entire course. Every subsequent module builds on the "why" we establish here. Encourage participants to think about how their current workflow maps to these concepts.</aside>
+            </section>
+
+            <!-- Section Divider: The Problem -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #2c5282 100%)" class="section-divider">
+                <h2>&#129300; The Problem We're Solving</h2>
+                <h3>Why developers needed something better</h3>
+                <aside class="notes">Before we talk about Kubernetes, let's talk about the pain points that led to its creation. Every technology exists to solve a problem — understanding the problem makes the solution intuitive.</aside>
+            </section>
+
+            <!-- Before Kubernetes -->
+            <section>
+                <h2>&#128148; Before Kubernetes — Developer Pain Points</h2>
+                <div class="two-columns">
+                    <div class="card">
+                        <h4>Deployment Challenges</h4>
+                        <ul>
+                            <li class="fragment fade-up">"Works on my machine" syndrome</li>
+                            <li class="fragment fade-up">Manual server provisioning tickets</li>
+                            <li class="fragment fade-up">Environment drift between dev/staging/prod</li>
+                            <li class="fragment fade-up">Multi-hour deployment windows</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>Operational Burden</h4>
+                        <ul>
+                            <li class="fragment fade-up">Developers on-call for infrastructure issues</li>
+                            <li class="fragment fade-up">Scaling requires capacity planning meetings</li>
+                            <li class="fragment fade-up">Rollback = panic + SSH + hope</li>
+                            <li class="fragment fade-up">No self-service for infrastructure needs</li>
+                        </ul>
+                    </div>
+                </div>
+                <aside class="notes">Ask the room: how many of you have experienced these pain points? Most developers have lived through at least some of these. The key insight is that these aren't just inconveniences — they directly impact velocity and reliability.</aside>
+            </section>
+
+            <!-- After Kubernetes -->
+            <section>
+                <h2>&#9989; After Kubernetes — Developer Gains</h2>
+                <div class="two-columns">
+                    <div class="card">
+                        <h4>Deployment Gains</h4>
+                        <ul>
+                            <li class="fragment fade-up">Containers guarantee environment parity</li>
+                            <li class="fragment fade-up">Self-service deployments via <code>kubectl apply</code></li>
+                            <li class="fragment fade-up">Same manifest works dev → staging → prod</li>
+                            <li class="fragment fade-up">Rolling updates with zero downtime</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>Operational Gains</h4>
+                        <ul>
+                            <li class="fragment fade-up">Platform team owns infrastructure</li>
+                            <li class="fragment fade-up">Auto-scaling based on actual metrics</li>
+                            <li class="fragment fade-up">Rollback = <code>kubectl rollout undo</code></li>
+                            <li class="fragment fade-up">Declarative config = version-controlled infra</li>
+                        </ul>
+                    </div>
+                </div>
+                <aside class="notes">The transformation is dramatic. Notice that every "after" item maps directly to a "before" pain point. Kubernetes doesn't just add features — it fundamentally changes the developer-to-infrastructure relationship.</aside>
+            </section>
+
+            <!-- Before/After Comparison Table -->
+            <section>
+                <h2>&#128202; Before vs. After — Side by Side</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Concern</th>
+                            <th>Before K8s</th>
+                            <th>With K8s</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Deploy a new version</td>
+                            <td>SSH, scripts, prayer</td>
+                            <td><code>kubectl apply -f deployment.yaml</code></td>
+                        </tr>
+                        <tr>
+                            <td>Scale to handle load</td>
+                            <td>File a ticket, wait days</td>
+                            <td>HPA scales automatically</td>
+                        </tr>
+                        <tr>
+                            <td>Rollback a bad release</td>
+                            <td>Restore from backup, redeploy</td>
+                            <td><code>kubectl rollout undo</code></td>
+                        </tr>
+                        <tr>
+                            <td>Service discovery</td>
+                            <td>Hardcoded IPs, load balancer configs</td>
+                            <td>DNS-based: <code>svc.namespace.svc.cluster.local</code></td>
+                        </tr>
+                        <tr>
+                            <td>Environment parity</td>
+                            <td>Snowflake servers</td>
+                            <td>Same container image everywhere</td>
+                        </tr>
+                        <tr>
+                            <td>Health monitoring</td>
+                            <td>External monitoring + manual restart</td>
+                            <td>Liveness/readiness probes + auto-restart</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <aside class="notes">This table is a great reference to come back to throughout the course. Each row represents a capability we'll explore in depth in later modules. The key takeaway: Kubernetes turns operational toil into declarative configuration.</aside>
+            </section>
+
+            <!-- Section Divider: Developer Workflow -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #2c5282 100%)" class="section-divider">
+                <h2>&#128736;&#65039; The Developer Workflow</h2>
+                <h3>From code to cluster</h3>
+                <aside class="notes">Now let's trace the actual workflow a developer follows to get code running in a Kubernetes cluster. Understanding this end-to-end flow is critical for everything that follows.</aside>
+            </section>
+
+            <!-- Code to Cluster Pipeline -->
+            <section>
+                <h2>&#128640; Code to Cluster — The Journey</h2>
+                <div class="concept-box">
+                    <h4>The Developer Pipeline</h4>
+                    <ol>
+                        <li class="fragment fade-up"><strong>Write Code</strong> — Application logic, tests, Dockerfile</li>
+                        <li class="fragment fade-up"><strong>Build Image</strong> — <code>docker build -t myapp:v1.2.3 .</code></li>
+                        <li class="fragment fade-up"><strong>Push to Registry</strong> — <code>docker push ecr-repo/myapp:v1.2.3</code></li>
+                        <li class="fragment fade-up"><strong>Declare Desired State</strong> — Write/update Kubernetes manifests</li>
+                        <li class="fragment fade-up"><strong>Apply to Cluster</strong> — <code>kubectl apply -f k8s/</code></li>
+                        <li class="fragment fade-up"><strong>Kubernetes Reconciles</strong> — Controller loop makes it so</li>
+                        <li class="fragment fade-up"><strong>Observe &amp; Iterate</strong> — Logs, metrics, traces</li>
+                    </ol>
+                </div>
+                <aside class="notes">This is the core loop every developer runs through. In practice, steps 2-5 are usually automated by a CI/CD pipeline, but developers need to understand each step. At Verisign, this pipeline typically uses ECR for the registry and EKS for the cluster.</aside>
+            </section>
+
+            <!-- What Developers Own -->
+            <section>
+                <h2>&#128221; What Developers Own</h2>
+                <div class="two-columns">
+                    <div class="card">
+                        <h4>Application Artifacts</h4>
+                        <ul>
+                            <li>Application source code</li>
+                            <li>Dockerfile / container definition</li>
+                            <li>Unit and integration tests</li>
+                            <li>Application configuration</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>Kubernetes Manifests</h4>
+                        <ul>
+                            <li>Deployment specifications</li>
+                            <li>Service definitions</li>
+                            <li>ConfigMaps and Secrets</li>
+                            <li>Resource requests and limits</li>
+                            <li>Health check probes</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="highlight-box warning" style="margin-top: 20px;">
+                    <strong>Key Insight:</strong> Developers define <em>what</em> they need. The platform provides <em>how</em> it's delivered.
+                </div>
+                <aside class="notes">This is the critical boundary. Developers own the application and its Kubernetes resource definitions. They don't need to know which physical node their pod runs on, how networking is implemented, or how storage is provisioned — they just declare what they need.</aside>
+            </section>
+
+            <!-- Section Divider: The Contract -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #2c5282 100%)" class="section-divider">
+                <h2>&#129309; The Developer-Platform Contract</h2>
+                <h3>Clear boundaries, clear responsibilities</h3>
+                <aside class="notes">One of the most powerful aspects of Kubernetes is how it creates a clear contract between developers and platform teams. Let's define that contract explicitly.</aside>
+            </section>
+
+            <!-- Developer vs Platform Responsibilities -->
+            <section>
+                <h2>&#128100; Developer vs. Platform Responsibilities</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Developer Responsibility</th>
+                            <th>Platform Responsibility</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Container image (Dockerfile)</td>
+                            <td>Container runtime (containerd)</td>
+                        </tr>
+                        <tr>
+                            <td>Resource requests &amp; limits</td>
+                            <td>Node capacity &amp; scheduling</td>
+                        </tr>
+                        <tr>
+                            <td>Health check endpoints</td>
+                            <td>Health check execution &amp; remediation</td>
+                        </tr>
+                        <tr>
+                            <td>Deployment strategy choice</td>
+                            <td>Rolling update orchestration</td>
+                        </tr>
+                        <tr>
+                            <td>Service port definitions</td>
+                            <td>Network routing &amp; load balancing</td>
+                        </tr>
+                        <tr>
+                            <td>PVC requests (size, access mode)</td>
+                            <td>Storage provisioning (EBS, EFS)</td>
+                        </tr>
+                        <tr>
+                            <td>Scaling thresholds (HPA config)</td>
+                            <td>Cluster autoscaler, node pools</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <aside class="notes">This table is the contract. When both sides honor it, the result is a highly productive system. Developers get self-service capabilities, and platform teams get consistent, manageable workloads. At Verisign with EKS, AWS manages the control plane, further simplifying the platform team's scope.</aside>
+            </section>
+
+            <!-- The API as Contract -->
+            <section>
+                <h2>&#128220; The Kubernetes API — Your Contract Interface</h2>
+                <div class="concept-box">
+                    <h4>The API Server is the single point of interaction</h4>
+                    <p>Every interaction flows through the API server — <code>kubectl</code>, CI/CD pipelines, controllers, and the scheduler all speak the same API.</p>
+                </div>
+                <div class="fragment fade-up">
+                    <pre><code class="language-bash"># Every developer action is an API call
+kubectl apply -f deployment.yaml    # POST/PUT to /apis/apps/v1/deployments
+kubectl get pods                    # GET to /api/v1/pods
+kubectl logs my-pod                 # GET to /api/v1/pods/my-pod/log
+kubectl port-forward svc/myapp 8080 # Upgrade to SPDY/WebSocket</code></pre>
+                </div>
+                <div class="key-point fragment fade-up">
+                    <strong>Why this matters:</strong> The API is versioned, documented, and consistent. Your manifests from today will work on future clusters because Kubernetes guarantees API compatibility.
+                </div>
+                <aside class="notes">The API server is the front door to everything in Kubernetes. Understanding that kubectl is just an HTTP client helps developers reason about what's happening under the hood. The versioned API is a stability guarantee — you're writing against a contract, not an implementation.</aside>
+            </section>
+
+            <!-- Self-Service Infrastructure -->
+            <section>
+                <h2>&#127381; Self-Service Infrastructure</h2>
+                <p>Kubernetes transforms infrastructure requests into API calls developers can make <strong>without filing tickets</strong>:</p>
+                <div class="two-columns fragment fade-up">
+                    <div class="card">
+                        <h4>I need...</h4>
+                        <ul>
+                            <li>A load balancer</li>
+                            <li>Persistent storage</li>
+                            <li>A cron job</li>
+                            <li>A DNS entry</li>
+                            <li>TLS termination</li>
+                            <li>Horizontal scaling</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>I write...</h4>
+                        <ul>
+                            <li><code>Service type: LoadBalancer</code></li>
+                            <li><code>PersistentVolumeClaim</code></li>
+                            <li><code>CronJob</code></li>
+                            <li><code>Service</code> (CoreDNS auto-registers)</li>
+                            <li><code>Ingress</code> with TLS config</li>
+                            <li><code>HorizontalPodAutoscaler</code></li>
+                        </ul>
+                    </div>
+                </div>
+                <aside class="notes">This is perhaps the most transformative aspect of Kubernetes for developer productivity. What used to take days of ticket-driven processes now takes a YAML file and a kubectl apply. The platform team pre-configures what's allowed (via RBAC, quotas, policies), and developers operate within those guardrails.</aside>
+            </section>
+
+            <!-- Section Divider: Core Abstractions -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #2c5282 100%)" class="section-divider">
+                <h2>&#128230; Core Abstractions Review</h2>
+                <h3>Pods, Deployments, and Services — the developer lens</h3>
+                <aside class="notes">Let's review the three foundational abstractions. Even if you've seen these before, we're going to look at them through a developer-centric lens — focusing on why each exists, not just what it does.</aside>
+            </section>
+
+            <!-- Abstraction to Need Mapping -->
+            <section>
+                <h2>&#128506; Abstraction-to-Need Mapping</h2>
+=======
+                <aside class="notes">
+                    Welcome to the Intermediate Kubernetes course, prepared for Verisign. This opening module frames the entire 3-day journey from a developer's perspective. The audience already has foundational Kubernetes knowledge, so we'll focus on why K8s is the platform of choice for modern application development and set the stage for the deeper topics ahead.
+                </aside>
+            </section>
+
+            <!-- Module Objectives -->
+            <section>
+                <h2>&#127919; Module Objectives</h2>
+                <div class="concept-box">
+                    <h4>By the end of this module, you will be able to:</h4>
+                    <ul>
+                        <li class="fragment fade-up">Articulate why Kubernetes matters specifically for <strong>application developers</strong>, not just operations teams</li>
+                        <li class="fragment fade-up">Describe the developer workflow from source code to running workloads in Kubernetes</li>
+                        <li class="fragment fade-up">Identify how core Kubernetes abstractions serve developer needs</li>
+                        <li class="fragment fade-up">Explain how Kubernetes enables developer productivity through environment parity and self-service</li>
+                        <li class="fragment fade-up">Understand the roadmap for the next 3 days of hands-on learning</li>
+                    </ul>
+                </div>
+                <aside class="notes">
+                    These objectives set the tone for the entire course. We want developers to see Kubernetes not as an ops burden, but as a platform that solves real problems they face daily: consistency, reproducibility, and self-service infrastructure.
+                </aside>
+            </section>
+
+            <!-- Section Divider: Developer's Perspective -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="section-divider">
+                <h2>&#128104;&#8205;&#128187; The Developer's Perspective on Kubernetes</h2>
+                <h3>Why K8s is a developer platform, not just an ops tool</h3>
+                <aside class="notes">
+                    This section reframes Kubernetes from something "the platform team manages" to something that directly empowers developers. Many developers see K8s as complex infrastructure — we want to shift that perspective.
+                </aside>
+            </section>
+
+            <!-- Why K8s Matters for Developers -->
+            <section>
+                <h2>&#128640; Why K8s Matters for Developers</h2>
+                <div class="two-columns">
+                    <div class="card">
+                        <h4>Before Kubernetes</h4>
+                        <ul>
+                            <li class="fragment fade-up">"Works on my machine" syndrome</li>
+                            <li class="fragment fade-up">File tickets to deploy anything</li>
+                            <li class="fragment fade-up">Environment drift between dev and prod</li>
+                            <li class="fragment fade-up">Manual scaling during traffic spikes</li>
+                            <li class="fragment fade-up">Opaque deployment processes</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>With Kubernetes</h4>
+                        <ul>
+                            <li class="fragment fade-up">Declarative, version-controlled deployments</li>
+                            <li class="fragment fade-up">Self-service namespace provisioning</li>
+                            <li class="fragment fade-up">Identical environments across stages</li>
+                            <li class="fragment fade-up">Autoscaling built into the platform</li>
+                            <li class="fragment fade-up">Full visibility into workload state</li>
+                        </ul>
+                    </div>
+                </div>
+                <aside class="notes">
+                    This isn't about convincing anyone to adopt Kubernetes — they already have it. It's about helping developers see how to leverage it effectively. The shift is from request-driven ops to self-service platform engineering.
+                </aside>
+            </section>
+
+            <!-- Developer Workflow -->
+            <section>
+                <h2>&#128260; Developer Workflow: Code to Cluster</h2>
+                <div class="highlight-box">
+                    <p style="text-align:center; font-size:0.85em; margin: 0;">
+                        <strong>Write Code</strong> &rarr; <strong>Build Image</strong> &rarr; <strong>Push to Registry</strong> &rarr; <strong>Define Manifests</strong> &rarr; <strong>Deploy to K8s</strong> &rarr; <strong>Observe &amp; Iterate</strong>
+                    </p>
+                </div>
+                <div class="two-columns" style="margin-top: 20px;">
+                    <div>
+                        <h4>What You Own</h4>
+                        <ul>
+                            <li class="fragment fade-up">Application code and Dockerfiles</li>
+                            <li class="fragment fade-up">Kubernetes manifests (Deployments, Services, ConfigMaps)</li>
+                            <li class="fragment fade-up">Resource requests and limits</li>
+                            <li class="fragment fade-up">Health check definitions</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4>What You Leverage</h4>
+                        <ul>
+                            <li class="fragment fade-up">CI/CD pipelines (Jenkins, GitOps)</li>
+                            <li class="fragment fade-up">Container registry</li>
+                            <li class="fragment fade-up">Cluster networking &amp; ingress</li>
+                            <li class="fragment fade-up">Monitoring &amp; logging infrastructure</li>
+                        </ul>
+                    </div>
+                </div>
+                <aside class="notes">
+                    Walk through the end-to-end developer workflow. Emphasize that developers own the application definition — the "what" — while the platform provides the "how." This ownership model is central to the course.
+                </aside>
+            </section>
+
+            <!-- The Contract Between Developers and Platform Teams -->
+            <section>
+                <h2>&#129309; The Developer-Platform Contract</h2>
+                <div class="key-point">
+                    <strong>Core Idea:</strong> Kubernetes establishes a clear API boundary between what developers define and what the platform provides. This contract is what makes self-service possible.
+                </div>
+                <div class="two-columns" style="margin-top: 15px;">
+                    <div class="card">
+                        <h4>&#128221; Developer Responsibilities</h4>
+                        <ul>
+                            <li class="fragment fade-up">Define resource requirements (CPU, memory)</li>
+                            <li class="fragment fade-up">Specify readiness &amp; liveness probes</li>
+                            <li class="fragment fade-up">Manage configuration via ConfigMaps/Secrets</li>
+                            <li class="fragment fade-up">Design for horizontal scalability</li>
+                            <li class="fragment fade-up">Emit structured logs and metrics</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>&#9881;&#65039; Platform Responsibilities</h4>
+                        <ul>
+                            <li class="fragment fade-up">Cluster provisioning and upgrades</li>
+                            <li class="fragment fade-up">Network policies and security baselines</li>
+                            <li class="fragment fade-up">Storage classes and persistent volumes</li>
+                            <li class="fragment fade-up">Ingress controllers and certificates</li>
+                            <li class="fragment fade-up">Monitoring stack (Grafana, Splunk, Netcool)</li>
+                        </ul>
+                    </div>
+                </div>
+                <aside class="notes">
+                    This slide is especially relevant for Verisign, where platform teams and application developers have distinct roles. The Kubernetes API is the contract — developers express intent, the platform fulfills it. This separation of concerns is what we'll build on throughout the course.
+                </aside>
+            </section>
+
+            <!-- Section Divider: Key Abstractions Review -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="section-divider">
+                <h2>&#128230; Key Kubernetes Abstractions</h2>
+                <h3>A focused review through the developer lens</h3>
+                <aside class="notes">
+                    This is a rapid review — not teaching these concepts from scratch. The goal is to reframe familiar objects in terms of the developer problems they solve.
+                </aside>
+            </section>
+
+            <!-- Quick Review: Core Objects -->
+            <section>
+                <h2>&#128194; Core Objects Review</h2>
+                <div class="three-columns">
+                    <div class="card">
+                        <h4>Pod</h4>
+                        <p style="font-size:0.8em;">The smallest deployable unit. Your container(s) plus shared networking and storage.</p>
+                        <div class="highlight-box" style="padding:10px 15px; margin:8px 0;">
+                            <small><strong>Developer lens:</strong> "Where my code runs"</small>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h4>Deployment</h4>
+                        <p style="font-size:0.8em;">Manages ReplicaSets, handles rolling updates and rollbacks declaratively.</p>
+                        <div class="highlight-box" style="padding:10px 15px; margin:8px 0;">
+                            <small><strong>Developer lens:</strong> "How my code is released"</small>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h4>Service</h4>
+                        <p style="font-size:0.8em;">Stable network endpoint for a set of Pods. Decouples discovery from deployment.</p>
+                        <div class="highlight-box" style="padding:10px 15px; margin:8px 0;">
+                            <small><strong>Developer lens:</strong> "How others reach my code"</small>
+                        </div>
+                    </div>
+                </div>
+                <aside class="notes">
+                    Keep this quick — one minute per object. The developer lens framing is the key value-add here, not the object definitions themselves.
+                </aside>
+            </section>
+
+            <!-- How Abstractions Serve Developers -->
+            <section>
+                <h2>&#127918; How Abstractions Serve Developer Needs</h2>
+>>>>>>> e7e0dd4937630aca9107087d93bdcef32cbb8143
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Developer Need</th>
+                            <th>K8s Abstraction</th>
+<<<<<<< HEAD
+                            <th>What It Provides</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Run my container</td>
+                            <td>Pod</td>
+                            <td>Smallest deployable unit, shared network/storage</td>
+                        </tr>
+                        <tr>
+                            <td>Keep N replicas running</td>
+                            <td>Deployment / ReplicaSet</td>
+                            <td>Desired state, rolling updates, rollback</td>
+                        </tr>
+                        <tr>
+                            <td>Stable network endpoint</td>
+                            <td>Service</td>
+                            <td>Load balancing, DNS, stable IP</td>
+                        </tr>
+                        <tr>
+                            <td>External traffic routing</td>
+                            <td>Ingress / Gateway</td>
+                            <td>HTTP routing, TLS, path-based routing</td>
+                        </tr>
+                        <tr>
+=======
+                            <th>What It Solves</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="fragment fade-up">
+                            <td>Zero-downtime releases</td>
+                            <td>Deployment (rolling update)</td>
+                            <td>Gradual rollout with automatic rollback</td>
+                        </tr>
+                        <tr class="fragment fade-up">
+                            <td>Service discovery</td>
+                            <td>Service + DNS</td>
+                            <td>Stable endpoints regardless of Pod IPs</td>
+                        </tr>
+                        <tr class="fragment fade-up">
+                            <td>Scaling under load</td>
+                            <td>ReplicaSet + HPA</td>
+                            <td>Automatic replica adjustment on metrics</td>
+                        </tr>
+                        <tr class="fragment fade-up">
+>>>>>>> e7e0dd4937630aca9107087d93bdcef32cbb8143
+                            <td>Configuration management</td>
+                            <td>ConfigMap / Secret</td>
+                            <td>Externalized config, decoupled from image</td>
+                        </tr>
+<<<<<<< HEAD
+                        <tr>
+                            <td>Persistent data</td>
+                            <td>PVC / StorageClass</td>
+                            <td>Dynamic provisioning, lifecycle management</td>
+                        </tr>
+                        <tr>
+                            <td>Run-to-completion tasks</td>
+                            <td>Job / CronJob</td>
+                            <td>Batch processing, scheduled tasks</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <aside class="notes">This table is your Rosetta Stone. Every time you encounter a new Kubernetes resource type, ask: what developer need does this serve? If you can't answer that question, you probably don't need it yet.</aside>
+            </section>
+
+            <!-- Pods -->
+            <section>
+                <h2>&#128230; Pods — The Atomic Unit</h2>
+                <div class="two-columns">
+                    <div>
+                        <ul>
+                            <li class="fragment fade-up">Smallest deployable unit in K8s</li>
+                            <li class="fragment fade-up">One or more containers sharing network &amp; storage</li>
+                            <li class="fragment fade-up">Every container in a pod shares <code>localhost</code></li>
+                            <li class="fragment fade-up">Pods are <strong>ephemeral</strong> — they can be killed and rescheduled</li>
+                            <li class="fragment fade-up">You rarely create pods directly — use Deployments</li>
+                        </ul>
+                        <div class="highlight-box warning fragment fade-up">
+                            <strong>Developer Rule:</strong> Never depend on a specific pod existing. Design for ephemerality.
+                        </div>
+                    </div>
+                    <div>
+                        <pre><code class="language-yaml">apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp
+  labels:
+    app: myapp
+    version: v1.2.3
+spec:
+  containers:
+  - name: myapp
+    image: 123456789.dkr.ecr.us-east-1.amazonaws.com/myapp:v1.2.3
+    ports:
+    - containerPort: 8080
+    resources:
+      requests:
+        cpu: "250m"
+        memory: "256Mi"
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+    livenessProbe:
+      httpGet:
+        path: /healthz
+        port: 8080
+      initialDelaySeconds: 10
+    readinessProbe:
+      httpGet:
+        path: /ready
+        port: 8080
+      initialDelaySeconds: 5</code></pre>
+                    </div>
+                </div>
+                <aside class="notes">The pod spec is the most important manifest a developer writes. Notice the key elements: container image with a specific tag (never use :latest in production), resource requests and limits, and health probes. Every one of these is a developer responsibility.</aside>
+            </section>
+
+            <!-- Deployments -->
+            <section>
+                <h2>&#9881;&#65039; Deployments — Desired State Management</h2>
+                <pre><code class="language-yaml">apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+  labels:
+    app: myapp
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: myapp
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: myapp
+        version: v1.2.3
+    spec:
+      containers:
+      - name: myapp
+        image: 123456789.dkr.ecr.us-east-1.amazonaws.com/myapp:v1.2.3
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            cpu: "250m"
+            memory: "256Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"</code></pre>
+                <div class="key-point fragment fade-up">
+                    <strong>Developer value:</strong> You declare <em>"I want 3 healthy copies of my app running at all times"</em> and Kubernetes makes it happen — and keeps it that way.
+                </div>
+                <aside class="notes">The Deployment is the workhorse resource for developers. Key things to note: replicas controls availability, the strategy section controls how updates happen (maxUnavailable: 0 means zero-downtime deploys), and the selector must match the pod template labels. The Deployment controller continuously reconciles actual state to desired state.</aside>
+            </section>
+
+            <!-- Services -->
+            <section>
+                <h2>&#128279; Services — Stable Networking</h2>
+                <div class="two-columns">
+                    <div>
+                        <pre><code class="language-yaml">apiVersion: v1
+kind: Service
+metadata:
+  name: myapp
+spec:
+  selector:
+    app: myapp
+  ports:
+  - port: 80
+    targetPort: 8080
+    protocol: TCP
+  type: ClusterIP</code></pre>
+                        <div class="highlight-box fragment fade-up">
+                            <strong>DNS auto-registered:</strong><br>
+                            <code>myapp.default.svc.cluster.local</code>
+                        </div>
+                    </div>
+                    <div>
+                        <h4>Why Services exist:</h4>
+                        <ul>
+                            <li class="fragment fade-up">Pods have dynamic IPs — they change on restart</li>
+                            <li class="fragment fade-up">Services provide a <strong>stable</strong> virtual IP</li>
+                            <li class="fragment fade-up">Built-in load balancing across pod replicas</li>
+                            <li class="fragment fade-up">DNS-based discovery — no hardcoded IPs</li>
+                            <li class="fragment fade-up">Selector connects Service to Pods via labels</li>
+                        </ul>
+                        <div class="key-point fragment fade-up">
+                            <strong>Think of it as:</strong> A stable address that always routes to healthy pods.
+                        </div>
+                    </div>
+                </div>
+                <aside class="notes">The Service is how pods find and talk to each other. The selector is the glue — it matches labels on pods. Kubernetes automatically updates the endpoints as pods come and go. This is the foundation of service discovery, which we'll cover in depth in Module 4.</aside>
+            </section>
+
+            <!-- Section Divider: Declarative -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #2c5282 100%)" class="section-divider">
+                <h2>&#128220; Declarative vs. Imperative</h2>
+                <h3>The most important mental shift</h3>
+                <aside class="notes">This is arguably the most important conceptual shift for developers coming to Kubernetes. Let's make it crystal clear.</aside>
+=======
+                        <tr class="fragment fade-up">
+                            <td>Persistent state</td>
+                            <td>PV / PVC</td>
+                            <td>Storage that survives Pod restarts</td>
+                        </tr>
+                        <tr class="fragment fade-up">
+                            <td>External traffic routing</td>
+                            <td>Ingress / Gateway API</td>
+                            <td>L7 routing, TLS termination, path-based rules</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <aside class="notes">
+                    This table previews many of the topics we'll cover in depth over the next 3 days. The point is: every abstraction exists because developers had a real problem that needed solving.
+                </aside>
+>>>>>>> e7e0dd4937630aca9107087d93bdcef32cbb8143
+            </section>
+
+            <!-- Declarative vs Imperative -->
+            <section>
+<<<<<<< HEAD
+                <h2>&#128260; Two Ways to Interact with Kubernetes</h2>
+                <div class="two-columns">
+                    <div class="card">
+                        <h4>&#128680; Imperative (Avoid in Production)</h4>
+                        <pre><code class="language-bash"># Step-by-step commands
+kubectl create deployment myapp \
+  --image=myapp:v1
+kubectl scale deployment myapp \
+  --replicas=3
+kubectl expose deployment myapp \
+  --port=80 --target-port=8080
+kubectl set image deployment/myapp \
+  myapp=myapp:v2</code></pre>
+                        <p style="font-size: 0.85em;">Tells Kubernetes <em>what to do</em> step by step.</p>
+                    </div>
+                    <div class="card">
+                        <h4>&#9989; Declarative (Best Practice)</h4>
+                        <pre><code class="language-bash"># Declare desired state
+kubectl apply -f deployment.yaml
+kubectl apply -f service.yaml
+
+# Update? Change the YAML, re-apply
+kubectl apply -f deployment.yaml
+
+# Everything is in version control
+git diff deployment.yaml</code></pre>
+                        <p style="font-size: 0.85em;">Tells Kubernetes <em>what you want</em> — it figures out how.</p>
+                    </div>
+                </div>
+                <aside class="notes">The declarative approach is fundamental to Kubernetes' power. With imperative commands, you lose the ability to audit, diff, review, and version control your infrastructure. Declarative manifests are code — they go in Git, they get reviewed in PRs, and they serve as documentation of your system's desired state.</aside>
+            </section>
+
+            <!-- Why Declarative Wins -->
+            <section>
+                <h2>&#127942; Why Declarative Wins</h2>
+                <div class="three-columns">
+                    <div class="card">
+                        <h4>&#128270; Auditability</h4>
+                        <ul>
+                            <li>Git history shows every change</li>
+                            <li>PR reviews for infra changes</li>
+                            <li>Blame shows who changed what</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>&#128260; Reproducibility</h4>
+                        <ul>
+                            <li>Same YAML = same result</li>
+                            <li>Recreate environments from Git</li>
+                            <li>Disaster recovery is a <code>kubectl apply</code></li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>&#129302; Automation</h4>
+                        <ul>
+                            <li>GitOps workflows (ArgoCD, Flux)</li>
+                            <li>CI/CD pipelines apply manifests</li>
+                            <li>Drift detection built-in</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="highlight-box success fragment fade-up">
+                    <strong>The reconciliation loop:</strong> Kubernetes continuously compares desired state (your YAML) to actual state (what's running) and takes action to converge. This is the superpower.
+                </div>
+                <aside class="notes">The reconciliation loop is the heart of Kubernetes. It's not a one-time "run this command" — it's a continuous process. If a pod crashes, the controller sees the discrepancy and creates a new one. This is self-healing infrastructure, driven by your declarative manifests.</aside>
+            </section>
+
+            <!-- Section Divider: Environment Parity -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #2c5282 100%)" class="section-divider">
+                <h2>&#127760; Environment Parity</h2>
+                <h3>Same image, same behavior, everywhere</h3>
+                <aside class="notes">Environment parity is one of the core promises of containerized workloads on Kubernetes. Let's explore how Kubernetes delivers on this promise.</aside>
+=======
+                <h2>&#128220; Declarative vs. Imperative</h2>
+                <div class="two-columns">
+                    <div class="card">
+                        <h4>Imperative</h4>
+                        <pre><code class="language-bash"># Step-by-step commands
+kubectl run nginx --image=nginx
+kubectl expose pod nginx --port=80
+kubectl scale deployment nginx --replicas=3</code></pre>
+                        <div class="highlight-box warning" style="padding:10px 15px; margin:8px 0;">
+                            <small><strong>Good for:</strong> Quick debugging, exploration</small>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h4>Declarative</h4>
+                        <pre><code class="language-yaml"># Desired state in YAML
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+spec:
+  replicas: 3
+  ...</code></pre>
+                        <div class="highlight-box success" style="padding:10px 15px; margin:8px 0;">
+                            <small><strong>Good for:</strong> Production, GitOps, repeatability</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="key-point fragment fade-up" style="margin-top:15px;">
+                    <strong>Rule of thumb:</strong> If it goes in version control, it should be declarative. This course emphasizes the declarative approach throughout.
+                </div>
+                <aside class="notes">
+                    Most developers are comfortable with both approaches. The key message is that declarative manifests are the foundation of GitOps, Helm charts, and everything we'll build on in this course. Imperative commands have their place for ad-hoc debugging.
+                </aside>
+            </section>
+
+            <!-- Section Divider: Developer Productivity -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="section-divider">
+                <h2>&#9889; Developer Productivity with Kubernetes</h2>
+                <h3>How K8s makes you faster and more confident</h3>
+                <aside class="notes">
+                    Now we move from what Kubernetes is to what it enables. These are the productivity gains that justify the complexity of the platform.
+                </aside>
+>>>>>>> e7e0dd4937630aca9107087d93bdcef32cbb8143
+            </section>
+
+            <!-- Environment Parity -->
+            <section>
+<<<<<<< HEAD
+                <h2>&#128203; Environment Parity with Kubernetes</h2>
+                <div class="concept-box">
+                    <h4>The Promise</h4>
+                    <p>The same container image runs identically in every environment. Configuration is injected, not baked in.</p>
+                </div>
+                <div class="two-columns fragment fade-up">
+                    <div class="card">
+                        <h4>What stays the same</h4>
+                        <ul>
+                            <li>Container image (immutable artifact)</li>
+                            <li>Application code and dependencies</li>
+                            <li>Runtime (JVM, Node, Python version)</li>
+                            <li>OS-level packages</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>What changes per environment</h4>
+                        <ul>
+                            <li>ConfigMaps (feature flags, URLs)</li>
+                            <li>Secrets (credentials, API keys)</li>
+                            <li>Resource requests/limits</li>
+                            <li>Replica counts</li>
+                            <li>Ingress rules / hostnames</li>
+                        </ul>
+                    </div>
+                </div>
+                <aside class="notes">This is a direct implementation of the 12-factor app principle of dev/prod parity. The image is your immutable artifact — it's the same bytes in every environment. Only the configuration changes. Kubernetes makes this natural with ConfigMaps and Secrets.</aside>
+            </section>
+
+            <!-- Kustomize Example -->
+            <section>
+                <h2>&#128736;&#65039; Environment Parity in Practice</h2>
+                <pre><code class="language-bash"># Directory structure for multi-environment manifests
+k8s/
+├── base/
+│   ├── deployment.yaml        # Common Deployment spec
+│   ├── service.yaml           # Common Service spec
+│   └── kustomization.yaml     # Base kustomization
+├── overlays/
+│   ├── dev/
+│   │   ├── kustomization.yaml # Dev-specific patches
+│   │   ├── replicas-patch.yaml
+│   │   └── configmap.yaml
+│   ├── staging/
+│   │   ├── kustomization.yaml
+│   │   ├── replicas-patch.yaml
+│   │   └── configmap.yaml
+│   └── prod/
+│       ├── kustomization.yaml
+│       ├── replicas-patch.yaml
+│       └── configmap.yaml</code></pre>
+                <pre class="fragment fade-up"><code class="language-bash"># Deploy to each environment
+kubectl apply -k k8s/overlays/dev/
+kubectl apply -k k8s/overlays/staging/
+kubectl apply -k k8s/overlays/prod/</code></pre>
+                <aside class="notes">Kustomize is built into kubectl and is the standard approach for managing environment-specific configurations. The base contains the common definition, and overlays patch only what differs. This ensures environments stay in sync while allowing necessary differences like replica counts and resource limits.</aside>
+            </section>
+
+            <!-- Section Divider: 12-Factor -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #2c5282 100%)" class="section-divider">
+                <h2>&#127919; 12-Factor App Principles</h2>
+                <h3>How Kubernetes embodies modern application design</h3>
+                <aside class="notes">The 12-factor app methodology predates Kubernetes, but Kubernetes was essentially designed to run 12-factor apps. Let's map the principles to Kubernetes features.</aside>
+            </section>
+
+            <!-- 12-Factor Mapping -->
+            <section>
+                <h2>&#128218; 12-Factor Principles &amp; Kubernetes</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Factor</th>
+                            <th>Principle</th>
+                            <th>Kubernetes Implementation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>I</td>
+                            <td>Codebase</td>
+                            <td>One repo, one container image</td>
+                        </tr>
+                        <tr>
+                            <td>II</td>
+                            <td>Dependencies</td>
+                            <td>Bundled in container image</td>
+                        </tr>
+                        <tr>
+                            <td>III</td>
+                            <td>Config</td>
+                            <td>ConfigMaps, Secrets, env vars</td>
+                        </tr>
+                        <tr>
+                            <td>IV</td>
+                            <td>Backing Services</td>
+                            <td>Services, ExternalName, endpoints</td>
+                        </tr>
+                        <tr>
+                            <td>V</td>
+                            <td>Build, Release, Run</td>
+                            <td>Image build → tag → Deployment</td>
+                        </tr>
+                        <tr>
+                            <td>VI</td>
+                            <td>Processes</td>
+                            <td>Stateless pods, external state</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <aside class="notes">This is the first half of the 12 factors. Notice how each one maps cleanly to a Kubernetes concept. This isn't a coincidence — Kubernetes was designed by people who deeply understood these principles. If your application follows 12-factor design, it will thrive on Kubernetes.</aside>
+            </section>
+
+            <!-- 12-Factor Continued -->
+            <section>
+                <h2>&#128218; 12-Factor Principles &amp; Kubernetes (cont.)</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Factor</th>
+                            <th>Principle</th>
+                            <th>Kubernetes Implementation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>VII</td>
+                            <td>Port Binding</td>
+                            <td><code>containerPort</code> + Service</td>
+                        </tr>
+                        <tr>
+                            <td>VIII</td>
+                            <td>Concurrency</td>
+                            <td>Horizontal scaling (replicas, HPA)</td>
+                        </tr>
+                        <tr>
+                            <td>IX</td>
+                            <td>Disposability</td>
+                            <td>Fast startup, graceful shutdown (<code>preStop</code>)</td>
+                        </tr>
+                        <tr>
+                            <td>X</td>
+                            <td>Dev/Prod Parity</td>
+                            <td>Same image + Kustomize overlays</td>
+                        </tr>
+                        <tr>
+                            <td>XI</td>
+                            <td>Logs</td>
+                            <td>Write to stdout/stderr, collected by platform</td>
+                        </tr>
+                        <tr>
+                            <td>XII</td>
+                            <td>Admin Processes</td>
+                            <td>Jobs, CronJobs, <code>kubectl exec</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="key-point fragment fade-up">
+                    <strong>Design implication:</strong> Applications that follow these principles are "Kubernetes-native" — they leverage the platform fully and avoid fighting it.
+                </div>
+                <aside class="notes">Factor IX — Disposability — is particularly important. Kubernetes will kill and reschedule your pods. If your application can't handle graceful shutdown (SIGTERM), you'll have problems. Factor XI — Logs — means your app should never write to log files inside the container. Write to stdout/stderr and let the platform handle collection.</aside>
+            </section>
+
+            <!-- Graceful Shutdown Example -->
+            <section>
+                <h2>&#128683; Factor IX Deep Dive — Disposability</h2>
+                <pre><code class="language-yaml">spec:
+  terminationGracePeriodSeconds: 30
+  containers:
+  - name: myapp
+    image: myapp:v1.2.3
+    lifecycle:
+      preStop:
+        exec:
+          command: ["/bin/sh", "-c", "sleep 5"]  # Allow in-flight requests to drain
+    # When Kubernetes stops a pod:
+    # 1. Pod marked as Terminating
+    # 2. Removed from Service endpoints
+    # 3. preStop hook runs
+    # 4. SIGTERM sent to PID 1
+    # 5. Wait terminationGracePeriodSeconds
+    # 6. SIGKILL if still running</code></pre>
+                <div class="highlight-box warning fragment fade-up">
+                    <strong>Common mistake:</strong> Not handling SIGTERM in your application. If your process doesn't gracefully shut down on SIGTERM, in-flight requests will be dropped.
+                </div>
+                <aside class="notes">The pod termination lifecycle is critical for zero-downtime deployments. The preStop sleep of 5 seconds gives kube-proxy and ingress controllers time to update their routing tables before the pod stops accepting traffic. This prevents dropped connections during rolling updates.</aside>
+            </section>
+
+            <!-- Section Divider: EKS Context -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #2c5282 100%)" class="section-divider">
+                <h2>&#9729;&#65039; Kubernetes on EKS</h2>
+                <h3>Your platform at Verisign</h3>
+                <aside class="notes">Let's ground everything we've discussed in the specific platform you'll be working with — Amazon EKS.</aside>
+            </section>
+
+            <!-- EKS Overview -->
+            <section>
+                <h2>&#9729;&#65039; Amazon EKS — What It Means for Developers</h2>
+                <div class="two-columns">
+                    <div class="card">
+                        <h4>AWS Manages</h4>
+                        <ul>
+                            <li>Kubernetes control plane (API server, etcd, scheduler, controller-manager)</li>
+                            <li>Control plane high availability (multi-AZ)</li>
+                            <li>Kubernetes version upgrades</li>
+                            <li>API server certificates &amp; authentication</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>Your Team Manages</h4>
+                        <ul>
+                            <li>Worker node groups (EC2 or Fargate)</li>
+                            <li>Application deployments</li>
+                            <li>Namespaces, RBAC policies</li>
+                            <li>Add-ons (ingress, monitoring, etc.)</li>
+                            <li>Application-level configuration</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="highlight-box success fragment fade-up">
+                    <strong>EKS advantage:</strong> The control plane is someone else's problem. You focus on workloads.
+                </div>
+                <aside class="notes">EKS is a managed Kubernetes service, which means the hardest part of running Kubernetes — the control plane — is handled by AWS. This lets the platform team focus on worker node management and developer enablement, and lets developers focus entirely on their applications.</aside>
+            </section>
+
+            <!-- EKS Developer Workflow -->
+            <section>
+                <h2>&#128736;&#65039; EKS Developer Workflow</h2>
+                <pre><code class="language-bash"># 1. Authenticate to the cluster
+aws eks update-kubeconfig --name verisign-cluster --region us-east-1
+
+# 2. Verify connectivity
+kubectl cluster-info
+kubectl get nodes
+
+# 3. Set your namespace context
+kubectl config set-context --current --namespace=my-team
+
+# 4. Deploy your application
+kubectl apply -f k8s/
+
+# 5. Monitor your deployment
+kubectl rollout status deployment/myapp
+kubectl get pods -w
+
+# 6. Check logs
+kubectl logs -l app=myapp --tail=100 -f
+
+# 7. Debug if needed
+kubectl describe pod myapp-abc123
+kubectl exec -it myapp-abc123 -- /bin/sh</code></pre>
+                <aside class="notes">This is the daily workflow for developers on EKS. The aws eks update-kubeconfig command configures your local kubectl to authenticate with the EKS cluster using IAM. From there, it's standard Kubernetes commands. Namespaces are typically used to isolate team workloads.</aside>
+            </section>
+
+            <!-- Lab Callout -->
+            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" class="lab-callout">
+                <h2>&#128295; Lab 1: Exploring Your Kubernetes Cluster</h2>
+                <h3>Hands-on: Connect, explore, deploy</h3>
+                <ul>
+                    <li>Connect to the EKS cluster using <code>aws eks update-kubeconfig</code></li>
+                    <li>Explore cluster resources with <code>kubectl get</code> and <code>kubectl describe</code></li>
+                    <li>Deploy a sample application using a Deployment manifest</li>
+                    <li>Expose it with a Service and verify connectivity</li>
+                    <li>Practice imperative vs. declarative approaches</li>
+                    <li>Examine pod lifecycle events and logs</li>
+                </ul>
+                <div class="highlight-box">
+                    <strong>Duration:</strong> ~30 minutes
+                </div>
+                <aside class="notes">This lab establishes the baseline workflow. Everyone should be comfortable with kubectl, cluster connectivity, and basic resource creation before we proceed. Circulate and help anyone with authentication issues — those are the most common blockers.</aside>
+            </section>
+
+            <!-- Section Divider: Course Roadmap -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #2c5282 100%)" class="section-divider">
+                <h2>&#128506;&#65039; Course Roadmap</h2>
+                <h3>What we'll cover across 16 modules</h3>
+                <aside class="notes">Let's preview the entire course so you can see how everything connects. Each module builds on the previous ones.</aside>
+            </section>
+
+            <!-- Course Roadmap Part 1 -->
+            <section>
+                <h2>&#128506;&#65039; Course Roadmap — Modules 1-8</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Module</th>
+                            <th>Focus</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td><strong>Why Kubernetes</strong></td>
+                            <td>Developer value prop, core abstractions</td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>Scaling &amp; AutoScalers</td>
+                            <td>HPA, VPA, KEDA, metrics</td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>Managing Data</td>
+                            <td>PVCs, StorageClasses, StatefulSets</td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td>Services &amp; Discovery</td>
+                            <td>Service types, DNS, kube-proxy</td>
+                        </tr>
+                        <tr>
+                            <td>5</td>
+                            <td>Ingress &amp; Traffic</td>
+                            <td>Ingress controllers, routing, TLS</td>
+                        </tr>
+                        <tr>
+                            <td>6</td>
+                            <td>Configuration</td>
+                            <td>ConfigMaps, Secrets, env injection</td>
+                        </tr>
+                        <tr>
+                            <td>7</td>
+                            <td>RBAC &amp; Security</td>
+                            <td>Roles, bindings, service accounts</td>
+                        </tr>
+                        <tr>
+                            <td>8</td>
+                            <td>Network Policies</td>
+                            <td>Pod-to-pod traffic control</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <aside class="notes">Modules 1-8 cover the core developer skills. By the end of module 8, you'll be able to deploy, expose, configure, secure, and scale applications on Kubernetes. The remaining modules build advanced operational skills.</aside>
+            </section>
+
+            <!-- Course Roadmap Part 2 -->
+            <section>
+                <h2>&#128506;&#65039; Course Roadmap — Modules 9-16</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Module</th>
+                            <th>Focus</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>9</td>
+                            <td>Observability</td>
+                            <td>Logging, metrics, tracing</td>
+                        </tr>
+                        <tr>
+                            <td>10</td>
+                            <td>Health Checks &amp; Probes</td>
+                            <td>Liveness, readiness, startup probes</td>
+                        </tr>
+                        <tr>
+                            <td>11</td>
+                            <td>Deployment Strategies</td>
+                            <td>Rolling, blue-green, canary</td>
+                        </tr>
+                        <tr>
+                            <td>12</td>
+                            <td>Helm &amp; Templating</td>
+                            <td>Charts, values, releases</td>
+                        </tr>
+                        <tr>
+                            <td>13</td>
+                            <td>CI/CD Integration</td>
+                            <td>Pipelines, GitOps, ArgoCD</td>
+                        </tr>
+                        <tr>
+                            <td>14</td>
+                            <td>Jobs &amp; CronJobs</td>
+                            <td>Batch processing, scheduling</td>
+                        </tr>
+                        <tr>
+                            <td>15</td>
+                            <td>Resource Management</td>
+                            <td>Quotas, LimitRanges, QoS</td>
+                        </tr>
+                        <tr>
+                            <td>16</td>
+                            <td>Troubleshooting</td>
+                            <td>Debugging, common issues, tools</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <aside class="notes">Modules 9-16 focus on production readiness and operational excellence. These are the skills that separate someone who can deploy to Kubernetes from someone who can run production workloads reliably. The troubleshooting module at the end pulls everything together.</aside>
+            </section>
+
+            <!-- Summary -->
+            <section>
+                <h2>&#128218; Module 1 — Key Takeaways</h2>
+                <div class="concept-box">
+                    <ul>
+                        <li class="fragment fade-up"><strong>Kubernetes is a developer platform</strong> — it transforms infrastructure requests into self-service API calls</li>
+                        <li class="fragment fade-up"><strong>The developer-platform contract</strong> — you define what you need; the platform delivers how</li>
+                        <li class="fragment fade-up"><strong>Core abstractions map to developer needs</strong> — Pod (run), Deployment (manage), Service (connect)</li>
+                        <li class="fragment fade-up"><strong>Declarative &gt; imperative</strong> — YAML in Git is your source of truth</li>
+                        <li class="fragment fade-up"><strong>Environment parity via containers</strong> — same image, different config per environment</li>
+                        <li class="fragment fade-up"><strong>12-factor apps thrive on K8s</strong> — the platform was designed for this pattern</li>
+                        <li class="fragment fade-up"><strong>EKS simplifies operations</strong> — AWS manages the control plane, you manage workloads</li>
+                    </ul>
+                </div>
+                <aside class="notes">These seven takeaways form the mental model for the rest of the course. Every subsequent module builds on these foundations. If participants can articulate these points, they have the right framework for everything that follows.</aside>
+            </section>
+
+            <!-- Questions -->
+            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" class="questions-slide" style="text-align: center;">
+                <h2>&#10067; Questions &amp; Discussion</h2>
+                <p>What aspects of your current workflow would you most like Kubernetes to improve?</p>
+                <aside class="notes">Open the floor for questions. This is a good time to understand the audience's current experience level and pain points. Their answers will help you tailor emphasis in later modules. Common questions: How does this work with our existing CI/CD? How do we handle database migrations? What about local development?</aside>
+=======
+                <h2>&#127919; Environment Parity</h2>
+                <div class="concept-box">
+                    <h4>The Twelve-Factor Principle: Dev/Prod Parity</h4>
+                    <p style="font-size:0.85em;">Keep development, staging, and production as similar as possible. Kubernetes makes this achievable by standardizing the runtime environment.</p>
+                </div>
+                <div class="three-columns" style="margin-top:15px;">
+                    <div class="card fragment fade-up">
+                        <h4>&#128187; Dev</h4>
+                        <ul style="font-size:0.85em;">
+                            <li>Same container images</li>
+                            <li>Same K8s manifests (different values)</li>
+                            <li>Namespace isolation</li>
+                        </ul>
+                    </div>
+                    <div class="card fragment fade-up">
+                        <h4>&#128736;&#65039; Staging</h4>
+                        <ul style="font-size:0.85em;">
+                            <li>Mirrors production topology</li>
+                            <li>Same network policies</li>
+                            <li>Realistic resource quotas</li>
+                        </ul>
+                    </div>
+                    <div class="card fragment fade-up">
+                        <h4>&#127757; Production</h4>
+                        <ul style="font-size:0.85em;">
+                            <li>Proven images from pipeline</li>
+                            <li>Full observability stack</li>
+                            <li>Autoscaling enabled</li>
+                        </ul>
+                    </div>
+                </div>
+                <aside class="notes">
+                    The key insight is that Kubernetes manifests plus Kustomize or Helm overlays let you keep a single source of truth with environment-specific overrides. We'll cover Helm and Kustomize in detail in a later module.
+                </aside>
+            </section>
+
+            <!-- Self-Service Infrastructure -->
+            <section>
+                <h2>&#128295; Self-Service Infrastructure</h2>
+                <div class="highlight-box">
+                    <strong>Shift Left:</strong> Developers can provision what they need without filing infrastructure tickets — within guardrails set by the platform team.
+                </div>
+                <ul style="margin-top:15px;">
+                    <li class="fragment fade-up"><strong>Namespaces</strong> &mdash; Isolated environments on shared clusters</li>
+                    <li class="fragment fade-up"><strong>Resource Quotas</strong> &mdash; Guaranteed resource allocation per team</li>
+                    <li class="fragment fade-up"><strong>RBAC</strong> &mdash; Scoped permissions for deploy, debug, and observe</li>
+                    <li class="fragment fade-up"><strong>PVCs</strong> &mdash; Request storage dynamically through StorageClasses</li>
+                    <li class="fragment fade-up"><strong>Ingress rules</strong> &mdash; Expose services without touching load balancers</li>
+                </ul>
+                <div class="key-point fragment fade-up" style="margin-top:15px;">
+                    <strong>The result:</strong> Faster iteration cycles. Developers deploy in minutes, not days.
+                </div>
+                <aside class="notes">
+                    This is particularly relevant in enterprise environments like Verisign, where the platform team sets the guardrails (quotas, network policies, PSA) and developers operate freely within them.
+                </aside>
+            </section>
+
+            <!-- Reproducible Deployments -->
+            <section>
+                <h2>&#128257; Reproducible Deployments</h2>
+                <div class="two-columns">
+                    <div>
+                        <h4>What Makes It Reproducible</h4>
+                        <ul>
+                            <li class="fragment fade-up"><strong>Immutable container images</strong> &mdash; same bytes in every environment</li>
+                            <li class="fragment fade-up"><strong>Declarative manifests</strong> &mdash; desired state is version-controlled</li>
+                            <li class="fragment fade-up"><strong>Helm/Kustomize</strong> &mdash; parameterized templating</li>
+                            <li class="fragment fade-up"><strong>GitOps</strong> &mdash; Git is the single source of truth</li>
+                        </ul>
+                    </div>
+                    <div class="card fragment fade-up">
+                        <h4>&#128161; Why It Matters</h4>
+                        <ul style="font-size:0.85em;">
+                            <li>Rollback is trivial: <code>git revert</code> + sync</li>
+                            <li>Audit trail for every change</li>
+                            <li>Disaster recovery = reapply manifests</li>
+                            <li>New team members can deploy day one</li>
+                        </ul>
+                    </div>
+                </div>
+                <aside class="notes">
+                    Reproducibility is the foundation of trust in your deployment pipeline. When a deployment is fully described in code and driven by GitOps, you eliminate the "what changed?" question during incidents.
+                </aside>
+            </section>
+
+            <!-- Resource Management from a Dev Perspective -->
+            <section>
+                <h2>&#128202; Resource Management: The Developer's View</h2>
+                <div class="concept-box">
+                    <h4>You Define the Contract, K8s Enforces It</h4>
+                    <p style="font-size:0.85em;">Resource <strong>requests</strong> guarantee capacity. Resource <strong>limits</strong> cap consumption. Getting this right is a developer responsibility.</p>
+                </div>
+                <div class="two-columns" style="margin-top:15px;">
+                    <div class="card fragment fade-up">
+                        <h4>Requests</h4>
+                        <pre><code class="language-yaml">resources:
+  requests:
+    cpu: "250m"
+    memory: "256Mi"</code></pre>
+                        <p style="font-size:0.75em;">Scheduler uses this to place your Pod. Underestimate = potential eviction. Overestimate = wasted cluster capacity.</p>
+                    </div>
+                    <div class="card fragment fade-up">
+                        <h4>Limits</h4>
+                        <pre><code class="language-yaml">resources:
+  limits:
+    cpu: "1"
+    memory: "512Mi"</code></pre>
+                        <p style="font-size:0.75em;">Hard ceiling. Exceeding memory limit = OOMKilled. CPU is throttled, not killed.</p>
+                    </div>
+                </div>
+                <aside class="notes">
+                    Resource management is often treated as an ops concern, but it directly affects developer experience. OOMKilled pods and CPU throttling are developer problems. We'll dive deeper into VPA and HPA in Module 2.
+                </aside>
+            </section>
+
+            <!-- Quotas and LimitRanges -->
+            <section>
+                <h2>&#128208; Quotas and LimitRanges</h2>
+                <div class="highlight-box">
+                    <strong>Platform guardrails that protect everyone</strong> &mdash; including you from noisy neighbors.
+                </div>
+                <div class="two-columns" style="margin-top:15px;">
+                    <div class="card fragment fade-up">
+                        <h4>ResourceQuota</h4>
+                        <p style="font-size:0.8em;">Per-namespace caps on total CPU, memory, object counts</p>
+                        <pre><code class="language-yaml">apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: team-quota
+spec:
+  hard:
+    requests.cpu: "10"
+    requests.memory: 20Gi
+    pods: "50"</code></pre>
+                    </div>
+                    <div class="card fragment fade-up">
+                        <h4>LimitRange</h4>
+                        <p style="font-size:0.8em;">Per-pod/container defaults and bounds</p>
+                        <pre><code class="language-yaml">apiVersion: v1
+kind: LimitRange
+metadata:
+  name: defaults
+spec:
+  limits:
+  - default:
+      cpu: "500m"
+      memory: "256Mi"
+    type: Container</code></pre>
+                    </div>
+                </div>
+                <aside class="notes">
+                    Developers need to understand quotas because they'll encounter them as deployment errors — "exceeded quota" messages. Knowing what quotas exist in your namespace and how to right-size your workloads is essential.
+                </aside>
+            </section>
+
+            <!-- Section Divider: Course Roadmap -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="section-divider">
+                <h2>&#128506;&#65039; Course Roadmap</h2>
+                <h3>3 days, 13 modules, hands-on throughout</h3>
+                <aside class="notes">
+                    Let's preview the full course so everyone knows where we're headed. This context helps each module make more sense as we go.
+                </aside>
+            </section>
+
+            <!-- Day 1 Overview -->
+            <section>
+                <h2>&#128197; Day 1: Running &amp; Scaling Applications</h2>
+                <div class="concept-box">
+                    <h4>Foundation: Getting your applications running well</h4>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Module</th>
+                            <th>Topic</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>1</strong></td>
+                            <td>Why We Use Kubernetes (this module)</td>
+                        </tr>
+                        <tr class="fragment fade-up">
+                            <td><strong>2</strong></td>
+                            <td>Scaling with AutoScalers &amp; Metrics (HPA, VPA)</td>
+                        </tr>
+                        <tr class="fragment fade-up">
+                            <td><strong>3</strong></td>
+                            <td>Managing Application Data (PV, PVC, Ephemeral Volumes)</td>
+                        </tr>
+                        <tr class="fragment fade-up">
+                            <td><strong>4</strong></td>
+                            <td>Connecting Applications: Services &amp; Advanced Selectors</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <aside class="notes">
+                    Day 1 ensures everyone can deploy, scale, store data, and connect services. These are the daily essentials for any K8s developer.
+                </aside>
+            </section>
+
+            <!-- Day 2 Overview -->
+            <section>
+                <h2>&#128197; Day 2: Configuration, Security &amp; Access</h2>
+                <div class="concept-box">
+                    <h4>Hardening: Making applications production-ready</h4>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Module</th>
+                            <th>Topic</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="fragment fade-up">
+                            <td><strong>5</strong></td>
+                            <td>Managing Configuration &amp; Secrets</td>
+                        </tr>
+                        <tr class="fragment fade-up">
+                            <td><strong>6</strong></td>
+                            <td>External Access: Ingress, Gateway API &amp; Certificates</td>
+                        </tr>
+                        <tr class="fragment fade-up">
+                            <td><strong>7</strong></td>
+                            <td>Network Policies with Calico</td>
+                        </tr>
+                        <tr class="fragment fade-up">
+                            <td><strong>8</strong></td>
+                            <td>Secure Containers &amp; Pod Security Admission (PSA)</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <aside class="notes">
+                    Day 2 shifts to security and configuration — the difference between a demo and a production deployment. Network policies and PSA are critical for Verisign's compliance requirements.
+                </aside>
+            </section>
+
+            <!-- Day 3 Overview -->
+            <section>
+                <h2>&#128197; Day 3: Deploy, Debug &amp; Operate</h2>
+                <div class="concept-box">
+                    <h4>Mastery: Packaging, automating, and troubleshooting</h4>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Module</th>
+                            <th>Topic</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="fragment fade-up">
+                            <td><strong>9</strong></td>
+                            <td>Packaging with Helm &amp; Kustomize</td>
+                        </tr>
+                        <tr class="fragment fade-up">
+                            <td><strong>10</strong></td>
+                            <td>Automating Deployments: Jenkins CI/CD &amp; GitOps</td>
+                        </tr>
+                        <tr class="fragment fade-up">
+                            <td><strong>11</strong></td>
+                            <td>Observability: Logging (Splunk) &amp; Alerting (Netcool, Grafana)</td>
+                        </tr>
+                        <tr class="fragment fade-up">
+                            <td><strong>12</strong></td>
+                            <td>Debugging Applications in Kubernetes</td>
+                        </tr>
+                        <tr class="fragment fade-up">
+                            <td><strong>13</strong></td>
+                            <td>N-Tier Application Patterns &amp; Verisign Architectures</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <aside class="notes">
+                    Day 3 brings it all together — packaging, automation, observability, and troubleshooting. The capstone module ties everything to Verisign-specific deployment patterns.
+                </aside>
+            </section>
+
+            <!-- How Topics Build on Each Other -->
+            <section>
+                <h2>&#128279; How Topics Build on Each Other</h2>
+                <div class="highlight-box">
+                    <p style="font-size:0.85em; margin:0;"><strong>Each module feeds the next.</strong> The course follows the lifecycle of an application from deployment through production operation.</p>
+                </div>
+                <div class="concept-box fragment fade-up" style="margin-top:15px;">
+                    <div style="text-align:center; font-size:0.8em; line-height:2.2;">
+                        <strong>Deploy &amp; Scale</strong> (Modules 1-2)
+                        &rarr; <strong>Store Data</strong> (Module 3)
+                        &rarr; <strong>Connect Services</strong> (Module 4)<br>
+                        &rarr; <strong>Configure &amp; Secure</strong> (Modules 5-8)
+                        &rarr; <strong>Package &amp; Automate</strong> (Modules 9-10)<br>
+                        &rarr; <strong>Observe &amp; Debug</strong> (Modules 11-12)
+                        &rarr; <strong>Integrate</strong> (Module 13)
+                    </div>
+                </div>
+                <div class="key-point fragment fade-up" style="margin-top:15px;">
+                    <strong>Every module includes a hands-on lab</strong> — you'll build real skills, not just theoretical knowledge.
+                </div>
+                <aside class="notes">
+                    Emphasize that this is a cumulative journey. Skills from earlier labs carry forward. By Module 13, students will deploy a full multi-tier application using everything they've learned.
+                </aside>
+            </section>
+
+            <!-- Key Takeaways -->
+            <section>
+                <h2>&#128218; Key Takeaways</h2>
+                <ul class="takeaway-list">
+                    <li class="fragment fade-up">&#9989; Kubernetes is a <strong>developer productivity platform</strong>, not just infrastructure</li>
+                    <li class="fragment fade-up">&#9989; The <strong>developer-platform contract</strong> enables self-service within guardrails</li>
+                    <li class="fragment fade-up">&#9989; Core abstractions solve <strong>real developer problems</strong>: releases, discovery, scaling, config</li>
+                    <li class="fragment fade-up">&#9989; <strong>Declarative, version-controlled manifests</strong> are the foundation for everything we'll build on</li>
+                    <li class="fragment fade-up">&#9989; <strong>Environment parity and reproducibility</strong> eliminate entire categories of bugs</li>
+                    <li class="fragment fade-up">&#9989; This course covers the full lifecycle: <strong>deploy, secure, package, automate, debug</strong></li>
+                </ul>
+                <aside class="notes">
+                    Summarize the key points before moving to the lab. These themes — developer ownership, declarative config, self-service — will recur throughout all 13 modules.
+                </aside>
+            </section>
+
+            <!-- Lab Callout -->
+            <section data-background-color="#1a365d" class="lab-callout">
+                <h2>&#128248; Lab 1</h2>
+                <h3>Exploring Your Kubernetes Environment</h3>
+                <div class="highlight-box" style="margin-top:20px;">
+                    <p style="margin:0;"><strong>Objective:</strong> Verify your cluster access, explore the environment, and observe the Pod lifecycle firsthand.</p>
+                </div>
+                <ul style="margin-top:20px;">
+                    <li class="fragment fade-up">Verify cluster access with <code style="color:#90cdf4;">kubectl cluster-info</code> and <code style="color:#90cdf4;">kubectl get nodes</code></li>
+                    <li class="fragment fade-up">Explore existing namespaces and their resource quotas</li>
+                    <li class="fragment fade-up">Deploy a sample application using a Deployment manifest</li>
+                    <li class="fragment fade-up">Expose it with a Service and verify connectivity</li>
+                    <li class="fragment fade-up">Examine the Pod lifecycle: Pending &rarr; ContainerCreating &rarr; Running</li>
+                    <li class="fragment fade-up">Inspect events, logs, and resource consumption with <code style="color:#90cdf4;">kubectl describe</code> and <code style="color:#90cdf4;">kubectl logs</code></li>
+                </ul>
+                <aside class="notes">
+                    This lab ensures everyone has a working environment and is comfortable with kubectl. It also sets the baseline for the more complex labs to come. Allow about 30-40 minutes. Circulate and help anyone with access issues early.
+                </aside>
+            </section>
+
+            <!-- Questions Slide -->
+            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="questions-slide">
+                <h2>&#10067; Questions?</h2>
+                <p>Before we move on to Module 2: Scaling Your Applications</p>
+                <aside class="notes">
+                    Open the floor for questions. Common questions at this point: "What cluster are we using?" and "Can I use my own IDE?" Address setup concerns before the lab.
+                </aside>
+>>>>>>> e7e0dd4937630aca9107087d93bdcef32cbb8143
+            </section>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/highlight/highlight.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/notes/notes.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            slideNumber: true,
+            transition: 'slide',
+            plugins: [RevealHighlight, RevealNotes]
+        });
+    </script>
+</body>
+<<<<<<< HEAD
+</html>
+=======
+</html>
+>>>>>>> e7e0dd4937630aca9107087d93bdcef32cbb8143
