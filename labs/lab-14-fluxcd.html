@@ -425,22 +425,17 @@ $ flux get sources git -o wide
 # Save as git-source.yaml
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: GitRepository
-metadata:
-  name: lab-sample-app
-  namespace: flux-system
+metadata: { name: lab-sample-app, namespace: flux-system }
 spec:
   interval: 2m
   url: https://github.com/fluxcd/flux2-kustomize-helm-example.git
-  ref:
-    branch: main
+  ref: { branch: main }
                 </code></pre>
                 <pre><code class="language-bash" data-trim>
 # Apply the source
 $ kubectl apply -f git-source.yaml
-
 # Watch it become Ready
 $ flux get sources git lab-sample-app --watch
-
 # Verify the artifact was fetched
 $ kubectl describe gitrepository lab-sample-app -n flux-system
                 </code></pre>
@@ -515,18 +510,8 @@ $ flux events --for Kustomization/lab-sample-app
 # Check the revision that was applied
 $ flux get kustomizations lab-sample-app
                 </code></pre>
-                <div class="concept-box" style="margin-top: 15px;">
-                    <h4>What Just Happened?</h4>
-                    <ol>
-                        <li class="fragment fade-up">The <code>--with-source</code> flag triggered the source controller to re-fetch from Git</li>
-                        <li class="fragment fade-up">The kustomize controller detected the (potentially updated) artifact</li>
-                        <li class="fragment fade-up">It ran <code>kustomize build</code> on the configured path</li>
-                        <li class="fragment fade-up">It applied the resulting manifests using server-side apply</li>
-                        <li class="fragment fade-up">It verified health checks (if configured) and reported Ready</li>
-                    </ol>
-                </div>
                 <aside class="notes">
-                    Even if nothing changed in Git, the reconciliation still runs and verifies the cluster state matches the desired state. This is the continuous reconciliation loop in action. Point out the revision in the output: if it matches the previous reconciliation, it means the source had not changed. If it is different, new commits were picked up. The with-source flag is important; without it, Flux would reconcile against the cached artifact, which might be stale.
+                    Tip: What Just Happened? -- 1) The --with-source flag triggered the source controller to re-fetch from Git, 2) The kustomize controller detected the updated artifact and ran kustomize build, 3) It applied the resulting manifests using server-side apply and verified health checks. Even if nothing changed in Git, the reconciliation still runs and verifies the cluster state matches the desired state. The with-source flag is important; without it, Flux would reconcile against the cached artifact, which might be stale.
                 </aside>
             </section>
 
@@ -684,9 +669,7 @@ $ flux get helmreleases lab-nginx -o wide
                 <pre><code class="language-yaml" data-trim>
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
-metadata:
-  name: lab-infra-base
-  namespace: flux-system
+metadata: { name: lab-infra-base, namespace: flux-system }
 spec:
   interval: 5m
   sourceRef: { kind: GitRepository, name: lab-sample-app }
@@ -695,9 +678,7 @@ spec:
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
-metadata:
-  name: lab-infra-configs
-  namespace: flux-system
+metadata: { name: lab-infra-configs, namespace: flux-system }
 spec:
   dependsOn: [{name: lab-infra-base}]
   sourceRef: { kind: GitRepository, name: lab-sample-app }
@@ -773,24 +754,18 @@ $ kubectl get deployment &lt;DEPLOYMENT_NAME&gt; -n &lt;NAMESPACE&gt; --watch
 # Save as broken-kustomization.yaml
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
-metadata:
-  name: lab-broken
-  namespace: flux-system
+metadata: { name: lab-broken, namespace: flux-system }
 spec:
   interval: 5m
-  sourceRef:
-    kind: GitRepository
-    name: lab-sample-app
+  sourceRef: { kind: GitRepository, name: lab-sample-app }
   path: ./this/path/does/not/exist   # Deliberate error!
   prune: true
                 </code></pre>
                 <pre><code class="language-bash" data-trim>
 # Apply the broken Kustomization
 $ kubectl apply -f broken-kustomization.yaml
-
-# Check the status
+# Check the status -- READY should be "False" with an error message
 $ flux get kustomizations lab-broken
-# READY should be "False" with an error message
                 </code></pre>
                 <aside class="notes">Expected: The Kustomization will fail with a message like "kustomization path not found" because the specified directory does not exist in the source repository.
                     

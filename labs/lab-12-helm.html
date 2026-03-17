@@ -368,7 +368,7 @@
             <section>
                 <h2>&#x2699; Verify Helm Installation</h2>
                 <p>Confirm Helm is installed and check the version:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Check Helm version
 helm version
 
@@ -412,7 +412,7 @@ helm list --all-namespaces
             <section>
                 <h2>&#x1F4E6; Add and Search Repositories</h2>
                 <p>Add the Bitnami chart repository and explore available charts:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 helm repo add bitnami https://charts.bitnami.com/bitnami
 
 helm repo update
@@ -423,18 +423,8 @@ helm search repo bitnami/nginx --versions | head -10
 
 helm show chart bitnami/nginx
                 </code></pre>
-                <aside class="notes">Expected Output: The repo add should confirm "bitnami" has been added to your repositories. The search should show multiple nginx-related charts with versions and descriptions.</aside>
-                <div class="concept-box fragment">
-                    <h4>&#x1F4A1; Helm Repository Commands</h4>
-                    <ul>
-                        <li><code>helm repo add</code> &mdash; register a new chart repository</li>
-                        <li><code>helm repo update</code> &mdash; refresh the local cache of chart metadata</li>
-                        <li><code>helm search repo</code> &mdash; search charts in added repositories</li>
-                        <li><code>helm search hub</code> &mdash; search Artifact Hub for charts across all registries</li>
-                    </ul>
-                </div>
-                <aside class="notes">
-                    Point out the difference between helm search repo (local repos) and helm search hub (Artifact Hub). The --versions flag shows all available chart versions, not just the latest.
+                <aside class="notes">Expected Output: The repo add should confirm "bitnami" has been added to your repositories. The search should show multiple nginx-related charts with versions and descriptions.
+                    Tip: Helm Repository Commands -- helm repo add (register a new chart repository), helm repo update (refresh the local cache), helm search repo (search charts in added repositories), helm search hub (search Artifact Hub for charts across all registries). The --versions flag shows all available chart versions, not just the latest.
                 </aside>
             </section>
 
@@ -465,7 +455,7 @@ helm show chart bitnami/nginx
             <section>
                 <h2>&#x1F680; Install nginx via Helm</h2>
                 <p>Install the Bitnami nginx chart with custom values:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 kubectl create namespace helm-lab
 
 helm show values bitnami/nginx | head -50
@@ -510,7 +500,7 @@ kubectl get pods -n helm-lab -w
             <section>
                 <h2>&#x1F50D; Inspect the Release</h2>
                 <p>Use Helm commands to examine the installed release:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 helm list -n helm-lab
 
 helm get values my-nginx -n helm-lab
@@ -555,7 +545,7 @@ helm get notes my-nginx -n helm-lab
             <section>
                 <h2>&#x2B06; Upgrade with New Values</h2>
                 <p>Upgrade the release to change the replica count:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Upgrade the release with more replicas
 helm upgrade my-nginx bitnami/nginx \
   --namespace helm-lab \
@@ -603,7 +593,7 @@ helm status my-nginx -n helm-lab
             <section>
                 <h2>&#x1F4DC; View History and Rollback</h2>
                 <p>Explore release history and perform a rollback:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # View release history
 helm history my-nginx -n helm-lab
 
@@ -654,7 +644,7 @@ helm history my-nginx -n helm-lab
             <section>
                 <h2>&#x1F3D7; Scaffold a New Chart</h2>
                 <p>Use <code>helm create</code> to generate a chart skeleton:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Create a new chart called mychart
 helm create mychart
 
@@ -696,7 +686,7 @@ find mychart/ -type f | sort
             <section>
                 <h2>&#x1F4C4; Chart.yaml and values.yaml</h2>
                 <p>Examine the chart metadata and default values:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # View chart metadata
 cat mychart/Chart.yaml
 
@@ -730,7 +720,7 @@ cat mychart/values.yaml
             <section>
                 <h2>&#x1F4C4; Explore the Templates</h2>
                 <p>Examine the deployment template to understand Go templating:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # View the deployment template
 cat mychart/templates/deployment.yaml
 
@@ -779,7 +769,7 @@ cat mychart/templates/_helpers.tpl
             <section>
                 <h2>&#x270F; Add a ConfigMap Template</h2>
                 <p>Create a new template for a ConfigMap:</p>
-                <pre><code class="yaml" data-trim>
+                <pre><code class="language-yaml" data-trim>
 # Save as mychart/templates/configmap.yaml
 apiVersion: v1
 kind: ConfigMap
@@ -802,7 +792,7 @@ data:
             <section>
                 <h2>&#x270F; Update values.yaml</h2>
                 <p>Add the new configuration values to values.yaml:</p>
-                <pre><code class="yaml" data-trim>
+                <pre><code class="language-yaml" data-trim>
 # Add to the end of mychart/values.yaml
 
 appConfig:
@@ -811,7 +801,7 @@ appConfig:
   customMessage: "Hello from Helm!"
                 </code></pre>
                 <p class="fragment">Then update the deployment template to mount the ConfigMap:</p>
-                <pre class="fragment"><code class="yaml" data-trim>
+                <pre class="fragment"><code class="language-yaml" data-trim>
 # Add to the container spec in mychart/templates/deployment.yaml
 # Inside the containers section, add:
           envFrom:
@@ -851,7 +841,7 @@ appConfig:
             <section>
                 <h2>&#x1F50D; Lint, Template, and Dry Run</h2>
                 <p>Use Helm's validation tools to check the chart:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Lint the chart for errors and best practices
 helm lint mychart/
 
@@ -866,17 +856,8 @@ helm install my-release mychart/ \
   --namespace helm-lab \
   --dry-run --debug
                 </code></pre>
-                <aside class="notes">Expected Output: helm lint should show ==> Linting mychart/ followed by 1 chart(s) linted, 0 chart(s) failed. Template output shows rendered YAML.</aside>
-                <div class="concept-box fragment">
-                    <h4>&#x1F4A1; Validation Workflow</h4>
-                    <ul>
-                        <li><code>helm lint</code> &mdash; checks chart structure and template syntax</li>
-                        <li><code>helm template</code> &mdash; renders templates locally for review</li>
-                        <li><code>helm install --dry-run</code> &mdash; validates against the cluster API without installing</li>
-                    </ul>
-                </div>
-                <aside class="notes">
-                    The --debug flag with --dry-run produces verbose output including the computed values and rendered templates. This is the most thorough validation because it includes server-side validation.
+                <aside class="notes">Expected Output: helm lint should show ==> Linting mychart/ followed by 1 chart(s) linted, 0 chart(s) failed. Template output shows rendered YAML.
+                    Tip: Validation Workflow -- helm lint (checks chart structure and template syntax), helm template (renders templates locally for review), helm install --dry-run (validates against the cluster API without installing). The --debug flag with --dry-run produces verbose output including the computed values and rendered templates.
                 </aside>
             </section>
 
@@ -907,7 +888,7 @@ helm install my-release mychart/ \
             <section>
                 <h2>&#x1F4E6; Package and Install</h2>
                 <p>Package the chart and install it from the archive:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 helm package mychart/
 
 ls mychart-*.tgz
@@ -929,7 +910,7 @@ kubectl get all -n helm-lab -l app.kubernetes.io/instance=my-custom-app
             <section>
                 <h2>&#x1F4E6; Verify ConfigMap and Environment</h2>
                 <p>Confirm the custom ConfigMap was created with correct values:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Check the ConfigMap
 kubectl get configmap -n helm-lab -l app.kubernetes.io/instance=my-custom-app
 kubectl describe configmap my-custom-app-mychart-config -n helm-lab
@@ -974,7 +955,7 @@ kubectl exec -n helm-lab \
             <section>
                 <h2>&#x1F9F9; Clean Up Resources</h2>
                 <p>Remove all Helm releases and lab resources:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Uninstall all releases
 helm uninstall my-nginx -n helm-lab
 helm uninstall my-custom-app -n helm-lab

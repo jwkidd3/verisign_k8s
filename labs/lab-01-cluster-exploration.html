@@ -365,7 +365,7 @@
             <section>
                 <h2>&#x1F50C; Verify Cluster Connectivity</h2>
                 <p>Confirm your kubectl is configured and can reach the cluster:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Check cluster endpoint information
 kubectl cluster-info
 
@@ -410,7 +410,7 @@ kubectl config current-context
             <section>
                 <h2>&#x1F5A5; Explore Cluster Nodes</h2>
                 <p>Examine the nodes that form your cluster:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # List all nodes with extended information
 kubectl get nodes -o wide
 
@@ -428,7 +428,7 @@ kubectl describe node &lt;NODE_NAME&gt;
             <section>
                 <h2>&#x1F3F7; Node Labels and Taints</h2>
                 <p>Labels and taints control pod scheduling:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # View all labels on nodes
 kubectl get nodes --show-labels
 
@@ -474,7 +474,7 @@ kubectl describe node &lt;NODE_NAME&gt; | grep -A 5 "Taints:"
             <section>
                 <h2>&#x1F4C2; Explore Namespaces</h2>
                 <p>Namespaces provide logical isolation within the cluster:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # List all namespaces
 kubectl get namespaces
 
@@ -486,7 +486,7 @@ kubectl describe namespace default
                 </div>
                 <div class="fragment">
                     <p>Now explore the system namespace:</p>
-                    <pre><code class="bash" data-trim>
+                    <pre><code class="language-bash" data-trim>
 # List system components running in kube-system
 kubectl get pods -n kube-system
 
@@ -526,7 +526,7 @@ kubectl get services -n kube-system
             <section>
                 <h2>&#x1F50D; Explore Running Workloads</h2>
                 <p>Get a full picture of what is running in the cluster:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # List all pods across all namespaces
 kubectl get pods -A
 
@@ -574,7 +574,7 @@ kubectl get all -A
             <section>
                 <h2>&#x1F680; Create a Namespace and Deploy nginx</h2>
                 <p>Create an isolated namespace for your work:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Create your personal namespace
 kubectl create namespace lab01
 
@@ -586,7 +586,7 @@ kubectl config view --minify | grep namespace
                 </code></pre>
                 <div class="fragment">
                     <p>Deploy an nginx application:</p>
-                    <pre><code class="bash" data-trim>
+                    <pre><code class="language-bash" data-trim>
 # Create an nginx deployment with 2 replicas
 kubectl create deployment nginx-lab --image=nginx:1.25 --replicas=2
 
@@ -629,7 +629,7 @@ kubectl get all -n lab01
             <section>
                 <h2>&#x1F50E; Examine Pod Details</h2>
                 <p>Inspect your running pods in depth:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Get pod names
 kubectl get pods -n lab01
 
@@ -653,7 +653,7 @@ kubectl describe pod &lt;POD_NAME&gt; -n lab01
             <section>
                 <h2>&#x1F4DC; Logs and Interactive Access</h2>
                 <p>View container logs and exec into a running container:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # View logs from a pod
 kubectl logs &lt;POD_NAME&gt; -n lab01
 
@@ -703,7 +703,7 @@ exit
             <section>
                 <h2>&#x2195; Scale the Deployment</h2>
                 <p>Scale your deployment up and observe the changes:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Scale up to 5 replicas
 kubectl scale deployment nginx-lab --replicas=5 -n lab01
 
@@ -718,7 +718,7 @@ kubectl get deployment nginx-lab -n lab01
                 </div>
                 <div class="fragment">
                     <p>Now scale back down:</p>
-                    <pre><code class="bash" data-trim>
+                    <pre><code class="language-bash" data-trim>
 # Scale down to 2 replicas
 kubectl scale deployment nginx-lab --replicas=2 -n lab01
 
@@ -758,13 +758,13 @@ kubectl get pods -n lab01 -w
             <section>
                 <h2>&#x1F310; Access the Application</h2>
                 <p>Use port-forwarding to access your service locally:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Forward local port 8080 to the service port 80
 kubectl port-forward service/nginx-lab 8080:80 -n lab01
                 </code></pre>
                 <div class="fragment">
                     <p>Open a <strong>second terminal</strong> and test the connection:</p>
-                    <pre><code class="bash" data-trim>
+                    <pre><code class="language-bash" data-trim>
 # Test the application
 curl http://localhost:8080
 
@@ -807,7 +807,7 @@ curl -I http://localhost:8080
             <section>
                 <h2>&#x1F4CA; Explore Resource Usage</h2>
                 <p>Check resource consumption across the cluster:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # View node resource usage
 kubectl top nodes
 
@@ -822,7 +822,7 @@ kubectl top pods -A --sort-by=cpu
                 </div>
                 <div class="highlight-box warning fragment">
                     <strong>&#x26A0; If kubectl top fails:</strong> The metrics-server may not be installed. Check with:
-                    <pre><code class="bash" data-trim>
+                    <pre><code class="language-bash" data-trim>
 kubectl get pods -n kube-system | grep metrics-server
                     </code></pre>
                     If missing, this is expected in some environments. You can skip this step and proceed to cleanup.
@@ -856,7 +856,7 @@ kubectl get pods -n kube-system | grep metrics-server
             <section>
                 <h2>&#x1F9F9; Clean Up Resources</h2>
                 <p>Remove all resources created during this lab:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Reset your default namespace context
 kubectl config set-context --current --namespace=default
 

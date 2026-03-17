@@ -458,8 +458,8 @@ $ kubectl get svc -n lab-ingress
 # Save as ingress-host.yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
-metadata: { name: app-ingress-host, namespace: lab-ingress }
-annotations: { nginx.ingress.kubernetes.io/rewrite-target: / }
+metadata: { name: app-ingress-host, namespace: lab-ingress,
+  annotations: { nginx.ingress.kubernetes.io/rewrite-target: / } }
 spec:
   ingressClassName: nginx
   rules:
@@ -475,8 +475,7 @@ spec:
               backend: { service: { name: app-v2-svc, port: { number: 80 } } } }
                 </code></pre>
                 <pre><code class="language-bash" data-trim>
-$ kubectl apply -f ingress-host.yaml
-$ kubectl get ingress -n lab-ingress
+$ kubectl apply -f ingress-host.yaml && kubectl get ingress -n lab-ingress
                 </code></pre>
                 <aside class="notes">
                     This Ingress defines two host rules. Requests to v1.lab.local are routed to app-v1-svc, and requests to v2.lab.local are routed to app-v2-svc. The ingressClassName must match an available IngressClass. If using AWS ALB Controller, change ingressClassName to alb and add the appropriate annotations. The rewrite-target annotation is specific to NGINX Ingress Controller.
@@ -636,26 +635,19 @@ Hello from App V1</pre>
             <section>
                 <h2>&#128640; Step 6: Create TLS Secret and Ingress</h2>
                 <pre><code class="language-bash" data-trim>
-# Generate a self-signed certificate for the lab domain
+# Generate a self-signed certificate and create TLS Secret
 $ openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
     -keyout tls-ingress.key -out tls-ingress.crt \
     -subj "/CN=*.lab.local/O=Verisign Lab"
-
-# Create the TLS Secret in the lab namespace
 $ kubectl create secret tls lab-tls-secret \
-    --cert=tls-ingress.crt \
-    --key=tls-ingress.key \
-    -n lab-ingress
+    --cert=tls-ingress.crt --key=tls-ingress.key -n lab-ingress
                 </code></pre>
                 <pre><code class="language-yaml" data-trim>
 # Save as ingress-tls.yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
-metadata:
-  name: app-ingress-tls
-  namespace: lab-ingress
-  annotations:
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+metadata: { name: app-ingress-tls, namespace: lab-ingress,
+  annotations: { nginx.ingress.kubernetes.io/ssl-redirect: "true" } }
 spec:
   ingressClassName: nginx
 # ... (remaining lines omitted for brevity)</code></pre>
@@ -813,7 +805,6 @@ spec:
                 <pre><code class="language-bash" data-trim>
 $ kubectl apply -f gateway.yaml
 $ kubectl get gateway -n lab-ingress
-$ kubectl describe gateway lab-gateway -n lab-ingress
                 </code></pre>
                 <aside class="notes">
                     The GatewayClass is a cluster-scoped resource that defines the controller implementation (similar to IngressClass). The Gateway is namespace-scoped and defines listeners on specific ports and protocols. The allowedRoutes field controls which namespaces can attach routes to this Gateway. The TLS listener references the same TLS Secret we created in Step 6. This separation of concerns allows platform teams to manage Gateways while application teams manage Routes.
@@ -968,13 +959,13 @@ spec:
   podSelector: { matchLabels: { run: egress-test } }
   policyTypes: [Egress]
   egress:
-    # Allow DNS resolution (required for service discovery)
-    - to:
+    - to:  # Allow DNS
         - namespaceSelector: {}
-          podSelector: { matchLabels: { k8s-app: kube-dns } }
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
       ports: [{ protocol: UDP, port: 53 }, { protocol: TCP, port: 53 }]
-    # Allow traffic to cluster-internal services only
-    - to:
+    - to:  # Allow cluster-internal HTTP
         - namespaceSelector:
             matchLabels: { kubernetes.io/metadata.name: lab-ingress }
       ports: [{ protocol: TCP, port: 80 }]

@@ -414,28 +414,21 @@ vault kv get -format=json secret/lab16/database</code></pre>
 
             <section>
                 <h2>Step 3: Create a Vault Policy</h2>
-                <h3>Write a read-only policy for lab16 secrets</h3>
-                <pre><code class="language-bash"># Still inside the Vault pod shell
-# Create the policy
+                <pre><code class="language-bash"># Still inside the Vault pod shell — write a read-only policy
 vault policy write lab16-readonly - &lt;&lt;EOF
 # Allow reading secrets under lab16/
 path "secret/data/lab16/*" {
   capabilities = ["read", "list"]
 }
-
 # Allow listing secret metadata
 path "secret/metadata/lab16/*" {
   capabilities = ["read", "list"]
 }
-EOF</code></pre>
-                <div class="fragment fade-up">
-                    <h3>Verify the policy</h3>
-                    <pre><code class="language-bash"># Read the policy back
+EOF
+
+# Verify the policy
 vault policy read lab16-readonly</code></pre>
-                </div>
-                <div class="key-point fragment fade-up">
-                    <strong>&#128161; Note the <code>/data/</code> prefix:</strong> KV v2 stores data at <code>secret/data/...</code> even though you write to <code>secret/...</code>. Policies must use the full API path including <code>/data/</code>.
-                </div>
+                <aside class="notes">Tip: Note the /data/ prefix — KV v2 stores data at secret/data/... even though you write to secret/.... Policies must use the full API path including /data/.</aside>
                 <aside class="notes">
                     The policy grants read and list capabilities on secret/data/lab16/* which covers all secrets under the lab16 path. We also grant read on the metadata path so ESO can check version information. Remind students that the /data/ prefix is required in policies for KV v2 — this is the most common policy mistake.
                 </aside>
@@ -575,18 +568,12 @@ EOF</code></pre>
 
             <section>
                 <h2>Step 8: Verify Secret Sync</h2>
-                <h3>Check the ExternalSecret status</h3>
-                <pre><code class="language-bash"># Check ExternalSecret status
+                <pre><code class="language-bash"># Check ExternalSecret status (look for STATUS: SecretSynced)
 kubectl get externalsecret -n lab16
-
-# Look for STATUS: SecretSynced
 kubectl describe externalsecret db-credentials -n lab16</code></pre>
                 <div class="fragment fade-up">
-                    <h3>Inspect the synced K8s Secret</h3>
-                    <pre><code class="language-bash"># View the Secret (base64 encoded)
+                    <pre><code class="language-bash"># Inspect the synced K8s Secret — decode individual values
 kubectl get secret db-credentials -n lab16 -o yaml
-
-# Decode individual values
 kubectl get secret db-credentials -n lab16 \
   -o jsonpath='{.data.username}' | base64 -d && echo
 kubectl get secret db-credentials -n lab16 \
@@ -718,27 +705,20 @@ kubectl exec -it secret-consumer -n lab16 -- env | grep DB_PASSWORD
 
             <section>
                 <h2>Step 11: Test Policy Boundaries</h2>
-                <h3>Store a secret outside the policy scope</h3>
                 <pre><code class="language-bash"># Store a secret at a DIFFERENT path (outside lab16/)
 kubectl exec -it vault-0 -n vault -- \
   vault kv put secret/lab16-other/credentials \
     api_key=super-secret-key</code></pre>
                 <div class="fragment fade-up">
-                    <h3>Try to access it via ExternalSecret</h3>
-                    <pre><code class="language-bash">cat &lt;&lt;'EOF' | kubectl apply -f -
+                    <pre><code class="language-bash"># Try to access it via ExternalSecret
+cat &lt;&lt;'EOF' | kubectl apply -f -
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
-metadata:
-  name: unauthorized-secret
-  namespace: lab16
+metadata: { name: unauthorized-secret, namespace: lab16 }
 spec:
   refreshInterval: "1m"
-  secretStoreRef:
-    name: vault-backend
-    kind: ClusterSecretStore
-  target:
-    name: unauthorized-secret
-    creationPolicy: Owner
+  secretStoreRef: { name: vault-backend, kind: ClusterSecretStore }
+  target: { name: unauthorized-secret, creationPolicy: Owner }
   data:
     - secretKey: api_key
       remoteRef:
@@ -778,7 +758,6 @@ kubectl describe externalsecret unauthorized-secret -n lab16</code></pre>
 
             <section>
                 <h2>Step 12: Clean Up</h2>
-                <h3>Remove lab resources</h3>
                 <pre><code class="language-bash"># Delete the Kubernetes resources
 kubectl delete namespace lab16
 
@@ -788,17 +767,13 @@ kubectl exec -it vault-0 -n vault -- /bin/sh -c '
   vault kv metadata delete secret/lab16-other/credentials
   vault delete auth/kubernetes/role/lab16-role
   vault policy delete lab16-readonly
-'</code></pre>
-                <div class="fragment fade-up">
-                    <h3>Verify cleanup</h3>
-                    <pre><code class="language-bash"># Confirm namespace is deleted
+'
+
+# Verify cleanup
 kubectl get namespace lab16
 # Expected: Error from server (NotFound)
-
-# Confirm Vault policy is removed
 kubectl exec -it vault-0 -n vault -- vault policy list | grep lab16
 # Expected: no output</code></pre>
-                </div>
                 <aside class="notes">Cleanup complete. All lab resources have been removed from the cluster and Vault.
                     
                     Deleting the namespace removes all K8s resources within it (pods, secrets, ExternalSecrets, ServiceAccounts). The Vault cleanup removes the secret data, the auth role, and the policy. Verify both are clean before moving on.

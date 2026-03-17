@@ -334,16 +334,13 @@
                 <h2>&#128640; Step 1: Create the Namespace and Backend</h2>
                 <p>Set up the lab namespace and deploy the backend tier:</p>
                 <pre><code class="language-bash" data-trim>
-# Create the lab namespace
 $ kubectl create namespace lab-services
                 </code></pre>
                 <pre><code class="language-yaml" data-trim>
 # Save as backend-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
-metadata:
-  name: backend
-  namespace: lab-services
+metadata: { name: backend, namespace: lab-services }
 spec:
   replicas: 3
   selector:
@@ -544,12 +541,7 @@ spec:
                 <pre><code class="language-bash" data-trim>
 $ kubectl apply -f frontend-nodeport.yaml
 $ kubectl get svc frontend-nodeport -n lab-services
-                </code></pre>
-                <pre><code class="language-bash" data-trim>
-# Get a node's external IP to test
 $ kubectl get nodes -o wide
-
-# Test via NodePort
 $ curl http://&lt;NODE-EXTERNAL-IP&gt;:30080
                 </code></pre>
                 <aside class="notes">
@@ -802,11 +794,8 @@ $ for i in $(seq 1 6); do
                 <div class="highlight-box success">
                     <p style="margin:0;"><strong>Expected:</strong> Requests to <code>backend-svc</code> may hit different pods. Requests to <code>backend-sticky</code> consistently hit the same pod (same response pattern).</p>
                 </div>
-                <div class="highlight-box warning">
-                    <p style="margin:0;"><strong>Caveat:</strong> Session affinity is based on the client's source IP. When traffic passes through a load balancer or proxy, all clients may appear to have the same IP, making session affinity ineffective. Use application-level session management for production workloads.</p>
-                </div>
                 <aside class="notes">
-                    The comparison between the two Services clearly shows the effect of session affinity. Without it, kube-proxy distributes requests across backends using round-robin or random selection. With it, the same source IP always maps to the same backend. The caveat about proxies is important for production. If all requests originate from the same pod (as in this test), they all have the same source IP and will always hit the same backend regardless of session affinity settings.
+                    Tip: Session affinity is based on the client's source IP. When traffic passes through a load balancer or proxy, all clients may appear to have the same IP, making session affinity ineffective. Use application-level session management for production workloads. The comparison between the two Services clearly shows the effect of session affinity. Without it, kube-proxy distributes requests across backends using round-robin or random selection. With it, the same source IP always maps to the same backend. If all requests originate from the same pod (as in this test), they all have the same source IP and will always hit the same backend regardless of session affinity settings.
                 </aside>
             </section>
 
@@ -898,14 +887,8 @@ $ kubectl delete namespace lab-services
 $ kubectl get all -n lab-services
 $ kubectl get svc -n lab-services
                 </code></pre>
-                <div class="highlight-box">
-                    <p style="margin:0;"><strong>Note:</strong> Delete the LoadBalancer Service before the namespace to ensure the AWS Load Balancer Controller has time to clean up the NLB. If you delete the namespace first, the NLB may become orphaned and require manual cleanup in AWS.</p>
-                </div>
-                <div class="highlight-box warning">
-                    <p style="margin:0;"><strong>Cost Warning:</strong> Orphaned NLBs incur ongoing AWS charges. Always verify that the NLB has been deprovisioned by checking the AWS console or running <code>aws elbv2 describe-load-balancers</code>.</p>
-                </div>
                 <aside class="notes">
-                    Order of deletion matters here. The LoadBalancer Service must be deleted while the AWS Load Balancer Controller is still running and the finalizer can execute. If the namespace is force-deleted, the controller may not get a chance to decommission the NLB. In production, this can lead to orphaned resources and unexpected AWS charges. Always verify cleanup in the AWS console.
+                    Tip: Delete the LoadBalancer Service before the namespace to ensure the AWS Load Balancer Controller has time to clean up the NLB. If you delete the namespace first, the NLB may become orphaned and require manual cleanup in AWS. Orphaned NLBs incur ongoing AWS charges. Always verify that the NLB has been deprovisioned by checking the AWS console or running aws elbv2 describe-load-balancers. Order of deletion matters here. The LoadBalancer Service must be deleted while the AWS Load Balancer Controller is still running and the finalizer can execute.
                 </aside>
             </section>
 

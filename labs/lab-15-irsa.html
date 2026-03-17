@@ -325,26 +325,20 @@
             <section>
                 <h2>&#128269; Step 1: Verify OIDC Provider</h2>
                 <aside class="notes">Confirm the EKS cluster has an OIDC issuer and that the corresponding IAM OIDC Identity Provider exists.</aside><div class="fragment fade-up" style="margin-top: 15px;">
-                    <h4>1a. Get the OIDC issuer URL</h4>
-                    <pre><code class="language-bash"># Retrieve the OIDC issuer URL for the cluster
+                    <pre><code class="language-bash"># 1a. Get the OIDC issuer URL
 aws eks describe-cluster \
   --name platform-lab \
   --query "cluster.identity.oidc.issuer" \
   --output text
+# Expected: https://oidc.eks.us-east-1.amazonaws.com/id/EXAMPLED539D...
 
-# Expected output (example):
-# https://oidc.eks.us-east-1.amazonaws.com/id/EXAMPLED539D4633E53DE1B71EXAMPLE</code></pre>
-                </div>
-                <div class="fragment fade-up" style="margin-top: 15px;">
-                    <h4>1b. Extract the OIDC ID and verify in IAM</h4>
-                    <pre><code class="language-bash"># Extract just the OIDC ID
+# 1b. Extract the OIDC ID and verify in IAM
 OIDC_ID=$(aws eks describe-cluster --name platform-lab \
   --query "cluster.identity.oidc.issuer" --output text | cut -d'/' -f5)
 echo "OIDC ID: $OIDC_ID"
 
 # List OIDC providers and check for our cluster's ID
 aws iam list-open-id-connect-providers | grep $OIDC_ID
-
 # Expected: ARN of the OIDC provider matching our cluster</code></pre>
                 </div>
                 <aside class="notes">
@@ -385,27 +379,16 @@ aws iam get-open-id-connect-provider --open-id-connect-provider-arn $OIDC_ARN</c
             <section>
                 <h2>&#128270; Step 2: Examine Existing IRSA</h2>
                 <aside class="notes">Look at how cert-manager and external-dns are configured with IRSA in the Verisign platform.</aside><div class="fragment fade-up" style="margin-top: 15px;">
-                    <h4>2a. Examine the cert-manager ServiceAccount</h4>
-                    <pre><code class="language-bash"># View the cert-manager ServiceAccount and its IRSA annotation
+                    <pre><code class="language-bash"># 2a. Examine the cert-manager ServiceAccount
 kubectl get sa cert-manager -n cert-manager -o yaml
+# Look for: eks.amazonaws.com/role-arn annotation
 
-# Look for this annotation:
-#   annotations:
-#     eks.amazonaws.com/role-arn: \
-#       arn:aws:iam::ACCOUNT:role/platform-lab-cert-manager</code></pre>
-                </div>
-                <div class="fragment fade-up" style="margin-top: 15px;">
-                    <h4>2b. Examine the cert-manager pod</h4>
-                    <pre><code class="language-bash"># Describe a cert-manager pod to see injected volumes and env vars
+# 2b. Describe a cert-manager pod to see injected volumes and env vars
 kubectl get pods -n cert-manager -l app=cert-manager -o name | head -1 | \
   xargs kubectl describe -n cert-manager
-
 # Look for:
-#   Environment:
-#     AWS_ROLE_ARN: arn:aws:iam::...
-#     AWS_WEB_IDENTITY_TOKEN_FILE: /var/run/secrets/eks.amazonaws.com/...
-#   Volumes:
-#     aws-iam-token (projected)</code></pre>
+#   Environment: AWS_ROLE_ARN, AWS_WEB_IDENTITY_TOKEN_FILE
+#   Volumes: aws-iam-token (projected)</code></pre>
                 </div>
                 <aside class="notes">
                     Have students identify the three key IRSA indicators in the pod description: the IRSA annotation on the ServiceAccount, the AWS environment variables injected into the containers, and the projected aws-iam-token volume. These three elements confirm IRSA is active.
@@ -454,27 +437,19 @@ aws iam list-roles --query "Roles[?contains(RoleName, \
             <section>
                 <h2>&#128220; Step 3: Create an IAM Policy</h2>
                 <aside class="notes">Create a policy that grants read-only access to a specific S3 bucket. This follows the least-privilege principle.</aside><div class="fragment fade-up" style="margin-top: 15px;">
-                    <h4>3a. Create the policy document</h4>
-                    <pre><code class="language-bash"># Create the policy JSON file
+                    <pre><code class="language-bash"># 3a. Create the policy JSON file
 cat &lt;&lt;'EOF' &gt; /tmp/s3-read-policy.json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "s3:GetObject",
-        "s3:ListBucket"
-      ],
-      "Resource": [
-        "arn:aws:s3:::platform-lab-irsa-demo",
-        "arn:aws:s3:::platform-lab-irsa-demo/*"
-      ]
-    }
-  ]
+{ "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Action": ["s3:GetObject", "s3:ListBucket"],
+    "Resource": [
+      "arn:aws:s3:::platform-lab-irsa-demo",
+      "arn:aws:s3:::platform-lab-irsa-demo/*"
+    ]
+  }]
 }
 EOF
-
 cat /tmp/s3-read-policy.json</code></pre>
                 </div>
                 <aside class="notes">
@@ -518,8 +493,7 @@ echo "Policy ARN: $POLICY_ARN"</code></pre>
             <section>
                 <h2>&#128220; Step 4: Create the Trust Policy</h2>
                 <aside class="notes">The trust policy tells IAM: "Allow the EKS OIDC provider to vouch for a specific ServiceAccount to assume this role."</aside><div class="fragment fade-up" style="margin-top: 15px;">
-                    <h4>4a. Build the trust policy JSON</h4>
-                    <pre><code class="language-bash"># Get the OIDC issuer URL and account ID
+                    <pre><code class="language-bash"># 4a. Build the trust policy JSON
 OIDC_ISSUER=$(aws eks describe-cluster --name platform-lab \
   --query "cluster.identity.oidc.issuer" --output text | sed 's|https://||')
 ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
@@ -550,27 +524,21 @@ cat /tmp/trust-policy.json</code></pre>
             <section>
                 <h2>&#128220; Step 4: Create the Role and Attach Policy</h2>
                 <div class="fragment fade-up">
-                    <h4>4b. Create the IAM role</h4>
-                    <pre><code class="language-bash"># Create the role with the trust policy
+                    <pre><code class="language-bash"># 4b. Create the IAM role with the trust policy
 aws iam create-role \
   --role-name platform-lab-irsa-demo-s3-reader \
   --assume-role-policy-document file:///tmp/trust-policy.json \
   --description "IRSA demo role for S3 read access"
-
-# Save the role ARN
 ROLE_ARN=$(aws iam get-role \
   --role-name platform-lab-irsa-demo-s3-reader \
   --query "Role.Arn" --output text)
 echo "Role ARN: $ROLE_ARN"</code></pre>
                 </div>
                 <div class="fragment fade-up" style="margin-top: 15px;">
-                    <h4>4c. Attach the S3 read policy to the role</h4>
-                    <pre><code class="language-bash"># Attach the policy we created in Step 3
+                    <pre><code class="language-bash"># 4c. Attach the S3 read policy to the role
 aws iam attach-role-policy \
   --role-name platform-lab-irsa-demo-s3-reader \
   --policy-arn $POLICY_ARN
-
-# Verify the attachment
 aws iam list-attached-role-policies \
   --role-name platform-lab-irsa-demo-s3-reader</code></pre>
                 </div>
@@ -593,24 +561,11 @@ aws iam list-attached-role-policies \
             <section>
                 <h2>&#128196; Step 5: Create Annotated ServiceAccount</h2>
                 <div class="fragment fade-up">
-                    <h4>5a. Create the lab namespace</h4>
-                    <pre><code class="language-bash"># Create the namespace for the lab
+                    <pre><code class="language-bash"># 5a. Create the namespace
 kubectl create namespace irsa-lab
+kubectl get namespace irsa-lab
 
-# Verify
-kubectl get namespace irsa-lab</code></pre>
-                </div>
-                <div class="fragment fade-up" style="margin-top: 15px;">
-                    <h4>5b. Create the ServiceAccount with IRSA annotation</h4>
-                    <pre><code class="language-yaml"># Save as /tmp/irsa-sa.yaml
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: s3-reader
-  namespace: irsa-lab
-  annotations:
-    eks.amazonaws.com/role-arn: "${ROLE_ARN}"</code></pre>
-                    <pre><code class="language-bash"># Create the file with the actual ROLE_ARN substituted
+# 5b. Create the ServiceAccount with IRSA annotation
 cat &lt;&lt;EOF | kubectl apply -f -
 apiVersion: v1
 kind: ServiceAccount
@@ -619,11 +574,10 @@ metadata:
   namespace: irsa-lab
   annotations:
     eks.amazonaws.com/role-arn: "${ROLE_ARN}"
-EOF</code></pre>
-                </div>
-                <div class="fragment fade-up" style="margin-top: 10px;">
-                    <h4>5c. Verify the ServiceAccount</h4>
-                    <pre><code class="language-bash">kubectl get sa s3-reader -n irsa-lab -o yaml</code></pre>
+EOF
+
+# 5c. Verify the ServiceAccount
+kubectl get sa s3-reader -n irsa-lab -o yaml</code></pre>
                 </div>
                 <aside class="notes">
                     The annotation is the critical piece that tells the EKS mutating webhook to inject the IRSA token and environment variables. Make sure students verify the annotation is present and the role ARN is correct. A typo here is one of the most common IRSA failures.
@@ -643,13 +597,11 @@ EOF</code></pre>
             <section>
                 <h2>&#128230; Step 6: Deploy a Test Pod</h2>
                 <div class="fragment fade-up">
-                    <h4>6a. Create the pod manifest</h4>
-                    <pre><code class="language-bash">cat &lt;&lt;'EOF' | kubectl apply -f -
+                    <pre><code class="language-bash"># 6a. Create the pod manifest
+cat &lt;&lt;'EOF' | kubectl apply -f -
 apiVersion: v1
 kind: Pod
-metadata:
-  name: irsa-test
-  namespace: irsa-lab
+metadata: { name: irsa-test, namespace: irsa-lab }
 spec:
   serviceAccountName: s3-reader
   containers:
@@ -657,14 +609,10 @@ spec:
     image: amazon/aws-cli:latest
     command: ["sleep", "3600"]
   restartPolicy: Never
-EOF</code></pre>
-                </div>
-                <div class="fragment fade-up" style="margin-top: 15px;">
-                    <h4>6b. Wait for the pod to be running</h4>
-                    <pre><code class="language-bash"># Wait for the pod to be ready
-kubectl wait --for=condition=Ready pod/irsa-test -n irsa-lab --timeout=60s
+EOF
 
-# Verify pod status
+# 6b. Wait for the pod to be running
+kubectl wait --for=condition=Ready pod/irsa-test -n irsa-lab --timeout=60s
 kubectl get pod irsa-test -n irsa-lab</code></pre>
                 </div>
                 <aside class="notes">
@@ -753,28 +701,18 @@ kubectl exec irsa-test -n irsa-lab -- \
             <section>
                 <h2>&#128737;&#65039; Step 8: Test Permission Boundaries</h2>
                 <aside class="notes">Verify that the IRSA role only grants the permissions defined in the IAM policy. Actions outside the policy should be denied.</aside><div class="fragment fade-up" style="margin-top: 15px;">
-                    <h4>8a. Try an unauthorized action</h4>
-                    <pre><code class="language-bash"># Try to list EC2 instances (NOT in our policy)
+                    <pre><code class="language-bash"># 8a. Try an unauthorized action (NOT in our policy)
 kubectl exec irsa-test -n irsa-lab -- aws ec2 describe-instances \
   --region us-east-1
-
 # Expected: AccessDenied error
-# An error occurred (UnauthorizedOperation) when calling the
-# DescribeInstances operation: You are not authorized to perform
-# this operation.</code></pre>
-                </div>
-                <div class="fragment fade-up" style="margin-top: 15px;">
-                    <h4>8b. Try to write to S3 (read-only policy)</h4>
-                    <pre><code class="language-bash"># Try to upload a file (our policy only allows read)
+
+# 8b. Try to write to S3 (read-only policy)
 kubectl exec irsa-test -n irsa-lab -- \
   bash -c 'echo "test" | aws s3 cp - \
     s3://platform-lab-irsa-demo/unauthorized.txt'
-
 # Expected: AccessDenied error</code></pre>
                 </div>
-                <div class="key-point fragment fade-up" style="margin-top: 10px;">
-                    <strong>Least Privilege Confirmed:</strong> The pod can read from S3 but cannot write, and cannot access any other AWS service. This is IRSA enforcing the scoped IAM policy.
-                </div>
+                <aside class="notes">Tip: Least Privilege Confirmed — The pod can read from S3 but cannot write, and cannot access any other AWS service. This is IRSA enforcing the scoped IAM policy.</aside>
                 <aside class="notes">
                     This step demonstrates that IRSA is not just providing AWS access — it is providing precisely scoped access. The AccessDenied errors prove that the pod cannot exceed its granted permissions. This is the fundamental security advantage over node-level IAM roles.
                 </aside>
@@ -793,14 +731,11 @@ kubectl exec irsa-test -n irsa-lab -- \
             <section>
                 <h2>&#128683; Step 9: Pod Without IRSA</h2>
                 <div class="fragment fade-up">
-                    <h4>9a. Deploy a pod with the default ServiceAccount</h4>
-                    <pre><code class="language-bash"># Deploy a pod WITHOUT an IRSA-annotated ServiceAccount
+                    <pre><code class="language-bash"># 9a. Deploy a pod WITHOUT an IRSA-annotated ServiceAccount
 cat &lt;&lt;'EOF' | kubectl apply -f -
 apiVersion: v1
 kind: Pod
-metadata:
-  name: no-irsa-test
-  namespace: irsa-lab
+metadata: { name: no-irsa-test, namespace: irsa-lab }
 spec:
   containers:
   - name: aws-cli
@@ -808,14 +743,10 @@ spec:
     command: ["sleep", "3600"]
   restartPolicy: Never
 EOF
+kubectl wait --for=condition=Ready pod/no-irsa-test -n irsa-lab --timeout=60s
 
-kubectl wait --for=condition=Ready pod/no-irsa-test -n irsa-lab --timeout=60s</code></pre>
-                </div>
-                <div class="fragment fade-up" style="margin-top: 15px;">
-                    <h4>9b. Check environment variables</h4>
-                    <pre><code class="language-bash"># Check for AWS environment variables
+# 9b. Check for AWS environment variables
 kubectl exec no-irsa-test -n irsa-lab -- env | grep AWS
-
 # Expected: NO AWS_ROLE_ARN or AWS_WEB_IDENTITY_TOKEN_FILE</code></pre>
                 </div>
                 <aside class="notes">
@@ -871,8 +802,7 @@ kubectl exec no-irsa-test -n irsa-lab -- aws sts get-caller-identity
             <section>
                 <h2>&#128295; Step 10: Debugging IRSA</h2>
                 <aside class="notes">We will deliberately introduce a misconfiguration, observe the failure, diagnose it, and fix it.</aside><div class="fragment fade-up" style="margin-top: 15px;">
-                    <h4>10a. Create a ServiceAccount with a wrong role ARN</h4>
-                    <pre><code class="language-bash"># Create a SA with a typo in the role ARN + a test pod
+                    <pre><code class="language-bash"># 10a. Create a SA with a typo in the role ARN + a test pod
 cat &lt;&lt;'EOF' | kubectl apply -f -
 apiVersion: v1
 kind: ServiceAccount
@@ -893,8 +823,9 @@ spec:
     command: ["sleep", "3600"]
   restartPolicy: Never
 EOF
-kubectl wait --for=condition=Ready pod/broken-irsa-test -n \
-  irsa-lab --timeout=60s</code></pre>
+kubectl wait --for=condition=Ready \
+  pod/broken-irsa-test -n irsa-lab \
+  --timeout=60s</code></pre>
                 </div>
                 <aside class="notes">
                     This simulates a common mistake: a typo in the role ARN annotation. The pod will start normally — IRSA failures are not pod startup failures. The error only appears when the AWS SDK tries to assume the role.
@@ -905,20 +836,16 @@ kubectl wait --for=condition=Ready pod/broken-irsa-test -n \
             <section>
                 <h2>&#128295; Step 10: Observe and Fix the Failure</h2>
                 <div class="fragment fade-up">
-                    <h4>10b. Observe the STS error</h4>
-                    <pre><code class="language-bash"># Try to get caller identity — this will fail
+                    <pre><code class="language-bash"># 10b. Observe the STS error
 kubectl exec broken-irsa-test -n irsa-lab -- aws sts get-caller-identity
-# Error: AccessDenied calling AssumeRoleWithWebIdentity</code></pre>
-                </div>
-                <div class="fragment fade-up" style="margin-top: 15px;">
-                    <h4>10c. Diagnose: check the SA annotation</h4>
-                    <pre><code class="language-bash">kubectl get sa broken-sa -n irsa-lab -o \
+# Error: AccessDenied calling AssumeRoleWithWebIdentity
+
+# 10c. Diagnose: check the SA annotation
+kubectl get sa broken-sa -n irsa-lab -o \
   jsonpath='{.metadata.annotations}' | python3 -m json.tool
-echo "Expected: $ROLE_ARN"  # annotation has a non-existent ARN</code></pre>
-                </div>
-                <div class="fragment fade-up" style="margin-top: 15px;">
-                    <h4>10d. Fix the annotation and redeploy</h4>
-                    <pre><code class="language-bash"># Fix annotation, delete pod, and recreate
+echo "Expected: $ROLE_ARN"  # annotation has a non-existent ARN
+
+# 10d. Fix annotation, delete pod, and recreate
 kubectl annotate sa broken-sa -n irsa-lab \
   eks.amazonaws.com/role-arn=$ROLE_ARN --overwrite
 kubectl delete pod broken-irsa-test -n irsa-lab
@@ -960,26 +887,17 @@ kubectl exec broken-irsa-test -n irsa-lab -- aws sts get-caller-identity
             <section>
                 <h2>&#128465;&#65039; Step 11: Clean Up</h2>
                 <div class="fragment fade-up">
-                    <h4>11a. Delete Kubernetes resources</h4>
-                    <pre><code class="language-bash"># Delete all pods and ServiceAccounts in the lab namespace
+                    <pre><code class="language-bash"># 11a. Delete Kubernetes resources
 kubectl delete pod irsa-test no-irsa-test broken-irsa-test -n \
   irsa-lab --ignore-not-found
 kubectl delete sa s3-reader broken-sa -n irsa-lab --ignore-not-found
+kubectl delete namespace irsa-lab
 
-# Delete the namespace
-kubectl delete namespace irsa-lab</code></pre>
-                </div>
-                <div class="fragment fade-up" style="margin-top: 15px;">
-                    <h4>11b. Delete IAM resources</h4>
-                    <pre><code class="language-bash"># Detach the policy from the role
+# 11b. Delete IAM resources
 aws iam detach-role-policy \
   --role-name platform-lab-irsa-demo-s3-reader \
   --policy-arn $POLICY_ARN
-
-# Delete the role
 aws iam delete-role --role-name platform-lab-irsa-demo-s3-reader
-
-# Delete the policy
 aws iam delete-policy --policy-arn $POLICY_ARN
 
 # Verify clean up

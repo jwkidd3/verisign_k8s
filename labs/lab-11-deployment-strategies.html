@@ -366,7 +366,7 @@
             <section>
                 <h2>&#x1F680; Create the v1 Application</h2>
                 <p>First, create a namespace and a ConfigMap for our v1 index page:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Create a dedicated namespace
 kubectl create namespace deploy-strategies
 
@@ -385,7 +385,7 @@ kubectl create configmap app-v1-page \
             <section>
                 <h2>&#x1F680; Deploy v1 with Rolling Update Strategy</h2>
                 <p>Create the Deployment manifest and apply it:</p>
-                <pre><code class="yaml" data-trim>
+                <pre><code class="language-yaml" data-trim>
 apiVersion: apps/v1
 kind: Deployment
 metadata: { name: webapp, namespace: deploy-strategies }
@@ -394,8 +394,7 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate: { maxSurge: 1, maxUnavailable: 1 }
-  selector:
-    matchLabels: { app: webapp }
+  selector: { matchLabels: { app: webapp } }
   template:
     metadata: { labels: { app: webapp, version: v1 } }
     spec:
@@ -403,10 +402,8 @@ spec:
       - name: nginx
         image: nginx:1.24
         ports: [{containerPort: 80}]
-        volumeMounts:
-        - { name: html, mountPath: /usr/share/nginx/html }
-      volumes:
-      - { name: html, configMap: { name: app-v1-page } }
+        volumeMounts: [{ name: html, mountPath: /usr/share/nginx/html }]
+      volumes: [{ name: html, configMap: { name: app-v1-page } }]
                 </code></pre>
                 <aside class="notes">
                     Walk through the strategy section. maxSurge 1 means at most 5 pods during update. maxUnavailable 1 means at least 3 pods available during update. These settings control the pace of the rolling update.
@@ -416,7 +413,7 @@ spec:
             <section>
                 <h2>&#x1F680; Apply and Expose the Deployment</h2>
                 <p>Apply the manifest and create a Service:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Apply the deployment
 kubectl apply -f app-deploy-v1.yaml
 
@@ -462,7 +459,7 @@ kubectl get pods -n deploy-strategies -l app=webapp
             <section>
                 <h2>&#x1F504; Update to v2</h2>
                 <p>Create a v2 ConfigMap and update the Deployment:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 kubectl create configmap app-v2-page \
   --from-literal=index.html='&lt;h1 \
     style="color:green"&gt;Application v2&lt;/h1&gt;&lt;p&gt;Version: 2.0.0&lt;/p&gt;' \
@@ -507,7 +504,7 @@ kubectl patch deployment webapp -n deploy-strategies --type=json \
             <section>
                 <h2>&#x1F4CA; Watch Rollout Progress</h2>
                 <p>Use multiple commands to observe the rolling update:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Watch the rollout status (blocks until complete)
 kubectl rollout status deployment/webapp -n deploy-strategies
 
@@ -526,7 +523,7 @@ kubectl describe deployment webapp -n deploy-strategies | tail -20
             <section>
                 <h2>&#x1F4CA; Verify the Update</h2>
                 <p>Confirm v2 is now serving traffic:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Check pods are running the new image
 kubectl get pods -n deploy-strategies -l app=webapp -o wide
 
@@ -568,7 +565,7 @@ kubectl get replicasets -n deploy-strategies -l app=webapp
             <section>
                 <h2>&#x23EA; Rollback the Deployment</h2>
                 <p>Undo the rollout to return to v1:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Rollback to the previous revision
 kubectl rollout undo deployment/webapp -n deploy-strategies
 
@@ -617,7 +614,7 @@ kubectl rollout history deployment/webapp -n deploy-strategies
             <section>
                 <h2>&#x1F535; Deploy the Blue Version</h2>
                 <p>Create a blue deployment with its own version label:</p>
-                <pre><code class="yaml" data-trim>
+                <pre><code class="language-yaml" data-trim>
 apiVersion: apps/v1
 kind: Deployment
 metadata: { name: webapp-blue, namespace: deploy-strategies }
@@ -644,7 +641,7 @@ spec:
             <section>
                 <h2>&#x1F7E2; Deploy the Green Version</h2>
                 <p>Create a green deployment alongside blue:</p>
-                <pre><code class="yaml" data-trim>
+                <pre><code class="language-yaml" data-trim>
 apiVersion: apps/v1
 kind: Deployment
 metadata: { name: webapp-green, namespace: deploy-strategies }
@@ -671,7 +668,7 @@ spec:
             <section>
                 <h2>&#x1F500; Create the Blue-Green Service</h2>
                 <p>Create a Service that initially points to blue:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Apply both deployments
 kubectl apply -f blue-deploy.yaml
 kubectl apply -f green-deploy.yaml
@@ -686,7 +683,7 @@ kubectl create service clusterip webapp-bg-svc \
   kubectl apply -f -
                 </code></pre>
                 <p class="fragment">Or use a simpler YAML approach:</p>
-                <pre class="fragment"><code class="yaml" data-trim>
+                <pre class="fragment"><code class="language-yaml" data-trim>
 # Save as bg-service.yaml
 apiVersion: v1
 kind: Service
@@ -709,7 +706,7 @@ spec:
             <section>
                 <h2>&#x1F500; Switch Traffic: Blue to Green</h2>
                 <p>Perform the blue-green switch by changing the service selector:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 kubectl apply -f bg-service.yaml
 
 kubectl run bg-test1 --image=curlimages/curl --rm -it --restart=Never \
@@ -753,27 +750,26 @@ kubectl run bg-test2 --image=curlimages/curl --rm -it --restart=Never \
             <section>
                 <h2>&#x1F426; Deploy Stable and Canary Versions</h2>
                 <p>Create the stable deployment with 4 replicas:</p>
-                <pre><code class="yaml" data-trim>
+                <pre><code class="language-yaml" data-trim>
 apiVersion: apps/v1
 kind: Deployment
-metadata:
-  name: webapp-stable
-  namespace: deploy-strategies
+metadata: { name: webapp-stable, namespace: deploy-strategies }
 spec:
   replicas: 4
   selector:
     matchLabels: { app: webapp-canary, track: stable }
   template:
-    metadata:
-      labels: { app: webapp-canary, track: stable }
+    metadata: { labels: { app: webapp-canary, track: stable } }
     spec:
       containers:
       - name: nginx
         image: nginx:1.24
         ports: [{containerPort: 80}]
         command: ["/bin/sh", "-c"]
-        args: ["echo 'STABLE-v1' > \
-          /usr/share/nginx/html/index.html; nginx -g 'daemon off;'"]
+        args:
+        - "echo 'STABLE-v1' > \
+          /usr/share/nginx/html/index.html; \
+          nginx -g 'daemon off;'"
                 </code></pre>
                 <aside class="notes">
                     The stable deployment uses 4 replicas and the shared label app: webapp-canary. The track label differentiates stable from canary but is not used in the service selector.
@@ -782,62 +778,50 @@ spec:
 
             <section>
                 <h2>&#x1F426; Deploy the Canary</h2>
-                <p>Create the canary deployment with 1 replica:</p>
-                <pre><code class="yaml" data-trim>
+                <pre><code class="language-yaml" data-trim>
 apiVersion: apps/v1
 kind: Deployment
-metadata:
-  name: webapp-canary
-  namespace: deploy-strategies
+metadata: { name: webapp-canary, namespace: deploy-strategies }
 spec:
   replicas: 1
   selector:
     matchLabels: { app: webapp-canary, track: canary }
   template:
-    metadata:
-      labels: { app: webapp-canary, track: canary }
+    metadata: { labels: { app: webapp-canary, track: canary } }
     spec:
       containers:
       - name: nginx
         image: nginx:1.25
         ports: [{containerPort: 80}]
         command: ["/bin/sh", "-c"]
-        args: ["echo 'CANARY-v2' > \
-          /usr/share/nginx/html/index.html; nginx -g 'daemon off;'"]
+        args:
+        - "echo 'CANARY-v2' > \
+          /usr/share/nginx/html/index.html; \
+          nginx -g 'daemon off;'"
                 </code></pre>
-                <div class="concept-box fragment">
-                    <h4>&#x1F4A1; Traffic Ratio</h4>
-                    <p>With 4 stable + 1 canary = 5 total pods, approximately <strong>20%</strong> of traffic goes to the canary version. Adjust replica counts to control the ratio.</p>
-                </div>
                 <aside class="notes">
-                    The service selects on app: webapp-canary only, which matches both stable and canary pods. Kubernetes round-robins across all endpoints, giving us an approximate traffic split based on pod count.
+                    Tip: Traffic Ratio -- With 4 stable + 1 canary = 5 total pods, approximately 20% of traffic goes to the canary version. Adjust replica counts to control the ratio. The service selects on app: webapp-canary only, which matches both stable and canary pods. Kubernetes round-robins across all endpoints, giving us an approximate traffic split based on pod count.
                 </aside>
             </section>
 
             <section>
                 <h2>&#x1F426; Create the Canary Service</h2>
                 <p>Create a Service that selects both stable and canary pods:</p>
-                <pre><code class="yaml" data-trim>
+                <pre><code class="language-yaml" data-trim>
 # Save as canary-service.yaml
 apiVersion: v1
 kind: Service
-metadata:
-  name: webapp-canary-svc
-  namespace: deploy-strategies
+metadata: { name: webapp-canary-svc, namespace: deploy-strategies }
 spec:
   selector:
     app: webapp-canary    # Matches BOTH stable and canary pods
-  ports:
-  - port: 80
-    targetPort: 80
+  ports: [{ port: 80, targetPort: 80 }]
                 </code></pre>
-                <pre><code class="bash" data-trim>
-# Apply all canary resources
+                <pre><code class="language-bash" data-trim>
+# Apply all canary resources and verify
 kubectl apply -f canary-stable.yaml
 kubectl apply -f canary-new.yaml
 kubectl apply -f canary-service.yaml
-
-# Verify pods are running
 kubectl get pods -n deploy-strategies -l app=webapp-canary --show-labels
                 </code></pre>
                 <aside class="notes">Expected Output: 5 pods total -- 4 with track=stable and 1 with track=canary.
@@ -871,7 +855,7 @@ kubectl get pods -n deploy-strategies -l app=webapp-canary --show-labels
             <section>
                 <h2>&#x1F4CA; Test Traffic Distribution</h2>
                 <p>Run a loop to observe the traffic split between stable and canary:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 kubectl run traffic-test --image=curlimages/curl --rm -it --restart=Never \
   -n deploy-strategies -- sh -c '
   STABLE=0; CANARY=0
@@ -918,7 +902,7 @@ kubectl run traffic-test --image=curlimages/curl --rm -it --restart=Never \
             <section>
                 <h2>&#x1F6E1; Create a Pod Disruption Budget</h2>
                 <p>Create a PDB that ensures minimum availability during disruptions:</p>
-                <pre><code class="yaml" data-trim>
+                <pre><code class="language-yaml" data-trim>
 # Save as pdb.yaml
 apiVersion: policy/v1
 kind: PodDisruptionBudget
@@ -928,7 +912,7 @@ spec:
   selector:
     matchLabels: { app: webapp }
                 </code></pre>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Apply the PDB
 kubectl apply -f pdb.yaml
 
@@ -945,7 +929,7 @@ kubectl describe pdb webapp-pdb -n deploy-strategies
             <section>
                 <h2>&#x1F6E1; Test the PDB with Node Drain</h2>
                 <p>Simulate a voluntary disruption by draining a node:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Identify which nodes our pods are running on
 kubectl get pods -n deploy-strategies -l app=webapp -o wide
 
@@ -957,17 +941,8 @@ kubectl drain &lt;NODE_NAME&gt; --ignore-daemonsets \
 # Observe the PDB status during operations
 kubectl get pdb webapp-pdb -n deploy-strategies -w
                 </code></pre>
-                <aside class="notes">Important: Use --dry-run=client first to avoid actually evicting pods from the node. In a real scenario, the drain respects the PDB and will wait or fail if minimum availability cannot be maintained.</aside>
-                <div class="concept-box fragment">
-                    <h4>&#x1F4A1; PDB Use Cases</h4>
-                    <ul>
-                        <li><strong>Cluster upgrades</strong> &mdash; ensures application availability during node rolling updates</li>
-                        <li><strong>Cluster autoscaler</strong> &mdash; prevents scaling down nodes that would violate the budget</li>
-                        <li><strong>Maintenance windows</strong> &mdash; safe node cordoning and draining</li>
-                    </ul>
-                </div>
-                <aside class="notes">
-                    Emphasize that PDBs only protect against voluntary disruptions. Involuntary disruptions like node crashes, OOM kills, or hardware failures are not governed by PDBs. Applications should also be designed for resilience.
+                <aside class="notes">Important: Use --dry-run=client first to avoid actually evicting pods from the node. In a real scenario, the drain respects the PDB and will wait or fail if minimum availability cannot be maintained.
+                    Tip: PDB Use Cases -- Cluster upgrades (ensures availability during node rolling updates), Cluster autoscaler (prevents scaling down nodes that would violate the budget), Maintenance windows (safe node cordoning and draining). PDBs only protect against voluntary disruptions. Involuntary disruptions like node crashes, OOM kills, or hardware failures are not governed by PDBs.
                 </aside>
             </section>
 
@@ -996,7 +971,7 @@ kubectl get pdb webapp-pdb -n deploy-strategies -w
             <section>
                 <h2>&#x23F0; Detect Stuck Rollouts</h2>
                 <p>Configure a progress deadline and trigger a stuck rollout:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Set a short progress deadline (60 seconds) for testing
 kubectl patch deployment webapp -n deploy-strategies \
   -p '{"spec":{"progressDeadlineSeconds":60}}'
@@ -1017,7 +992,7 @@ kubectl rollout status deployment/webapp -n deploy-strategies --timeout=90s
             <section>
                 <h2>&#x23F0; Inspect and Recover from Stuck Rollout</h2>
                 <p>Examine the deployment conditions and recover:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Check the deployment conditions
 kubectl get deployment webapp -n deploy-strategies \
   -o jsonpath='{.status.conditions[*].message}' | tr ',' '\n'
@@ -1063,7 +1038,7 @@ kubectl get pods -n deploy-strategies -l app=webapp
             <section>
                 <h2>&#x1F9F9; Clean Up Resources</h2>
                 <p>Remove all resources created during this lab:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Delete the entire namespace (removes all resources within it)
 kubectl delete namespace deploy-strategies
 

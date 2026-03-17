@@ -379,7 +379,7 @@
 
             <section>
                 <h2>&#x1F6E0;&#xFE0F; Set Up the Lab Namespace</h2>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Create the lab namespace
 kubectl create namespace probes-lab
 
@@ -394,7 +394,7 @@ kubectl config set-context --current --namespace=probes-lab
 
             <section>
                 <h2>&#x274C; App Without Probes</h2>
-                <pre><code class="yaml" data-trim>
+                <pre><code class="language-yaml" data-trim>
 cat &lt;&lt;'EOF' | kubectl apply -f -
 apiVersion: apps/v1
 kind: Deployment
@@ -424,7 +424,7 @@ EOF
 
             <section>
                 <h2>&#x1F41B; Simulate a Failure</h2>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Verify the app is running and serving traffic
 kubectl get pods -l app=no-probes-app
 curl_pod=$(kubectl get pod -l app=no-probes-app -o \
@@ -457,7 +457,7 @@ kubectl exec $curl_pod -- curl -s -o /dev/null -w "%{http_code}" localhost:80
 
             <section>
                 <h2>&#x1F49A; Deploy with Liveness Probe</h2>
-                <pre><code class="yaml" data-trim>
+                <pre><code class="language-yaml" data-trim>
 cat &lt;&lt;'EOF' | kubectl apply -f -
 apiVersion: apps/v1
 kind: Deployment
@@ -486,7 +486,7 @@ EOF
 
             <section>
                 <h2>&#x1F4A5; Test the Liveness Probe</h2>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Get a pod name
 LIVE_POD=$(kubectl get pod -l app=liveness-http \
   -o jsonpath='{.items[0].metadata.name}')
@@ -500,7 +500,7 @@ kubectl get pods -l app=liveness-http -w
                 </code></pre>
                 <aside class="notes">Expected Behavior: NAME READY STATUS RESTARTS liveness-http-xxx 1/1 Running 0 liveness-http-xxx 1/1 Running 1 ← restarted!</aside>
                 <div class="fragment">
-                    <pre><code class="bash" data-trim>
+                    <pre><code class="language-bash" data-trim>
 # Check the events to see probe failure details
 kubectl describe pod $LIVE_POD | grep -A 5 "Liveness"
                     </code></pre>
@@ -521,7 +521,7 @@ kubectl describe pod $LIVE_POD | grep -A 5 "Liveness"
 
             <section>
                 <h2>&#x1F499; Deploy with Readiness Probe</h2>
-                <pre><code class="yaml" data-trim>
+                <pre><code class="language-yaml" data-trim>
 cat &lt;&lt;'EOF' | kubectl apply -f -
 apiVersion: apps/v1
 kind: Deployment
@@ -550,7 +550,7 @@ EOF
 
             <section>
                 <h2>&#x1F527; Configure the Ready Endpoint</h2>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Create the /ready endpoint on all pods
 for pod in $(kubectl get pods -l app=readiness-app \
   -o jsonpath='{.items[*].metadata.name}'); do
@@ -572,7 +572,7 @@ kubectl get endpoints readiness-svc
 
             <section>
                 <h2>&#x1F6AB; Test Readiness Failure</h2>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Make one pod unready by removing the /ready file
 READY_POD=$(kubectl get pod -l app=readiness-app \
   -o jsonpath='{.items[0].metadata.name}')
@@ -595,7 +595,7 @@ kubectl get endpoints readiness-svc
 
             <section>
                 <h2>&#x267B;&#xFE0F; Restore Readiness</h2>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Restore the /ready endpoint
 kubectl exec $READY_POD -- sh -c \
   "echo 'OK' > /usr/share/nginx/html/ready"
@@ -623,7 +623,7 @@ kubectl get endpoints readiness-svc
 
             <section>
                 <h2>&#x1F49B; Deploy with a Startup Probe</h2>
-                <pre><code class="yaml" data-trim>
+                <pre><code class="language-yaml" data-trim>
 cat &lt;&lt;'EOF' | kubectl apply -f -
 apiVersion: apps/v1
 kind: Deployment
@@ -652,7 +652,7 @@ EOF
 
             <section>
                 <h2>&#x23F1;&#xFE0F; Observe Startup Behavior</h2>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Watch the pod start up
 kubectl get pods -l app=slow-start-app -w
 
@@ -741,7 +741,7 @@ kubectl get events --field-selector reason=Unhealthy \
 
             <section>
                 <h2>&#x1F4CA; Tuning Exercise</h2>
-                <pre><code class="yaml" data-trim>
+                <pre><code class="language-yaml" data-trim>
 cat &lt;&lt;'EOF' | kubectl apply -f -
 # ... standard metadata/selector/template (app: tuned-probes)
     spec:
@@ -778,7 +778,7 @@ EOF
 
             <section>
                 <h2>&#x1F50C; TCP Liveness Probe</h2>
-                <pre><code class="yaml" data-trim>
+                <pre><code class="language-yaml" data-trim>
 cat &lt;&lt;'EOF' | kubectl apply -f -
 apiVersion: apps/v1
 kind: Deployment
@@ -806,7 +806,7 @@ EOF
 
             <section>
                 <h2>&#x1F9EA; Test the TCP Probe</h2>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Verify the pod is running and ready
 kubectl get pods -l app=tcp-probe-app
 
@@ -816,7 +816,7 @@ TCP_POD=$(kubectl get pod -l app=tcp-probe-app \
 kubectl exec $TCP_POD -- redis-cli ping
                 </code></pre>
                 <aside class="notes">Expected Output: PONG</aside>
-                <pre class="fragment"><code class="bash" data-trim>
+                <pre class="fragment"><code class="language-bash" data-trim>
 # View probe-related events
 kubectl describe pod $TCP_POD | grep -A 3 "Liveness\|Readiness"
                 </code></pre>
@@ -836,7 +836,7 @@ kubectl describe pod $TCP_POD | grep -A 3 "Liveness\|Readiness"
 
             <section>
                 <h2>&#x1F4BB; Exec Probe: File-Based Health Check</h2>
-                <pre><code class="yaml" data-trim>
+                <pre><code class="language-yaml" data-trim>
 cat &lt;&lt;'EOF' | kubectl apply -f -
 apiVersion: apps/v1
 kind: Deployment
@@ -866,7 +866,7 @@ EOF
 
             <section>
                 <h2>&#x1F4A5; Test the Exec Probe</h2>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 EXEC_POD=$(kubectl get pod -l app=exec-probe-app \
   -o jsonpath='{.items[0].metadata.name}')
 
@@ -894,7 +894,7 @@ kubectl get pods -l app=exec-probe-app -w
 
             <section>
                 <h2>&#x1F6D1; Graceful Shutdown Configuration</h2>
-                <pre><code class="yaml" data-trim>
+                <pre><code class="language-yaml" data-trim>
 cat &lt;&lt;'EOF' | kubectl apply -f -
 apiVersion: apps/v1
 kind: Deployment
@@ -923,7 +923,7 @@ EOF
 
             <section>
                 <h2>&#x23F1;&#xFE0F; Observe Graceful Shutdown</h2>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Delete a pod and observe the shutdown process
 GRACEFUL_POD=$(kubectl get pod -l app=graceful-app \
   -o jsonpath='{.items[0].metadata.name}')
@@ -936,19 +936,8 @@ kubectl delete pod $GRACEFUL_POD
 
 # Note the time between the delete command and actual termination
                 </code></pre>
-                <aside class="notes">Expected: The pod enters Terminating state and takes approximately 10+ seconds to fully terminate (due to the sleep 10 in the preStop hook).</aside>
-                <div class="concept-box fragment">
-                    <h4>&#x1F504; Shutdown Sequence</h4>
-                    <ol>
-                        <li>Pod marked as <code>Terminating</code> (removed from endpoints)</li>
-                        <li>preStop hook executes</li>
-                        <li>SIGTERM sent to the container</li>
-                        <li>Wait for <code>terminationGracePeriodSeconds</code></li>
-                        <li>SIGKILL if still running</li>
-                    </ol>
-                </div>
-                <aside class="notes">
-                    The key detail is that endpoints are removed immediately when termination begins, so new traffic stops flowing to the pod while it drains existing connections.
+                <aside class="notes">Expected: The pod enters Terminating state and takes approximately 10+ seconds to fully terminate (due to the sleep 10 in the preStop hook).
+                    Tip: Shutdown Sequence -- 1) Pod marked as Terminating (removed from endpoints), 2) preStop hook executes, 3) SIGTERM sent to container, 4) Wait for terminationGracePeriodSeconds, 5) SIGKILL if still running. Endpoints are removed immediately when termination begins, so new traffic stops flowing to the pod while it drains existing connections.
                 </aside>
             </section>
 
@@ -963,7 +952,7 @@ kubectl delete pod $GRACEFUL_POD
 
             <section>
                 <h2>&#x1F6E1;&#xFE0F; Create a Pod Disruption Budget</h2>
-                <pre><code class="yaml" data-trim>
+                <pre><code class="language-yaml" data-trim>
 cat &lt;&lt;'EOF' | kubectl apply -f -
 apiVersion: apps/v1
 kind: Deployment
@@ -993,7 +982,7 @@ EOF
 
             <section>
                 <h2>&#x1F50D; Examine the PDB</h2>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # View the PDB status
 kubectl get pdb -n probes-lab
 
@@ -1020,7 +1009,7 @@ kubectl describe pdb pdb-app-pdb -n probes-lab
 
             <section>
                 <h2>&#x1F527; Test PDB with Pod Deletion</h2>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # See where pods are scheduled
 kubectl get pods -l app=pdb-app -o wide
 
@@ -1039,7 +1028,7 @@ kubectl get pdb pdb-app-pdb -n probes-lab -w
 
             <section>
                 <h2>&#x1F6E1;&#xFE0F; Test PDB with Node Drain</h2>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 NODE_NAME=$(kubectl get pods -l app=pdb-app \
   -o jsonpath='{.items[0].spec.nodeName}')
 
@@ -1053,7 +1042,7 @@ kubectl drain $NODE_NAME \
                 </code></pre>
                 <aside class="notes">Caution: Only drain a node in a multi-node cluster! If you only have one node, the drain will block because the PDB cannot be satisfied.</aside>
                 <div class="fragment">
-                    <pre><code class="bash" data-trim>
+                    <pre><code class="language-bash" data-trim>
 # Don't forget to uncordon the node afterward!
 # kubectl uncordon $NODE_NAME
                     </code></pre>
@@ -1074,7 +1063,7 @@ kubectl drain $NODE_NAME \
 
             <section>
                 <h2>&#x1F9F9; Clean Up Lab Resources</h2>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Delete the lab namespace (removes all resources)
 kubectl delete namespace probes-lab
 

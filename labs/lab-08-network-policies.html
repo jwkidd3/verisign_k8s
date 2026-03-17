@@ -366,13 +366,13 @@
             <section>
                 <h2>&#x1F3D7; Deploy the Three-Tier Application</h2>
                 <p>Create a namespace and deploy frontend, backend, and database tiers:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Create the lab namespace
 kubectl create namespace lab08
                 </code></pre>
                 <div class="fragment">
                     <p>Deploy the <strong>database</strong> tier:</p>
-                    <pre><code class="yaml" data-trim>
+                    <pre><code class="language-yaml" data-trim>
 # Save as database.yaml
 apiVersion: v1
 kind: Pod
@@ -394,8 +394,8 @@ spec:
 
             <section>
                 <h2>&#x1F3D7; Deploy Backend and Frontend Tiers</h2>
-                <p>Deploy the <strong>backend</strong> tier:</p>
-                <pre><code class="yaml" data-trim>
+                <p>Deploy the backend and frontend tiers (each with matching Service):</p>
+                <pre><code class="language-yaml" data-trim>
 # Save as backend.yaml
 apiVersion: v1
 kind: Pod
@@ -406,8 +406,7 @@ metadata:
 spec:
 # ... (remaining lines omitted for brevity)</code></pre>
                 <div class="fragment">
-                    <p>Deploy the <strong>frontend</strong> tier:</p>
-                    <pre><code class="yaml" data-trim>
+                    <pre><code class="language-yaml" data-trim>
 # Save as frontend.yaml
 apiVersion: v1
 kind: Pod
@@ -425,7 +424,7 @@ spec:
 
             <section>
                 <h2>&#x1F3D7; Apply and Verify the Deployment</h2>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Apply all three tiers
 kubectl apply -f database.yaml
 kubectl apply -f backend.yaml
@@ -477,7 +476,7 @@ kubectl get services -n lab08
             <section>
                 <h2>&#x1F50C; Verify Default Connectivity</h2>
                 <p>Confirm that all pods can communicate with each other (default behavior):</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Frontend → Backend (should SUCCEED)
 kubectl exec frontend -n lab08 -- \
   curl -s --max-time 3 http://backend.lab08.svc.cluster.local:8080
@@ -525,7 +524,7 @@ kubectl exec database -n lab08 -- \
             <section>
                 <h2>&#x1F6D1; Apply Default Deny-All Ingress Policy</h2>
                 <p>Create a policy that blocks all incoming traffic to all pods in the namespace:</p>
-                <pre><code class="yaml" data-trim>
+                <pre><code class="language-yaml" data-trim>
 # Save as deny-all-ingress.yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -538,7 +537,7 @@ spec:
   - Ingress
                 </code></pre>
                 <div class="fragment">
-                    <pre><code class="bash" data-trim>
+                    <pre><code class="language-bash" data-trim>
 # Apply the deny-all policy
 kubectl apply -f deny-all-ingress.yaml
 
@@ -549,14 +548,11 @@ kubectl get networkpolicies -n lab08
 kubectl describe networkpolicy default-deny-all-ingress -n lab08
                     </code></pre>
                 </div>
-                <div class="highlight-box success fragment">
-                    <strong>&#x2705; Expected Output:</strong> The NetworkPolicy is created. The <code>podSelector: {}</code> matches <strong>all pods</strong> in the namespace. The empty <code>Ingress</code> policyType with no ingress rules means all inbound traffic is denied.
-                </div>
                 <div class="key-point fragment">
-                    <strong>&#x1F511; Key Point:</strong> A <code>podSelector: {}</code> (empty selector) matches <strong>all pods</strong> in the namespace. Specifying <code>policyTypes: [Ingress]</code> with no ingress rules creates a deny-all for inbound traffic. This is the foundation of zero-trust networking.
+                    <strong>&#x1F511; Key Point:</strong> A <code>podSelector: {}</code> (empty selector) matches <strong>all pods</strong> in the namespace. Specifying <code>policyTypes: [Ingress]</code> with no ingress rules creates a deny-all for inbound traffic.
                 </div>
                 <aside class="notes">
-                    Emphasize that the empty podSelector is how you target all pods. The policy says: for all pods, apply ingress policy type, but with no ingress rules — meaning deny all ingress. Egress is not affected by this policy.
+                    Tip: The NetworkPolicy is created. The empty podSelector matches all pods in the namespace. The empty Ingress policyType with no ingress rules means all inbound traffic is denied. Egress is not affected by this policy. This is the foundation of zero-trust networking.
                 </aside>
             </section>
 
@@ -586,7 +582,7 @@ kubectl describe networkpolicy default-deny-all-ingress -n lab08
             <section>
                 <h2>&#x1F6AB; Verify Isolation</h2>
                 <p>Test that all pod-to-pod communication is now blocked:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Frontend → Backend (should FAIL / timeout)
 kubectl exec frontend -n lab08 -- \
   curl -s --max-time 3 http://backend.lab08.svc.cluster.local:8080
@@ -638,7 +634,7 @@ echo "Exit code: $?"
             <section>
                 <h2>&#x27A1; Allow Frontend &rarr; Backend Communication</h2>
                 <p>Create a policy allowing the backend to receive traffic from the frontend:</p>
-                <pre><code class="yaml" data-trim>
+                <pre><code class="language-yaml" data-trim>
 # Save as allow-frontend-to-backend.yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -649,7 +645,7 @@ spec:
   podSelector:
 # ... (remaining lines omitted for brevity)</code></pre>
                 <div class="fragment">
-                    <pre><code class="bash" data-trim>
+                    <pre><code class="language-bash" data-trim>
 # Apply the policy
 kubectl apply -f allow-frontend-to-backend.yaml
 
@@ -660,14 +656,11 @@ kubectl exec frontend -n lab08 -- \
 # Test: Database → Backend (should still FAIL)
 # ... (more output)</code></pre>
                 </div>
-                <div class="highlight-box success fragment">
-                    <strong>&#x2705; Expected Output:</strong> Frontend to backend returns the nginx page. Database to backend still times out. Only the explicitly allowed path works.
-                </div>
                 <div class="key-point fragment">
-                    <strong>&#x1F511; Key Point:</strong> NetworkPolicies are additive. The deny-all policy is still in effect, but this new policy adds an exception: backend pods accept ingress from frontend pods on TCP port 80. All other ingress to backend pods remains denied.
+                    <strong>&#x1F511; Key Point:</strong> NetworkPolicies are additive. The deny-all policy is still in effect, but this new policy adds an exception for frontend-to-backend on TCP port 80.
                 </div>
                 <aside class="notes">
-                    Point out that the podSelector targets the backend (the destination), and the ingress.from targets the frontend (the source). NetworkPolicies are written from the perspective of the target pod.
+                    Tip: Frontend to backend returns the nginx page. Database to backend still times out. Only the explicitly allowed path works. The podSelector targets the backend (the destination), and the ingress.from targets the frontend (the source). NetworkPolicies are written from the perspective of the target pod.
                 </aside>
             </section>
 
@@ -697,7 +690,7 @@ kubectl exec frontend -n lab08 -- \
             <section>
                 <h2>&#x27A1; Allow Backend &rarr; Database Communication</h2>
                 <p>Create a policy allowing the database to receive traffic from the backend:</p>
-                <pre><code class="yaml" data-trim>
+                <pre><code class="language-yaml" data-trim>
 # Save as allow-backend-to-database.yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -708,7 +701,7 @@ spec:
   podSelector:
 # ... (remaining lines omitted for brevity)</code></pre>
                 <div class="fragment">
-                    <pre><code class="bash" data-trim>
+                    <pre><code class="language-bash" data-trim>
 # Apply the policy
 kubectl apply -f allow-backend-to-database.yaml
 
@@ -719,11 +712,8 @@ kubectl exec backend -n lab08 -- \
 # Test: Frontend → Database (should still FAIL)
 # ... (more output)</code></pre>
                 </div>
-                <div class="highlight-box success fragment">
-                    <strong>&#x2705; Expected Output:</strong> Backend to database returns the nginx page. Frontend to database still times out. The database is only accessible from the backend tier.
-                </div>
                 <aside class="notes">
-                    This completes the second leg of the three-tier architecture. The database is now protected — only the backend can reach it. The frontend must go through the backend to access data.
+                    Tip: Backend to database returns the nginx page. Frontend to database still times out. The database is only accessible from the backend tier. This completes the second leg of the three-tier architecture. The frontend must go through the backend to access data.
                 </aside>
             </section>
 
@@ -753,7 +743,7 @@ kubectl exec backend -n lab08 -- \
             <section>
                 <h2>&#x1F9EA; Comprehensive Policy Verification</h2>
                 <p>Test all communication paths and verify only allowed paths work:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 echo "=== ALLOWED PATHS ==="
 echo -n "Frontend -> Backend: "
 kubectl exec frontend -n lab08 -- curl -s -o /dev/null \
@@ -800,7 +790,7 @@ echo -n "Frontend -> Database: "
             <section>
                 <h2>&#x2B06; Add Egress Rules</h2>
                 <p>Apply a default deny-all egress policy, then selectively allow DNS and specific traffic:</p>
-                <pre><code class="yaml" data-trim>
+                <pre><code class="language-yaml" data-trim>
 # Save as deny-all-egress.yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -813,7 +803,7 @@ spec:
   - Egress
                 </code></pre>
                 <div class="fragment">
-                    <pre><code class="bash" data-trim>
+                    <pre><code class="language-bash" data-trim>
 # Apply deny-all egress
 kubectl apply -f deny-all-egress.yaml
 
@@ -822,18 +812,15 @@ kubectl exec frontend -n lab08 -- \
   nslookup backend.lab08.svc.cluster.local 2>&1 || echo "DNS FAILED"
                     </code></pre>
                 </div>
-                <div class="highlight-box warning fragment">
-                    <strong>&#x26A0; DNS is now broken!</strong> The deny-all egress policy blocks all outbound traffic, including DNS queries to kube-dns (port 53). We need to explicitly allow DNS resolution.
-                </div>
                 <aside class="notes">
-                    This is a very common gotcha. When you deny all egress, you break DNS. Services that resolve by name will stop working. Always allow DNS egress when implementing egress policies.
+                    Tip: DNS is now broken! The deny-all egress policy blocks all outbound traffic, including DNS queries to kube-dns (port 53). We need to explicitly allow DNS resolution. This is a very common gotcha. When you deny all egress, you break DNS. Services that resolve by name will stop working. Always allow DNS egress when implementing egress policies.
                 </aside>
             </section>
 
             <section>
                 <h2>&#x2B06; Allow DNS and Tier-Specific Egress</h2>
                 <p>Allow DNS resolution and backend egress to the database:</p>
-                <pre><code class="yaml" data-trim>
+                <pre><code class="language-yaml" data-trim>
 # Save as allow-dns-egress.yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -846,15 +833,12 @@ spec:
   - Egress
 # ... (remaining lines omitted for brevity)</code></pre>
                 <div class="fragment">
-                    <pre><code class="bash" data-trim>
-# Apply DNS egress policy
+                    <pre><code class="language-bash" data-trim>
 kubectl apply -f allow-dns-egress.yaml
 
-# Verify DNS works again
+# Verify DNS and full path work again
 kubectl exec frontend -n lab08 -- \
   nslookup backend.lab08.svc.cluster.local
-
-# Verify the full path still works
 kubectl exec frontend -n lab08 -- \
   curl -s --max-time 3 http://backend.lab08.svc.cluster.local:8080
                     </code></pre>
@@ -889,21 +873,18 @@ kubectl exec frontend -n lab08 -- \
 
             <section>
                 <h2>&#x1F30D; Namespace-Based Policies</h2>
-                <p>Allow a monitoring namespace to access pods in the application namespace:</p>
-                <pre><code class="bash" data-trim>
-# Create and label a monitoring namespace
+                <p>Create a monitoring namespace and allow it to access application pods:</p>
+                <pre><code class="language-bash" data-trim>
 kubectl create namespace monitoring
 kubectl label namespace monitoring purpose=monitoring
 kubectl run monitor --image=nginx:1.25 -n monitoring
 
 # Test: Monitor cannot reach backend (FAIL due to deny-all)
 kubectl exec monitor -n monitoring -- \
-  curl -s --max-time 3 \
-  http://backend.lab08.svc.cluster.local:8080
+  curl -s --max-time 3 http://backend.lab08.svc.cluster.local:8080
                 </code></pre>
                 <div class="fragment">
-                    <p>Create a policy allowing ingress from the monitoring namespace:</p>
-                    <pre><code class="yaml" data-trim>
+                    <pre><code class="language-yaml" data-trim>
 # Save as allow-monitoring-ingress.yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -921,7 +902,7 @@ spec:
 
             <section>
                 <h2>&#x1F30D; Test Monitoring Access</h2>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Apply the monitoring ingress policy
 kubectl apply -f allow-monitoring-ingress.yaml
 
@@ -974,7 +955,7 @@ kubectl exec monitor -n monitoring -- \
             <section>
                 <h2>&#x1F41B; Debug a Broken Policy</h2>
                 <p>Apply this intentionally broken policy and find the bug:</p>
-                <pre><code class="yaml" data-trim>
+                <pre><code class="language-yaml" data-trim>
 # Save as broken-policy.yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -987,14 +968,11 @@ spec:
       tier: frontend
 # ... (remaining lines omitted for brevity)</code></pre>
                 <div class="fragment">
-                    <pre><code class="bash" data-trim>
-# Apply the broken policy
+                    <pre><code class="language-bash" data-trim>
 kubectl apply -f broken-policy.yaml
-
 # Test - this should work but does not
-kubectl run test-client --image=nginx:1.25 \
-  -n lab08 --rm -it --restart=Never -- \
-  curl -s --max-time 3 \
+kubectl run test-client --image=nginx:1.25 -n lab08 --rm -it \
+  --restart=Never -- curl -s --max-time 3 \
   http://frontend.lab08.svc.cluster.local:80
                     </code></pre>
                 </div>
@@ -1005,10 +983,9 @@ kubectl run test-client --image=nginx:1.25 \
 
             <section>
                 <h2>&#x1F41B; Fix the Broken Policy</h2>
-                <p><strong>Bug 1:</strong> <code>from.podSelector</code> matches <code>tier: frontend</code> &mdash; frontend only receives traffic from itself. Fix: use <code>from: []</code>.</p>
-                <p><strong>Bug 2:</strong> Port is <code>8080</code> but frontend listens on <code>80</code>. Fix: change to port <code>80</code>.</p>
+                <p><strong>Bug 1:</strong> <code>from.podSelector</code> matches <code>tier: frontend</code> (self-referencing) &mdash; fix: use <code>from: []</code>. <strong>Bug 2:</strong> Port is <code>8080</code> but frontend listens on <code>80</code>.</p>
                 <div class="fragment">
-                    <pre><code class="yaml" data-trim>
+                    <pre><code class="language-yaml" data-trim>
 # Save as fixed-policy.yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -1022,7 +999,7 @@ spec:
 # ... (remaining lines omitted for brevity)</code></pre>
                 </div>
                 <div class="fragment">
-                    <pre><code class="bash" data-trim>
+                    <pre><code class="language-bash" data-trim>
 kubectl apply -f fixed-policy.yaml
 # Test again - should now work
 kubectl run test-client --image=nginx:1.25 \
@@ -1062,7 +1039,7 @@ kubectl run test-client --image=nginx:1.25 \
             <section>
                 <h2>&#x1F9F9; Clean Up Resources</h2>
                 <p>Remove all resources created during this lab:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Delete both namespaces (cascades to all resources within)
 kubectl delete namespace lab08
 kubectl delete namespace monitoring

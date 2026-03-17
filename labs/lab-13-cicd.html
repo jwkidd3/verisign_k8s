@@ -367,7 +367,7 @@
             <section>
                 <h2>&#x1F4C4; Sample GitHub Actions Workflow</h2>
                 <p>Examine a typical CI/CD pipeline for Kubernetes:</p>
-                <pre><code class="yaml" data-trim>
+                <pre><code class="language-yaml" data-trim>
 name: Build and Deploy
 on: { push: { branches: [main] } }
 env:
@@ -380,15 +380,13 @@ jobs:
     - uses: actions/checkout@v4
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-east-1
+      with: { aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }},
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }},
+        aws-region: us-east-1 }
     - name: Build and push image
       run: |
         IMAGE_TAG=$(git rev-parse --short HEAD)
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
                 </code></pre>
                 <aside class="notes">
                     Walk through each section of the workflow. Explain how secrets are used for credentials, how the git SHA is used for image tagging, and why ECR is a common choice for AWS-based Kubernetes deployments.
@@ -453,7 +451,7 @@ jobs:
             <section>
                 <h2>&#x1F6E0; Create a Sample Application</h2>
                 <p>Set up a simple application to build and deploy:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 mkdir -p ~/cicd-lab && cd ~/cicd-lab && git init
 
 cat &lt;&lt;'EOF' &gt; index.html
@@ -480,7 +478,7 @@ git add . && git commit -m "Initial application"
             <section>
                 <h2>&#x1F6E0; Build and Tag with Git SHA</h2>
                 <p>Build the image and tag it with the current git commit SHA:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 GIT_SHA=$(git rev-parse --short HEAD)
 echo "Building with SHA: $GIT_SHA"
 
@@ -527,7 +525,7 @@ mv index.html.bak index.html
             <section>
                 <h2>&#x1F4E4; Authenticate and Push to ECR</h2>
                 <p>Login to ECR and push the built image:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query \
   Account --output text)
 export ECR_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com"
@@ -577,7 +575,7 @@ aws ecr describe-images --repository-name $ECR_REPO --region us-east-1
             <section>
                 <h2>&#x1F4DD; Create the Deployment Manifest</h2>
                 <p>Write a Kubernetes Deployment manifest referencing the ECR image:</p>
-                <pre><code class="yaml" data-trim>
+                <pre><code class="language-yaml" data-trim>
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -629,7 +627,7 @@ spec:
             <section>
                 <h2>&#x1F680; Deploy with kubectl</h2>
                 <p>Substitute variables and apply the manifest:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 kubectl create namespace cicd-lab
 
 mkdir -p ~/cicd-lab/k8s
@@ -677,7 +675,7 @@ kubectl run curl-test --image=curlimages/curl --rm -it --restart=Never \
             <section>
                 <h2>&#x1F4E6; Verify ArgoCD Installation</h2>
                 <p>Check if ArgoCD is available in the cluster:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Check if ArgoCD is installed
 kubectl get namespace argocd
 
@@ -697,12 +695,10 @@ argocd version
             <section>
                 <h2>&#x1F4E6; Create an ArgoCD Application</h2>
                 <p>Define an ArgoCD Application CRD:</p>
-                <pre><code class="yaml" data-trim>
+                <pre><code class="language-yaml" data-trim>
 apiVersion: argoproj.io/v1alpha1
 kind: Application
-metadata:
-  name: cicd-demo
-  namespace: argocd
+metadata: { name: cicd-demo, namespace: argocd }
 spec:
   project: default
   source:
@@ -713,22 +709,11 @@ spec:
     server: https://kubernetes.default.svc
     namespace: cicd-lab
   syncPolicy:
-    automated:
-      prune: true            # Remove resources not in git
-      selfHeal: true         # Revert manual changes
-    syncOptions:
-    - CreateNamespace=true
+    automated: { prune: true, selfHeal: true }
+    syncOptions: [CreateNamespace=true]
                 </code></pre>
-                <div class="concept-box fragment">
-                    <h4>&#x1F4A1; Key ArgoCD Concepts</h4>
-                    <ul>
-                        <li><strong>Source</strong> &mdash; the git repository and path containing manifests</li>
-                        <li><strong>Destination</strong> &mdash; the target cluster and namespace</li>
-                        <li><strong>Sync Policy</strong> &mdash; automated means ArgoCD syncs on git changes; prune removes deleted resources; selfHeal reverts manual drift</li>
-                    </ul>
-                </div>
                 <aside class="notes">
-                    The automated sync policy is what makes this GitOps. Any change pushed to the main branch in the specified path will automatically be applied to the cluster. The selfHeal feature reverts any manual kubectl changes.
+                    Tip: Key ArgoCD Concepts -- Source (the git repository and path containing manifests), Destination (the target cluster and namespace), Sync Policy (automated means ArgoCD syncs on git changes; prune removes deleted resources; selfHeal reverts manual drift). The automated sync policy is what makes this GitOps. Any change pushed to the main branch in the specified path will automatically be applied to the cluster.
                 </aside>
             </section>
 
@@ -758,7 +743,7 @@ spec:
             <section>
                 <h2>&#x1F50D; Monitor ArgoCD Sync Status</h2>
                 <p>Use the ArgoCD CLI and UI to observe the sync:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 kubectl apply -f argocd-app.yaml
 
 argocd app get cicd-demo
@@ -803,7 +788,7 @@ kubectl -n argocd get secret argocd-initial-admin-secret \
             <section>
                 <h2>&#x1F504; Simulate a Pipeline Trigger</h2>
                 <p>Make a code change, rebuild, and update the manifest:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 cd ~/cicd-lab
 sed -i 's/CI\/CD Demo Application/CI\/CD Demo v2/' index.html
 git add . && git commit -m "Update application to v2"
@@ -828,7 +813,7 @@ git commit -m "Deploy image $NEW_SHA"
             <section>
                 <h2>&#x1F504; Apply and Verify the Update</h2>
                 <p>Apply the updated manifest and observe the rollout:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 docker tag my-app:$NEW_SHA $ECR_REGISTRY/$ECR_REPO:$NEW_SHA
 docker push $ECR_REGISTRY/$ECR_REPO:$NEW_SHA
 
@@ -874,7 +859,7 @@ kubectl run curl-test2 --image=curlimages/curl --rm -it --restart=Never \
                 <div class="two-columns">
                     <div class="card fragment">
                         <h4>&#x1F4DC; Git Revert (Preferred)</h4>
-                        <pre style="font-size:0.8em;"><code class="bash" data-trim>
+                        <pre style="font-size:0.8em;"><code class="language-bash" data-trim>
 # Revert the last commit
 git revert HEAD --no-edit
 
@@ -885,7 +870,7 @@ git push origin main
                     </div>
                     <div class="card fragment">
                         <h4>&#x26A1; ArgoCD Rollback (Quick)</h4>
-                        <pre style="font-size:0.8em;"><code class="bash" data-trim>
+                        <pre style="font-size:0.8em;"><code class="language-bash" data-trim>
 # View sync history
 argocd app history cicd-demo
 
@@ -927,7 +912,7 @@ argocd app rollback cicd-demo 1
             <section>
                 <h2>&#x1F300; FluxCD Overview</h2>
                 <p>If FluxCD is available, explore its reconciliation model:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Check if Flux is installed
 flux check
 
@@ -991,7 +976,7 @@ flux reconcile kustomization flux-system --with-source
             <section>
                 <h2>&#x1F9F9; Clean Up Resources</h2>
                 <p>Remove all resources created during this lab:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 kubectl delete application cicd-demo -n argocd --ignore-not-found
 
 kubectl delete namespace cicd-lab

@@ -498,34 +498,17 @@ Lab 3 persistence test
 
             <section>
                 <h2>&#128260; Step 4: Verify Data Persistence</h2>
-                <p>Delete the pod and create a new one to verify data survives:</p>
+                <p>Delete the pod, create a reader pod, and verify data survives:</p>
                 <pre><code class="language-bash" data-trim>
-# Delete the writer pod
+# Delete the writer pod and verify PVC is still Bound
 $ kubectl delete pod data-writer -n lab-storage
-
-# Verify the PVC is still Bound
 $ kubectl get pvc -n lab-storage
                 </code></pre>
-                <pre><code class="language-yaml" data-trim>
-# Save as lab-reader-pod.yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: data-reader
-  namespace: lab-storage
-spec:
-  containers:
-    - name: reader
-      image: busybox:1.36
-# ... (remaining lines omitted for brevity)</code></pre>
+                <p>Save a <code>lab-reader-pod.yaml</code> that mounts the same PVC, then apply and verify:</p>
                 <pre><code class="language-bash" data-trim>
-# Apply the reader pod
 $ kubectl apply -f lab-reader-pod.yaml
-
-# Verify data from the previous pod is still there
 $ kubectl logs data-reader -n lab-storage
                 </code></pre>
-
                 <aside class="notes">
                     This is the key insight of the lab. The PVC and its underlying PV persist independently of any pod. The data written by the first pod is still available to the second pod. This is exactly how databases, message queues, and other stateful services maintain data across pod restarts and rescheduling events. Point out that the PVC remained Bound even after the pod was deleted.
                  | Success: The file written by data-writer is still present in the volume, even though that pod no longer exists. The original timestamp proves this is the same data.</aside>
@@ -604,7 +587,7 @@ spec:
 
             <section>
                 <h2>&#128640; Step 6: Create the Headless Service and Apply</h2>
-                <p>A StatefulSet requires a headless Service for DNS-based pod discovery:</p>
+                <p>A StatefulSet requires a headless Service (<code>clusterIP: None</code>) for DNS-based pod discovery:</p>
                 <pre><code class="language-yaml" data-trim>
 # Save as lab-headless-svc.yaml
 apiVersion: v1
@@ -614,18 +597,12 @@ metadata:
   namespace: lab-storage
 spec:
   clusterIP: None
-  selector:
-    app: web
-  ports:
-    - port: 80
-      targetPort: 80
+  selector: { app: web }
+  ports: [{ port: 80, targetPort: 80 }]
                 </code></pre>
                 <pre><code class="language-bash" data-trim>
-# Apply both resources
 $ kubectl apply -f lab-headless-svc.yaml
 $ kubectl apply -f lab-statefulset.yaml
-
-# Watch pods come up in order
 $ kubectl get pods -n lab-storage -l app=web -w
                 </code></pre>
 
@@ -711,11 +688,8 @@ $ for i in 0 1 2; do
     kubectl exec web-$i -n lab-storage -- curl -s localhost
   done
                 </code></pre>
-                <div class="highlight-box success">
-                    <p style="margin:0;"><strong>Expected:</strong> Each pod returns its own unique content, confirming that volumes are not shared between replicas.</p>
-                </div>
                 <aside class="notes">
-                    This demonstrates that each StatefulSet replica has its own isolated storage. Unlike a Deployment with a shared PVC (which is not even possible with ReadWriteOnce), each pod in a StatefulSet gets a dedicated volume. This is essential for databases where each replica has its own data directory.
+                    Tip: Expected output -- each pod returns its own unique content, confirming that volumes are not shared between replicas. This demonstrates that each StatefulSet replica has its own isolated storage. Unlike a Deployment with a shared PVC (which is not even possible with ReadWriteOnce), each pod in a StatefulSet gets a dedicated volume. This is essential for databases where each replica has its own data directory.
                 </aside>
             </section>
 

@@ -353,7 +353,7 @@
             <section>
                 <h2>&#x1F4DD; Set Up the Lab Namespace</h2>
                 <p>Create a dedicated namespace for this lab:</p>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Create the lab namespace
 kubectl create namespace observability-lab
 
@@ -368,7 +368,7 @@ kubectl config set-context --current --namespace=observability-lab
 
             <section>
                 <h2>&#x1F4DD; Deploy a Simple Pod for Log Exploration</h2>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Deploy a pod that generates log output
 kubectl run log-generator --image=busybox \
   --restart=Never -- \
@@ -385,7 +385,7 @@ kubectl run log-generator --image=busybox \
                 </code></pre>
                 <div class="fragment">
                     <p>Wait for the pod to be running:</p>
-                    <pre><code class="bash" data-trim>
+                    <pre><code class="language-bash" data-trim>
 kubectl wait --for=condition=Ready pod/log-generator --timeout=30s
                     </code></pre>
                 </div>
@@ -396,7 +396,7 @@ kubectl wait --for=condition=Ready pod/log-generator --timeout=30s
 
             <section>
                 <h2>&#x1F50D; Explore kubectl logs Flags</h2>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # View last 20 lines of logs
 kubectl logs log-generator --tail=20
 
@@ -417,27 +417,25 @@ kubectl logs log-generator --timestamps
 
             <section>
                 <h2>&#x1F4E6; Multi-Container Pod Logs</h2>
-                <pre><code class="yaml" data-trim>
+                <pre><code class="language-yaml" data-trim>
 cat &lt;&lt;'EOF' | kubectl apply -f -
 apiVersion: v1
 kind: Pod
-metadata:
-  name: multi-container-app
-  namespace: observability-lab
+metadata: { name: multi-container-app, namespace: observability-lab }
 spec:
   containers:
   - name: app
     image: busybox
-    command: ['sh', '-c', 'while true; do echo "$(date) APP: \
-      Processing request"; sleep 3; done']
+    command: ['sh', '-c',
+      'while true; do echo "APP: req"; sleep 3; done']
   - name: sidecar
     image: busybox
-    command: ['sh', '-c', 'while true; do echo "$(date) SIDECAR: \
-      Collecting metrics"; sleep 5; done']
+    command: ['sh', '-c',
+      'while true; do echo "SIDECAR: metrics"; sleep 5; done']
 EOF
                 </code></pre>
                 <div class="fragment">
-                    <pre><code class="bash" data-trim>
+                    <pre><code class="language-bash" data-trim>
 # View logs from a specific container
 kubectl logs multi-container-app -c app
 kubectl logs multi-container-app -c sidecar
@@ -462,7 +460,7 @@ kubectl logs multi-container-app --all-containers=true
 
             <section>
                 <h2>&#x1F4CA; Deploy an App with JSON Logs</h2>
-                <pre><code class="yaml" data-trim>
+                <pre><code class="language-yaml" data-trim>
 cat &lt;&lt;'EOF' | kubectl apply -f -
 apiVersion: apps/v1
 kind: Deployment
@@ -492,7 +490,7 @@ EOF
 
             <section>
                 <h2>&#x1F50E; View and Filter JSON Logs</h2>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # View logs from all pods in the deployment
 kubectl logs deployment/json-logger --all-containers=true --tail=5
 
@@ -554,7 +552,7 @@ kubectl logs -l app=json-logger --tail=10
 
             <section>
                 <h2>&#x1F4C8; Verify Metrics Server</h2>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Check if metrics-server is running
 kubectl get deployment metrics-server -n kube-system
 
@@ -570,7 +568,7 @@ kubectl get apiservice v1beta1.metrics.k8s.io
 
             <section>
                 <h2>&#x1F4CA; kubectl top: Node and Pod Metrics</h2>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 kubectl top nodes
 
 kubectl top pods
@@ -591,32 +589,27 @@ kubectl top pods --containers
 
             <section>
                 <h2>&#x1F3AF; Deploy a Resource-Intensive Workload</h2>
-                <pre><code class="yaml" data-trim>
+                <pre><code class="language-yaml" data-trim>
 cat &lt;&lt;'EOF' | kubectl apply -f -
 apiVersion: apps/v1
 kind: Deployment
-metadata:
-  name: stress-test
-  namespace: observability-lab
+metadata: { name: stress-test, namespace: observability-lab }
 spec:
   replicas: 2
   selector:
-    matchLabels:
-      app: stress-test
+    matchLabels: { app: stress-test }
   template:
-    metadata:
-      labels:
-        app: stress-test
+    metadata: { labels: { app: stress-test } }
     spec:
       containers:
       - name: stress
         image: busybox
-        command: ['sh', '-c', 'while true; do dd if=/dev/urandom \
+        command: ['sh', '-c', 'while true; do dd if=/dev/urandom
           bs=1024 count=1024 of=/dev/null 2>/dev/null; done']
 EOF
                 </code></pre>
                 <div class="fragment">
-                    <pre><code class="bash" data-trim>
+                    <pre><code class="language-bash" data-trim>
 # Wait 30 seconds then observe resource consumption
 sleep 30
 kubectl top pods -l app=stress-test --containers
@@ -655,7 +648,7 @@ kubectl top pods -l app=stress-test --containers
 
             <section>
                 <h2>&#x1F680; Install kube-prometheus-stack</h2>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Add the Prometheus community Helm repo
 helm repo add prometheus-community \
   https://prometheus-community.github.io/helm-charts
@@ -678,7 +671,7 @@ helm install monitoring prometheus-community/kube-prometheus-stack \
 
             <section>
                 <h2>&#x1F50D; Verify the Prometheus Stack</h2>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Check all pods in the monitoring namespace
 kubectl get pods -n monitoring
 
@@ -702,7 +695,7 @@ kubectl get svc -n monitoring
 
             <section>
                 <h2>&#x1F310; Access the Prometheus UI</h2>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Port-forward to Prometheus
 kubectl port-forward -n monitoring \
   svc/monitoring-kube-prometheus-prometheus 9090:9090 &
@@ -772,7 +765,7 @@ topk(5, container_memory_working_set_bytes{
 
             <section>
                 <h2>&#x1F3A8; Access Grafana</h2>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Port-forward to Grafana
 kubectl port-forward -n monitoring \
   svc/monitoring-grafana 3000:80 &
@@ -842,7 +835,7 @@ echo "Password: admin123"
 
             <section>
                 <h2>&#x1F514; Define a High Restart Count Alert</h2>
-                <pre><code class="yaml" data-trim>
+                <pre><code class="language-yaml" data-trim>
 cat &lt;&lt;'EOF' | kubectl apply -f -
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
@@ -873,7 +866,7 @@ EOF
 
             <section>
                 <h2>&#x2705; Verify the Alert Rule</h2>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Check the PrometheusRule resource
 kubectl get prometheusrules -n monitoring
 
@@ -902,7 +895,7 @@ kubectl get prometheusrules -n monitoring
                 <div class="two-columns">
                     <div class="card">
                         <h4>Check if Enabled</h4>
-                        <pre><code class="bash" data-trim>
+                        <pre><code class="language-bash" data-trim>
 # Check for CloudWatch agent
 kubectl get daemonset -n amazon-cloudwatch
 
@@ -938,7 +931,7 @@ kubectl get pods -n amazon-cloudwatch
 
             <section>
                 <h2>&#x1F41B; Deploy a Broken Application</h2>
-                <pre><code class="yaml" data-trim>
+                <pre><code class="language-yaml" data-trim>
 cat &lt;&lt;'EOF' | kubectl apply -f -
 apiVersion: apps/v1
 kind: Deployment
@@ -964,7 +957,7 @@ EOF
 
             <section>
                 <h2>&#x1F50D; Systematic Debugging: Step 1 &mdash; Events</h2>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Check pod status
 kubectl get pods -l app=buggy-app
 
@@ -983,7 +976,7 @@ kubectl describe pod -l app=buggy-app | grep -A 10 "State:"
 
             <section>
                 <h2>&#x1F50D; Systematic Debugging: Step 2 &mdash; Logs</h2>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # View current container logs
 kubectl logs -l app=buggy-app --tail=20
 
@@ -1001,7 +994,7 @@ kubectl logs -l app=buggy-app --previous --tail=20
 
             <section>
                 <h2>&#x1F50D; Systematic Debugging: Step 3 &mdash; Metrics</h2>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Check resource consumption
 kubectl top pods -l app=buggy-app
 
@@ -1016,17 +1009,8 @@ kubectl top pods -l app=buggy-app
 #   reason="OOMKilled"
 # }
                 </code></pre>
-                <div class="concept-box fragment">
-                    <h4>&#x1F3AF; Debugging Flowchart</h4>
-                    <ol>
-                        <li><strong>Events</strong> &rarr; What happened? When?</li>
-                        <li><strong>Logs</strong> &rarr; What did the app report?</li>
-                        <li><strong>Metrics</strong> &rarr; What was the resource state?</li>
-                        <li><strong>Describe</strong> &rarr; What are the pod's current conditions?</li>
-                    </ol>
-                </div>
                 <aside class="notes">
-                    This systematic approach — events, logs, metrics, describe — should become second nature. It covers 90% of production debugging scenarios.
+                    Tip: Debugging Flowchart -- Events (What happened? When?), Logs (What did the app report?), Metrics (What was the resource state?), Describe (What are the pod's current conditions?). This systematic approach should become second nature and covers 90% of production debugging scenarios.
                 </aside>
             </section>
 
@@ -1041,7 +1025,7 @@ kubectl top pods -l app=buggy-app
 
             <section>
                 <h2>&#x1F9F9; Clean Up Lab Resources</h2>
-                <pre><code class="bash" data-trim>
+                <pre><code class="language-bash" data-trim>
 # Delete the lab namespace (removes all lab workloads)
 kubectl delete namespace observability-lab
 
