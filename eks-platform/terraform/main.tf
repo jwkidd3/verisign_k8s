@@ -114,16 +114,18 @@ module "eks" {
 
 module "irsa" {
   source = "./modules/irsa"
-  count  = var.enable_dns ? 1 : 0
 
   cluster_name               = module.eks.cluster_name
   cluster_oidc_provider_arn  = module.eks.oidc_provider_arn
   cluster_oidc_provider_url  = module.eks.oidc_provider_url
   domain_zone_id             = var.route53_zone_id
+  enable_dns                 = var.enable_dns
 }
 
 module "vault" {
   source = "./modules/vault"
+
+  vault_root_token = var.vault_root_token
 
   depends_on = [module.eks]
 }

@@ -340,6 +340,17 @@
                 </aside>
             </section>
 
+            <section>
+                <h2>&#9881;&#65039; Environment Setup</h2>
+                <p>Set your student identifier (use your first name or assigned number):</p>
+                <pre><code class="language-bash"># Set your unique student name
+export STUDENT_NAME=&lt;your-name&gt;
+echo "Student: $STUDENT_NAME"</code></pre>
+                <div class="highlight-box warning">
+                    <strong>Important:</strong> This shared cluster is used by all 22 students. Your <code>STUDENT_NAME</code> ensures your resources don't conflict with others.
+                </div>
+            </section>
+
             <!-- ========== STEP 1: Deploy a Three-Tier Application ========== -->
             <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="section-divider">
                 <h2>Step 1</h2>
@@ -368,7 +379,7 @@
                 <p>Create a namespace and deploy frontend, backend, and database tiers:</p>
                 <pre><code class="language-bash" data-trim>
 # Create the lab namespace
-kubectl create namespace lab08
+kubectl create namespace lab08-$STUDENT_NAME
                 </code></pre>
                 <div class="fragment">
                     <p>Deploy the <strong>database</strong> tier:</p>
@@ -378,7 +389,7 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: database
-  namespace: lab08
+  namespace: lab08-$STUDENT_NAME
   labels: { app: bookstore, tier: database }
 spec:
   containers:
@@ -401,7 +412,7 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: backend
-  namespace: lab08
+  namespace: lab08-$STUDENT_NAME
   labels: { app: bookstore, tier: backend }
 spec:
 # ... (remaining lines omitted for brevity)</code></pre>
@@ -412,13 +423,13 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: frontend
-  namespace: lab08
+  namespace: lab08-$STUDENT_NAME
   labels: { app: bookstore, tier: frontend }
 spec:
 # ... (remaining lines omitted for brevity)</code></pre>
                 </div>
                 <aside class="notes">
-                    Each tier has a pod and a service. The services provide stable DNS names (frontend.lab08.svc.cluster.local, etc.) that we will use to test connectivity.
+                    Each tier has a pod and a service. The services provide stable DNS names (frontend.lab08-$STUDENT_NAME.svc.cluster.local, etc.) that we will use to test connectivity.
                 </aside>
             </section>
 
@@ -431,13 +442,13 @@ kubectl apply -f backend.yaml
 kubectl apply -f frontend.yaml
 
 # Wait for all pods to be ready
-kubectl wait --for=condition=Ready pod --all -n lab08 --timeout=60s
+kubectl wait --for=condition=Ready pod --all -n lab08-$STUDENT_NAME --timeout=60s
 
 # Verify everything is running
-kubectl get pods -n lab08 -o wide --show-labels
+kubectl get pods -n lab08-$STUDENT_NAME -o wide --show-labels
 
 # Verify services
-kubectl get services -n lab08
+kubectl get services -n lab08-$STUDENT_NAME
                 </code></pre>
                 <div class="highlight-box success fragment">
                     <strong>&#x2705; Expected Output:</strong> Three pods (<code>frontend</code>, <code>backend</code>, <code>database</code>) all in <code>Running</code> state. Three corresponding services with ClusterIP addresses. Each pod has <code>app=bookstore</code> and its respective <code>tier</code> label.
@@ -478,20 +489,20 @@ kubectl get services -n lab08
                 <p>Confirm that all pods can communicate with each other (default behavior):</p>
                 <pre><code class="language-bash" data-trim>
 # Frontend → Backend (should SUCCEED)
-kubectl exec frontend -n lab08 -- \
-  curl -s --max-time 3 http://backend.lab08.svc.cluster.local:8080
+kubectl exec frontend -n lab08-$STUDENT_NAME -- \
+  curl -s --max-time 3 http://backend.lab08-$STUDENT_NAME.svc.cluster.local:8080
 
 # Frontend → Database (should SUCCEED)
-kubectl exec frontend -n lab08 -- \
-  curl -s --max-time 3 http://database.lab08.svc.cluster.local:3306
+kubectl exec frontend -n lab08-$STUDENT_NAME -- \
+  curl -s --max-time 3 http://database.lab08-$STUDENT_NAME.svc.cluster.local:3306
 
 # Backend → Database (should SUCCEED)
-kubectl exec backend -n lab08 -- \
-  curl -s --max-time 3 http://database.lab08.svc.cluster.local:3306
+kubectl exec backend -n lab08-$STUDENT_NAME -- \
+  curl -s --max-time 3 http://database.lab08-$STUDENT_NAME.svc.cluster.local:3306
 
 # Database → Frontend (should SUCCEED)
-kubectl exec database -n lab08 -- \
-  curl -s --max-time 3 http://frontend.lab08.svc.cluster.local:80
+kubectl exec database -n lab08-$STUDENT_NAME -- \
+  curl -s --max-time 3 http://frontend.lab08-$STUDENT_NAME.svc.cluster.local:80
                 </code></pre>
                 <aside class="notes">
                     Expected Output: All four curl commands return the nginx welcome page HTML. Every pod can reach every other pod -- this is the Kubernetes default. Important: By default, Kubernetes has a flat network with no restrictions. Any pod can communicate with any other pod in any namespace. This is why NetworkPolicies are critical for security. This baseline is important. Students need to see the "before" state so the "after" state (with policies) is meaningful. In a real three-tier architecture, the database should never be directly accessible from the frontend.
@@ -530,7 +541,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: default-deny-all-ingress
-  namespace: lab08
+  namespace: lab08-$STUDENT_NAME
 spec:
   podSelector: {}
   policyTypes:
@@ -542,10 +553,10 @@ spec:
 kubectl apply -f deny-all-ingress.yaml
 
 # Verify the policy
-kubectl get networkpolicies -n lab08
+kubectl get networkpolicies -n lab08-$STUDENT_NAME
 
 # Describe the policy
-kubectl describe networkpolicy default-deny-all-ingress -n lab08
+kubectl describe networkpolicy default-deny-all-ingress -n lab08-$STUDENT_NAME
                     </code></pre>
                 </div>
                 <div class="key-point fragment">
@@ -584,23 +595,23 @@ kubectl describe networkpolicy default-deny-all-ingress -n lab08
                 <p>Test that all pod-to-pod communication is now blocked:</p>
                 <pre><code class="language-bash" data-trim>
 # Frontend → Backend (should FAIL / timeout)
-kubectl exec frontend -n lab08 -- \
-  curl -s --max-time 3 http://backend.lab08.svc.cluster.local:8080
+kubectl exec frontend -n lab08-$STUDENT_NAME -- \
+  curl -s --max-time 3 http://backend.lab08-$STUDENT_NAME.svc.cluster.local:8080
 echo "Exit code: $?"
 
 # Frontend → Database (should FAIL / timeout)
-kubectl exec frontend -n lab08 -- \
-  curl -s --max-time 3 http://database.lab08.svc.cluster.local:3306
+kubectl exec frontend -n lab08-$STUDENT_NAME -- \
+  curl -s --max-time 3 http://database.lab08-$STUDENT_NAME.svc.cluster.local:3306
 echo "Exit code: $?"
 
 # Backend → Database (should FAIL / timeout)
-kubectl exec backend -n lab08 -- \
-  curl -s --max-time 3 http://database.lab08.svc.cluster.local:3306
+kubectl exec backend -n lab08-$STUDENT_NAME -- \
+  curl -s --max-time 3 http://database.lab08-$STUDENT_NAME.svc.cluster.local:3306
 echo "Exit code: $?"
 
 # Database → Frontend (should FAIL / timeout)
-kubectl exec database -n lab08 -- \
-  curl -s --max-time 3 http://frontend.lab08.svc.cluster.local:80
+kubectl exec database -n lab08-$STUDENT_NAME -- \
+  curl -s --max-time 3 http://frontend.lab08-$STUDENT_NAME.svc.cluster.local:80
 echo "Exit code: $?"
                 </code></pre>
                 <aside class="notes">
@@ -640,7 +651,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: allow-frontend-to-backend
-  namespace: lab08
+  namespace: lab08-$STUDENT_NAME
 spec:
   podSelector:
 # ... (remaining lines omitted for brevity)</code></pre>
@@ -650,8 +661,8 @@ spec:
 kubectl apply -f allow-frontend-to-backend.yaml
 
 # Test: Frontend → Backend (should now SUCCEED)
-kubectl exec frontend -n lab08 -- \
-  curl -s --max-time 3 http://backend.lab08.svc.cluster.local:8080
+kubectl exec frontend -n lab08-$STUDENT_NAME -- \
+  curl -s --max-time 3 http://backend.lab08-$STUDENT_NAME.svc.cluster.local:8080
 
 # Test: Database → Backend (should still FAIL)
 # ... (more output)</code></pre>
@@ -696,7 +707,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: allow-backend-to-database
-  namespace: lab08
+  namespace: lab08-$STUDENT_NAME
 spec:
   podSelector:
 # ... (remaining lines omitted for brevity)</code></pre>
@@ -706,8 +717,8 @@ spec:
 kubectl apply -f allow-backend-to-database.yaml
 
 # Test: Backend → Database (should now SUCCEED)
-kubectl exec backend -n lab08 -- \
-  curl -s --max-time 3 http://database.lab08.svc.cluster.local:3306
+kubectl exec backend -n lab08-$STUDENT_NAME -- \
+  curl -s --max-time 3 http://database.lab08-$STUDENT_NAME.svc.cluster.local:3306
 
 # Test: Frontend → Database (should still FAIL)
 # ... (more output)</code></pre>
@@ -746,12 +757,12 @@ kubectl exec backend -n lab08 -- \
                 <pre><code class="language-bash" data-trim>
 echo "=== ALLOWED PATHS ==="
 echo -n "Frontend -> Backend: "
-kubectl exec frontend -n lab08 -- curl -s -o /dev/null \
+kubectl exec frontend -n lab08-$STUDENT_NAME -- curl -s -o /dev/null \
   -w "%{http_code}" --max-time 3 \
   http://backend:8080 2>/dev/null || echo "BLOCKED"
 
 echo -n "Backend -> Database: "
-kubectl exec backend -n lab08 -- curl -s -o /dev/null \
+kubectl exec backend -n lab08-$STUDENT_NAME -- curl -s -o /dev/null \
   -w "%{http_code}" --max-time 3 \
   http://database:3306 2>/dev/null || echo "BLOCKED"
 
@@ -796,7 +807,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: default-deny-all-egress
-  namespace: lab08
+  namespace: lab08-$STUDENT_NAME
 spec:
   podSelector: {}
   policyTypes:
@@ -808,8 +819,8 @@ spec:
 kubectl apply -f deny-all-egress.yaml
 
 # Test: DNS resolution is now broken
-kubectl exec frontend -n lab08 -- \
-  nslookup backend.lab08.svc.cluster.local 2>&1 || echo "DNS FAILED"
+kubectl exec frontend -n lab08-$STUDENT_NAME -- \
+  nslookup backend.lab08-$STUDENT_NAME.svc.cluster.local 2>&1 || echo "DNS FAILED"
                     </code></pre>
                 </div>
                 <aside class="notes">
@@ -826,7 +837,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: allow-dns-egress
-  namespace: lab08
+  namespace: lab08-$STUDENT_NAME
 spec:
   podSelector: {}
   policyTypes:
@@ -837,10 +848,10 @@ spec:
 kubectl apply -f allow-dns-egress.yaml
 
 # Verify DNS and full path work again
-kubectl exec frontend -n lab08 -- \
-  nslookup backend.lab08.svc.cluster.local
-kubectl exec frontend -n lab08 -- \
-  curl -s --max-time 3 http://backend.lab08.svc.cluster.local:8080
+kubectl exec frontend -n lab08-$STUDENT_NAME -- \
+  nslookup backend.lab08-$STUDENT_NAME.svc.cluster.local
+kubectl exec frontend -n lab08-$STUDENT_NAME -- \
+  curl -s --max-time 3 http://backend.lab08-$STUDENT_NAME.svc.cluster.local:8080
                     </code></pre>
                 </div>
                 <aside class="notes">
@@ -875,13 +886,13 @@ kubectl exec frontend -n lab08 -- \
                 <h2>&#x1F30D; Namespace-Based Policies</h2>
                 <p>Create a monitoring namespace and allow it to access application pods:</p>
                 <pre><code class="language-bash" data-trim>
-kubectl create namespace monitoring
-kubectl label namespace monitoring purpose=monitoring
-kubectl run monitor --image=nginx:1.25 -n monitoring
+kubectl create namespace monitoring-$STUDENT_NAME
+kubectl label namespace monitoring-$STUDENT_NAME purpose=monitoring
+kubectl run monitor --image=nginx:1.25 -n monitoring-$STUDENT_NAME
 
 # Test: Monitor cannot reach backend (FAIL due to deny-all)
-kubectl exec monitor -n monitoring -- \
-  curl -s --max-time 3 http://backend.lab08.svc.cluster.local:8080
+kubectl exec monitor -n monitoring-$STUDENT_NAME -- \
+  curl -s --max-time 3 http://backend.lab08-$STUDENT_NAME.svc.cluster.local:8080
                 </code></pre>
                 <div class="fragment">
                     <pre><code class="language-yaml" data-trim>
@@ -890,7 +901,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: allow-monitoring-ingress
-  namespace: lab08
+  namespace: lab08-$STUDENT_NAME
 spec:
   podSelector: {}
 # ... (remaining lines omitted for brevity)</code></pre>
@@ -907,19 +918,19 @@ spec:
 kubectl apply -f allow-monitoring-ingress.yaml
 
 # Test: Monitor → Backend (should now SUCCEED)
-kubectl exec monitor -n monitoring -- \
-  curl -s --max-time 3 http://backend.lab08.svc.cluster.local:8080
+kubectl exec monitor -n monitoring-$STUDENT_NAME -- \
+  curl -s --max-time 3 http://backend.lab08-$STUDENT_NAME.svc.cluster.local:8080
 
 # Test: Monitor → Frontend (should also SUCCEED)
-kubectl exec monitor -n monitoring -- \
-  curl -s --max-time 3 http://frontend.lab08.svc.cluster.local:80
+kubectl exec monitor -n monitoring-$STUDENT_NAME -- \
+  curl -s --max-time 3 http://frontend.lab08-$STUDENT_NAME.svc.cluster.local:80
 
 # Test: Monitor → Database (should also SUCCEED)
-kubectl exec monitor -n monitoring -- \
-  curl -s --max-time 3 http://database.lab08.svc.cluster.local:3306
+kubectl exec monitor -n monitoring-$STUDENT_NAME -- \
+  curl -s --max-time 3 http://database.lab08-$STUDENT_NAME.svc.cluster.local:3306
                 </code></pre>
                 <div class="highlight-box success fragment">
-                    <strong>&#x2705; Expected Output:</strong> All three requests from the monitoring namespace succeed. The <code>namespaceSelector</code> with <code>purpose: monitoring</code> allows any pod in the monitoring namespace to reach any pod in lab08 on TCP port 80.
+                    <strong>&#x2705; Expected Output:</strong> All three requests from the monitoring namespace succeed. The <code>namespaceSelector</code> with <code>purpose: monitoring</code> allows any pod in the monitoring namespace to reach any pod in lab08-$STUDENT_NAME on TCP port 80.
                 </div>
                 <div class="key-point fragment">
                     <strong>&#x1F511; Key Point:</strong> <code>namespaceSelector</code> selects by <strong>namespace labels</strong>, not by namespace name. This is why we labeled the monitoring namespace with <code>purpose=monitoring</code>. Always label namespaces that you intend to use in cross-namespace NetworkPolicies.
@@ -961,7 +972,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: allow-external-to-frontend
-  namespace: lab08
+  namespace: lab08-$STUDENT_NAME
 spec:
   podSelector:
     matchLabels:
@@ -971,9 +982,9 @@ spec:
                     <pre><code class="language-bash" data-trim>
 kubectl apply -f broken-policy.yaml
 # Test - this should work but does not
-kubectl run test-client --image=nginx:1.25 -n lab08 --rm -it \
+kubectl run test-client --image=nginx:1.25 -n lab08-$STUDENT_NAME --rm -it \
   --restart=Never -- curl -s --max-time 3 \
-  http://frontend.lab08.svc.cluster.local:80
+  http://frontend.lab08-$STUDENT_NAME.svc.cluster.local:80
                     </code></pre>
                 </div>
                 <aside class="notes">
@@ -991,7 +1002,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: allow-external-to-frontend
-  namespace: lab08
+  namespace: lab08-$STUDENT_NAME
 spec:
   podSelector:
     matchLabels:
@@ -1003,9 +1014,9 @@ spec:
 kubectl apply -f fixed-policy.yaml
 # Test again - should now work
 kubectl run test-client --image=nginx:1.25 \
-  -n lab08 --rm -it --restart=Never -- \
+  -n lab08-$STUDENT_NAME --rm -it --restart=Never -- \
   curl -s --max-time 3 \
-  http://frontend.lab08.svc.cluster.local:80
+  http://frontend.lab08-$STUDENT_NAME.svc.cluster.local:80
                     </code></pre>
                 </div>
                 <aside class="notes">
@@ -1041,14 +1052,14 @@ kubectl run test-client --image=nginx:1.25 \
                 <p>Remove all resources created during this lab:</p>
                 <pre><code class="language-bash" data-trim>
 # Delete both namespaces (cascades to all resources within)
-kubectl delete namespace lab08
-kubectl delete namespace monitoring
+kubectl delete namespace lab08-$STUDENT_NAME
+kubectl delete namespace monitoring-$STUDENT_NAME
 
 # Verify cleanup
-kubectl get namespace lab08 2>/dev/null \
-  || echo "Namespace lab08 deleted"
-kubectl get namespace monitoring 2>/dev/null \
-  || echo "Namespace monitoring deleted"
+kubectl get namespace lab08-$STUDENT_NAME 2>/dev/null \
+  || echo "Namespace lab08-$STUDENT_NAME deleted"
+kubectl get namespace monitoring-$STUDENT_NAME 2>/dev/null \
+  || echo "Namespace monitoring-$STUDENT_NAME deleted"
                 </code></pre>
                 <div class="highlight-box success fragment">
                     <strong>&#x2705; Checkpoint:</strong> Both namespaces and all their resources (pods, services, NetworkPolicies) are deleted. NetworkPolicies are namespace-scoped, so they are automatically removed when the namespace is deleted.

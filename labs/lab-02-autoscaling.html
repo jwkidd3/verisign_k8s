@@ -340,6 +340,17 @@
                 </aside>
             </section>
 
+            <section>
+                <h2>&#9881;&#65039; Environment Setup</h2>
+                <p>Set your student identifier (use your first name or assigned number):</p>
+                <pre><code class="language-bash"># Set your unique student name
+export STUDENT_NAME=&lt;your-name&gt;
+echo "Student: $STUDENT_NAME"</code></pre>
+                <div class="highlight-box warning">
+                    <strong>Important:</strong> This shared cluster is used by all 22 students. Your <code>STUDENT_NAME</code> ensures your resources don't conflict with others.
+                </div>
+            </section>
+
             <!-- Autoscaling Concepts -->
             <section>
                 <h2>&#x1F4A1; Autoscaling in Kubernetes</h2>
@@ -438,8 +449,8 @@ kubectl top pods -A
                 <p>Create a namespace and deploy an application with resource requests:</p>
                 <pre><code class="language-bash" data-trim>
 # Create lab namespace
-kubectl create namespace lab02
-kubectl config set-context --current --namespace=lab02
+kubectl create namespace lab02-$STUDENT_NAME
+kubectl config set-context --current --namespace=lab02-$STUDENT_NAME
                 </code></pre>
                 <div class="fragment">
                     <p>Create the deployment manifest:</p>
@@ -449,7 +460,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: php-apache
-  namespace: lab02
+  namespace: lab02-$STUDENT_NAME
 spec:
   replicas: 1
   selector:
@@ -471,7 +482,7 @@ kubectl apply -f php-apache-deployment.yaml
 kubectl expose deployment php-apache --port=80 --target-port=80
 
 # Verify everything is running
-kubectl get all -n lab02
+kubectl get all -n lab02-$STUDENT_NAME
                 </code></pre>
                 <div class="highlight-box success fragment">
                     <strong>&#x2705; Expected Output:</strong> One pod in <code>Running</code> state, one deployment with <code>1/1</code> ready, and a ClusterIP service on port 80.
@@ -516,13 +527,13 @@ kubectl autoscale deployment php-apache \
   --cpu-percent=50 \
   --min=1 \
   --max=10 \
-  -n lab02
+  -n lab02-$STUDENT_NAME
 
 # Examine the HPA
-kubectl get hpa -n lab02
+kubectl get hpa -n lab02-$STUDENT_NAME
 
 # View detailed HPA information
-kubectl describe hpa php-apache -n lab02
+kubectl describe hpa php-apache -n lab02-$STUDENT_NAME
                 </code></pre>
                 <div class="highlight-box success fragment">
                     <strong>&#x2705; Expected Output:</strong> The HPA should show <code>TARGETS: &lt;current&gt;/50%</code>, <code>MINPODS: 1</code>, <code>MAXPODS: 10</code>, and <code>REPLICAS: 1</code>. The current value may show <code>&lt;unknown&gt;/50%</code> for the first 15-30 seconds while metrics are collected.
@@ -566,7 +577,7 @@ kubectl describe hpa php-apache -n lab02
 kubectl run load-generator \
   --image=busybox:1.36 \
   --restart=Never \
-  -n lab02 \
+  -n lab02-$STUDENT_NAME \
   -- /bin/sh -c "while sleep 0.01; do wget -q -O- http://php-apache; done"
                 </code></pre>
                 <div class="highlight-box warning fragment">
@@ -609,10 +620,10 @@ kubectl run load-generator \
                 <p>In your <strong>second terminal</strong>, watch the HPA and pods respond:</p>
                 <pre><code class="language-bash" data-trim>
 # Watch HPA status (updates every 15 seconds)
-kubectl get hpa php-apache -n lab02 --watch
+kubectl get hpa php-apache -n lab02-$STUDENT_NAME --watch
 
 # In yet another terminal, watch pods scale up
-kubectl get pods -n lab02 --watch
+kubectl get pods -n lab02-$STUDENT_NAME --watch
                 </code></pre>
                 <div class="highlight-box success fragment">
                     <strong>&#x2705; Expected Output:</strong> Within 1-3 minutes you should see:
@@ -658,10 +669,10 @@ kubectl get pods -n lab02 --watch
                 <p>Inspect the HPA decision-making process:</p>
                 <pre><code class="language-bash" data-trim>
 # Detailed HPA description with events
-kubectl describe hpa php-apache -n lab02
+kubectl describe hpa php-apache -n lab02-$STUDENT_NAME
 
 # View HPA in YAML format for full status
-kubectl get hpa php-apache -n lab02 -o yaml
+kubectl get hpa php-apache -n lab02-$STUDENT_NAME -o yaml
                 </code></pre>
                 <div class="concept-box fragment">
                     <h4>&#x1F4A1; Key Fields in HPA Status</h4>
@@ -708,13 +719,13 @@ kubectl get hpa php-apache -n lab02 -o yaml
                 <p>Stop the load generator and watch the HPA scale down:</p>
                 <pre><code class="language-bash" data-trim>
 # Delete the load generator pod
-kubectl delete pod load-generator -n lab02
+kubectl delete pod load-generator -n lab02-$STUDENT_NAME
 
 # Watch the HPA scale down (this takes ~5 minutes)
-kubectl get hpa php-apache -n lab02 --watch
+kubectl get hpa php-apache -n lab02-$STUDENT_NAME --watch
 
 # In another terminal, watch pods terminate
-kubectl get pods -n lab02 --watch
+kubectl get pods -n lab02-$STUDENT_NAME --watch
                 </code></pre>
                 <div class="highlight-box success fragment">
                     <strong>&#x2705; Expected Output:</strong> After approximately 5 minutes, you should see:
@@ -760,7 +771,7 @@ kubectl get pods -n lab02 --watch
                 <p>Delete the existing HPA and create a more advanced one:</p>
                 <pre><code class="language-bash" data-trim>
 # Remove the existing HPA
-kubectl delete hpa php-apache -n lab02
+kubectl delete hpa php-apache -n lab02-$STUDENT_NAME
                 </code></pre>
                 <div class="fragment">
                     <p>Create the v2 HPA manifest:</p>
@@ -768,11 +779,11 @@ kubectl delete hpa php-apache -n lab02
 # Save as hpa-v2.yaml
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
-metadata: { name: php-apache-v2, namespace: lab02 }
+metadata: { name: php-apache-v2, namespace: lab02-$STUDENT_NAME }
 spec:
   scaleTargetRef: { apiVersion: apps/v1, kind: Deployment, name: php-apache }
   minReplicas: 1
-  maxReplicas: 10
+  maxReplicas: 5
   metrics:
   - type: Resource
 # ... (remaining lines omitted for brevity)</code></pre>
@@ -789,10 +800,10 @@ spec:
 kubectl apply -f hpa-v2.yaml
 
 # Examine the HPA
-kubectl get hpa php-apache-v2 -n lab02
+kubectl get hpa php-apache-v2 -n lab02-$STUDENT_NAME
 
 # View the full spec
-kubectl describe hpa php-apache-v2 -n lab02
+kubectl describe hpa php-apache-v2 -n lab02-$STUDENT_NAME
                 </code></pre>
                 <div class="highlight-box success fragment">
                     <strong>&#x2705; Expected Output:</strong> The HPA should show two metrics targets: <code>cpu: &lt;current&gt;/50%</code> and <code>memory: &lt;current&gt;/80%</code>. The REFERENCE should point to <code>Deployment/php-apache</code>.
@@ -853,7 +864,7 @@ apiVersion: autoscaling.k8s.io/v1
 kind: VerticalPodAutoscaler
 metadata:
   name: php-apache-vpa
-  namespace: lab02
+  namespace: lab02-$STUDENT_NAME
 spec:
   targetRef:
     apiVersion: apps/v1
@@ -872,10 +883,10 @@ spec:
 kubectl apply -f vpa.yaml
 
 # Check VPA recommendations (may take a few minutes to populate)
-kubectl describe vpa php-apache-vpa -n lab02
+kubectl describe vpa php-apache-vpa -n lab02-$STUDENT_NAME
 
 # View recommendations in JSON
-kubectl get vpa php-apache-vpa -n lab02 \
+kubectl get vpa php-apache-vpa -n lab02-$STUDENT_NAME \
   -o jsonpath='{.status.recommendation}' | python3 -m json.tool
                 </code></pre>
                 <div class="highlight-box success fragment">
@@ -919,6 +930,9 @@ kubectl get vpa php-apache-vpa -n lab02 \
 
             <section>
                 <h2>&#x1F4E6; Test Cluster Autoscaler Behavior</h2>
+                <div class="highlight-box danger">
+                    <strong>Instructor Demo:</strong> In a shared cluster, only run this step when directed by the instructor. Creating 20 replicas per student would overwhelm the cluster.
+                </div>
                 <p>Deploy a workload that requests more resources than currently available:</p>
                 <pre><code class="language-yaml" data-trim>
 # Save as inflate-deployment.yaml
@@ -926,9 +940,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: inflate
-  namespace: lab02
+  namespace: lab02-$STUDENT_NAME
 spec:
-  replicas: 20
+  replicas: 5
   selector:
     matchLabels:
 # ... (remaining lines omitted for brevity)</code></pre>
@@ -936,7 +950,7 @@ spec:
 kubectl apply -f inflate-deployment.yaml
                 </code></pre>
                 <aside class="notes">
-                    The pause container consumes almost no resources but reserves them via requests. 20 replicas requesting 250m CPU each means 5 full CPU cores worth of requests. This will likely exceed available capacity on a small cluster.
+                    The pause container consumes almost no resources but reserves them via requests. 5 replicas requesting 250m CPU each means 1.25 CPU cores worth of requests. This will likely exceed available capacity on a small cluster.
                 </aside>
             </section>
 
@@ -944,13 +958,13 @@ kubectl apply -f inflate-deployment.yaml
                 <h2>&#x1F50D; Monitor Cluster Autoscaler Activity</h2>
                 <pre><code class="language-bash" data-trim>
 # Watch pods - some should be Pending if cluster is at capacity
-kubectl get pods -n lab02 -l app=inflate --watch
+kubectl get pods -n lab02-$STUDENT_NAME -l app=inflate --watch
 
 # Check for Pending pods
-kubectl get pods -n lab02 -l app=inflate --field-selector=status.phase=Pending
+kubectl get pods -n lab02-$STUDENT_NAME -l app=inflate --field-selector=status.phase=Pending
 
 # Examine why pods are pending
-kubectl describe pod &lt;PENDING_POD_NAME&gt; -n lab02 | grep -A 5 "Events:"
+kubectl describe pod &lt;PENDING_POD_NAME&gt; -n lab02-$STUDENT_NAME | grep -A 5 "Events:"
 
 # Check Cluster Autoscaler logs (if available)
 kubectl logs -n kube-system -l app=cluster-autoscaler --tail=50
@@ -1002,14 +1016,14 @@ kubectl logs -n kube-system -l app=cluster-autoscaler --tail=50
 kubectl config set-context --current --namespace=default
 
 # Delete the entire lab namespace
-kubectl delete namespace lab02
+kubectl delete namespace lab02-$STUDENT_NAME
 
 # Verify cleanup
 kubectl get namespaces
-kubectl get hpa -A | grep lab02
+kubectl get hpa -A | grep lab02-$STUDENT_NAME
                 </code></pre>
                 <div class="highlight-box success fragment">
-                    <strong>&#x2705; Checkpoint:</strong> The <code>lab02</code> namespace should be gone. No HPA resources should reference lab02. If Cluster Autoscaler added nodes, they will scale down automatically after the workloads are removed (this may take 10+ minutes).
+                    <strong>&#x2705; Checkpoint:</strong> The <code>lab02-$STUDENT_NAME</code> namespace should be gone. No HPA resources should reference lab02-$STUDENT_NAME. If Cluster Autoscaler added nodes, they will scale down automatically after the workloads are removed (this may take 10+ minutes).
                 </div>
                 <div class="highlight-box warning fragment">
                     <strong>&#x1F4DD; Note:</strong> Also delete any YAML files you created locally if you no longer need them, or keep them as reference material.

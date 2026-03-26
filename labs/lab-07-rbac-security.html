@@ -340,6 +340,17 @@
                 </aside>
             </section>
 
+            <section>
+                <h2>&#9881;&#65039; Environment Setup</h2>
+                <p>Set your student identifier (use your first name or assigned number):</p>
+                <pre><code class="language-bash"># Set your unique student name
+export STUDENT_NAME=&lt;your-name&gt;
+echo "Student: $STUDENT_NAME"</code></pre>
+                <div class="highlight-box warning">
+                    <strong>Important:</strong> This shared cluster is used by all 22 students. Your <code>STUDENT_NAME</code> ensures your resources don't conflict with others.
+                </div>
+            </section>
+
             <!-- ========== STEP 1: Explore Existing ClusterRoles ========== -->
             <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="section-divider">
                 <h2>Step 1</h2>
@@ -368,7 +379,7 @@
                 <p>First, create a namespace for this lab and examine the built-in ClusterRoles:</p>
                 <pre><code class="language-bash" data-trim>
 # Create a namespace for this lab
-kubectl create namespace lab07
+kubectl create namespace lab07-$STUDENT_NAME
 
 # List all ClusterRoles (there are many built-in ones)
 kubectl get clusterroles | head -20
@@ -431,7 +442,7 @@ kubectl describe clusterrole view
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  namespace: lab07
+  namespace: lab07-$STUDENT_NAME
   name: pod-reader
 rules:
 - apiGroups: [""]
@@ -442,17 +453,17 @@ rules:
 kubectl apply -f pod-reader-role.yaml
 
 # Verify the Role was created
-kubectl get roles -n lab07
+kubectl get roles -n lab07-$STUDENT_NAME
 
 # Examine the Role details
-kubectl describe role pod-reader -n lab07
+kubectl describe role pod-reader -n lab07-$STUDENT_NAME
                     </code></pre>
                 </div>
                 <div class="key-point fragment">
                     <strong>&#x1F511; Key Point:</strong> Roles use an additive model &mdash; there are no &ldquo;deny&rdquo; rules. If a permission is not explicitly granted, it is denied by default. The <code>apiGroups: [""]</code> refers to the core API group.
                 </div>
                 <aside class="notes">
-                    Tip: The Role pod-reader should appear in namespace lab07 with rules allowing get, list, watch on pods and get on pods/log. Emphasize the additive-only model. There is no way to deny a specific permission in RBAC; you can only grant. Also note that pods/log is a sub-resource, which requires a separate rule entry.
+                    Tip: The Role pod-reader should appear in namespace lab07-$STUDENT_NAME with rules allowing get, list, watch on pods and get on pods/log. Emphasize the additive-only model. There is no way to deny a specific permission in RBAC; you can only grant. Also note that pods/log is a sub-resource, which requires a separate rule entry.
                 </aside>
             </section>
 
@@ -483,15 +494,15 @@ kubectl describe role pod-reader -n lab07
                 <h2>&#x1F517; Create a ServiceAccount and RoleBinding</h2>
                 <p>Create a ServiceAccount and bind the pod-reader Role to it:</p>
                 <pre><code class="language-bash" data-trim>
-kubectl create serviceaccount pod-viewer -n lab07
-kubectl get serviceaccounts -n lab07
+kubectl create serviceaccount pod-viewer -n lab07-$STUDENT_NAME
+kubectl get serviceaccounts -n lab07-$STUDENT_NAME
                 </code></pre>
                 <div class="fragment">
                     <pre><code class="language-yaml" data-trim>
 # Save as pod-reader-binding.yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
-metadata: { name: read-pods, namespace: lab07 }
+metadata: { name: read-pods, namespace: lab07-$STUDENT_NAME }
 subjects:
 - kind: ServiceAccount
 # ... (remaining lines omitted for brevity)</code></pre>
@@ -499,7 +510,7 @@ subjects:
                 <div class="fragment">
                     <pre><code class="language-bash" data-trim>
 kubectl apply -f pod-reader-binding.yaml
-kubectl describe rolebinding read-pods -n lab07
+kubectl describe rolebinding read-pods -n lab07-$STUDENT_NAME
                     </code></pre>
                 </div>
                 <aside class="notes">
@@ -534,27 +545,27 @@ kubectl describe rolebinding read-pods -n lab07
                 <h2>&#x1F9EA; Test Permissions with kubectl auth can-i</h2>
                 <p>Use the <code>--as</code> flag to impersonate the ServiceAccount and test permissions:</p>
                 <pre><code class="language-bash" data-trim>
-# Test: Can the pod-viewer list pods in lab07? (should be YES)
-kubectl auth can-i list pods -n lab07 \
-  --as=system:serviceaccount:lab07:pod-viewer
+# Test: Can the pod-viewer list pods in lab07-$STUDENT_NAME? (should be YES)
+kubectl auth can-i list pods -n lab07-$STUDENT_NAME \
+  --as=system:serviceaccount:lab07-$STUDENT_NAME:pod-viewer
 
-# Test: Can the pod-viewer get pods in lab07? (should be YES)
-kubectl auth can-i get pods -n lab07 \
-  --as=system:serviceaccount:lab07:pod-viewer
+# Test: Can the pod-viewer get pods in lab07-$STUDENT_NAME? (should be YES)
+kubectl auth can-i get pods -n lab07-$STUDENT_NAME \
+  --as=system:serviceaccount:lab07-$STUDENT_NAME:pod-viewer
 
 # Test: Can the pod-viewer delete pods? (should be NO)
-kubectl auth can-i delete pods -n lab07 \
-  --as=system:serviceaccount:lab07:pod-viewer
+kubectl auth can-i delete pods -n lab07-$STUDENT_NAME \
+  --as=system:serviceaccount:lab07-$STUDENT_NAME:pod-viewer
 
 # Test: Can the pod-viewer create deployments? (should be NO)
-kubectl auth can-i create deployments -n lab07 \
-  --as=system:serviceaccount:lab07:pod-viewer
+kubectl auth can-i create deployments -n lab07-$STUDENT_NAME \
+  --as=system:serviceaccount:lab07-$STUDENT_NAME:pod-viewer
                 </code></pre>
                 <div class="fragment">
                     <pre><code class="language-bash" data-trim>
 # List all allowed actions in the namespace
-kubectl auth can-i --list -n lab07 \
-  --as=system:serviceaccount:lab07:pod-viewer
+kubectl auth can-i --list -n lab07-$STUDENT_NAME \
+  --as=system:serviceaccount:lab07-$STUDENT_NAME:pod-viewer
                     </code></pre>
                 </div>
                 <aside class="notes">
@@ -592,20 +603,20 @@ kubectl auth can-i --list -n lab07 \
 # Save as rbac-test-pod.yaml
 apiVersion: v1
 kind: Pod
-metadata: { name: rbac-test, namespace: lab07 }
+metadata: { name: rbac-test, namespace: lab07-$STUDENT_NAME }
 spec:
   serviceAccountName: pod-viewer
 # ... (remaining lines omitted for brevity)</code></pre>
                 <div class="fragment">
                     <pre><code class="language-bash" data-trim>
 kubectl apply -f rbac-test-pod.yaml
-kubectl wait --for=condition=Ready pod/rbac-test -n lab07 --timeout=60s
+kubectl wait --for=condition=Ready pod/rbac-test -n lab07-$STUDENT_NAME --timeout=60s
 
 # This should SUCCEED - list pods
-kubectl exec rbac-test -n lab07 -- kubectl get pods -n lab07
+kubectl exec rbac-test -n lab07-$STUDENT_NAME -- kubectl get pods -n lab07-$STUDENT_NAME
 # This should FAIL - try to create a deployment
-kubectl exec rbac-test -n lab07 -- kubectl create deployment \
-  test --image=nginx -n lab07
+kubectl exec rbac-test -n lab07-$STUDENT_NAME -- kubectl create deployment \
+  test --image=nginx -n lab07-$STUDENT_NAME
                     </code></pre>
                 </div>
                 <aside class="notes">
@@ -644,7 +655,7 @@ kubectl exec rbac-test -n lab07 -- kubectl create deployment \
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: cluster-pod-reader
+  name: cluster-pod-reader-$STUDENT_NAME
 rules:
 - apiGroups: [""]
   resources: ["pods", "pods/log", "services"]
@@ -655,17 +666,17 @@ rules:
 kubectl apply -f cluster-reader-role.yaml
 
 # Create a new ServiceAccount for cluster-wide access
-kubectl create serviceaccount cluster-viewer -n lab07
+kubectl create serviceaccount cluster-viewer -n lab07-$STUDENT_NAME
 
 # Verify the ClusterRole
-kubectl describe clusterrole cluster-pod-reader
+kubectl describe clusterrole cluster-pod-reader-$STUDENT_NAME
                     </code></pre>
                 </div>
                 <div class="key-point fragment">
                     <strong>&#x1F511; Key Point:</strong> A ClusterRole is a cluster-scoped resource (no namespace in its metadata). It can be bound with a <code>ClusterRoleBinding</code> for cluster-wide access or a <code>RoleBinding</code> for access within a single namespace.
                 </div>
                 <aside class="notes">
-                    Tip: The ClusterRole cluster-pod-reader should list rules for pods, pods/log, services (core API group) and deployments, replicasets (apps API group). ClusterRoles are reusable across namespaces. This pattern is common in production where you define permissions once and bind them per-namespace or cluster-wide as needed.
+                    Tip: The ClusterRole cluster-pod-reader-$STUDENT_NAME should list rules for pods, pods/log, services (core API group) and deployments, replicasets (apps API group). ClusterRoles are reusable across namespaces. This pattern is common in production where you define permissions once and bind them per-namespace or cluster-wide as needed.
                 </aside>
             </section>
 
@@ -700,7 +711,7 @@ kubectl describe clusterrole cluster-pod-reader
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: cluster-pod-reader-binding
+  name: cluster-pod-reader-binding-$STUDENT_NAME
 subjects:
 - kind: ServiceAccount
   name: cluster-viewer
@@ -712,7 +723,7 @@ kubectl apply -f cluster-reader-binding.yaml
 
 # Test: Can cluster-viewer list pods in kube-system? (should be YES)
 kubectl auth can-i list pods -n kube-system \
-  --as=system:serviceaccount:lab07:cluster-viewer
+  --as=system:serviceaccount:lab07-$STUDENT_NAME:cluster-viewer
 
 # Test: Can cluster-viewer list pods in default? (should be YES)
 # ... (more output)</code></pre>
@@ -750,10 +761,10 @@ kubectl auth can-i list pods -n kube-system \
                 <p>Create a new namespace with the <strong>restricted</strong> Pod Security Standard:</p>
                 <pre><code class="language-bash" data-trim>
 # Create a namespace with Pod Security Standards labels
-kubectl create namespace lab07-restricted
+kubectl create namespace lab07-restricted-$STUDENT_NAME
 
 # Apply the restricted profile (enforce mode)
-kubectl label namespace lab07-restricted \
+kubectl label namespace lab07-restricted-$STUDENT_NAME \
   pod-security.kubernetes.io/enforce=restricted \
   pod-security.kubernetes.io/enforce-version=latest \
   pod-security.kubernetes.io/warn=restricted \
@@ -761,10 +772,10 @@ kubectl label namespace lab07-restricted \
                 <div class="fragment">
                     <pre><code class="language-bash" data-trim>
 # Verify the labels
-kubectl get namespace lab07-restricted --show-labels
+kubectl get namespace lab07-restricted-$STUDENT_NAME --show-labels
 
 # View the labels in YAML format
-kubectl get namespace lab07-restricted -o yaml
+kubectl get namespace lab07-restricted-$STUDENT_NAME -o yaml
                     </code></pre>
                 </div>
                 <div class="concept-box fragment">
@@ -810,7 +821,7 @@ kubectl get namespace lab07-restricted -o yaml
 # Save as privileged-pod.yaml
 apiVersion: v1
 kind: Pod
-metadata: { name: privileged-test, namespace: lab07-restricted }
+metadata: { name: privileged-test, namespace: lab07-restricted-$STUDENT_NAME }
 # ... (remaining lines omitted for brevity)</code></pre>
                 <div class="fragment">
                     <pre><code class="language-bash" data-trim>
@@ -852,7 +863,7 @@ kubectl apply -f root-pod.yaml
 # Save as secure-pod.yaml
 apiVersion: v1
 kind: Pod
-metadata: { name: secure-app, namespace: lab07-restricted }
+metadata: { name: secure-app, namespace: lab07-restricted-$STUDENT_NAME }
 spec:
   securityContext:
     runAsNonRoot: true
@@ -864,10 +875,10 @@ spec:
 kubectl apply -f secure-pod.yaml
 
 # Verify it is running
-kubectl get pod secure-app -n lab07-restricted
+kubectl get pod secure-app -n lab07-restricted-$STUDENT_NAME
 
 # Examine the security settings
-kubectl get pod secure-app -n lab07-restricted -o \
+kubectl get pod secure-app -n lab07-restricted-$STUDENT_NAME -o \
 # ... (more output)</code></pre>
                 </div>
                 <aside class="notes">
@@ -880,18 +891,18 @@ kubectl get pod secure-app -n lab07-restricted -o \
                 <p>Confirm the security restrictions from inside the container:</p>
                 <pre><code class="language-bash" data-trim>
 # Check who the process is running as
-kubectl exec secure-app -n lab07-restricted -- id
+kubectl exec secure-app -n lab07-restricted-$STUDENT_NAME -- id
 
 # Try to write to the root filesystem (should FAIL)
-kubectl exec secure-app -n lab07-restricted -- \
+kubectl exec secure-app -n lab07-restricted-$STUDENT_NAME -- \
   touch /test-file
 
 # Writing to /tmp should work (emptyDir mount)
-kubectl exec secure-app -n lab07-restricted -- \
+kubectl exec secure-app -n lab07-restricted-$STUDENT_NAME -- \
   touch /tmp/test-file
 
 # Verify no extra capabilities
-kubectl exec secure-app -n lab07-restricted -- \
+kubectl exec secure-app -n lab07-restricted-$STUDENT_NAME -- \
   cat /proc/1/status | grep -i cap
                 </code></pre>
                 <div class="highlight-box success fragment">
@@ -937,20 +948,20 @@ kubectl exec secure-app -n lab07-restricted -- \
                 <p>Remove all resources created during this lab:</p>
                 <pre><code class="language-bash" data-trim>
 # Delete cluster-scoped resources first
-kubectl delete clusterrolebinding cluster-pod-reader-binding
-kubectl delete clusterrole cluster-pod-reader
+kubectl delete clusterrolebinding cluster-pod-reader-binding-$STUDENT_NAME
+kubectl delete clusterrole cluster-pod-reader-$STUDENT_NAME
 
 # Delete both namespaces (cascades to all resources within)
-kubectl delete namespace lab07
-kubectl delete namespace lab07-restricted
+kubectl delete namespace lab07-$STUDENT_NAME
+kubectl delete namespace lab07-restricted-$STUDENT_NAME
 
 # Verify cleanup
-kubectl get clusterrole cluster-pod-reader 2>/dev/null \
+kubectl get clusterrole cluster-pod-reader-$STUDENT_NAME 2>/dev/null \
   || echo "ClusterRole deleted"
-kubectl get namespace lab07 2>/dev/null \
-  || echo "Namespace lab07 deleted"
-kubectl get namespace lab07-restricted 2>/dev/null \
-  || echo "Namespace lab07-restricted deleted"
+kubectl get namespace lab07-$STUDENT_NAME 2>/dev/null \
+  || echo "Namespace lab07-$STUDENT_NAME deleted"
+kubectl get namespace lab07-restricted-$STUDENT_NAME 2>/dev/null \
+  || echo "Namespace lab07-restricted-$STUDENT_NAME deleted"
                 </code></pre>
                 <aside class="notes">
                     Tip: All three verification commands should show the "deleted" messages. Deleting a namespace removes Roles and RoleBindings within it, but ClusterRoles and ClusterRoleBindings are cluster-scoped and must be deleted separately. This is a common gotcha in production -- orphaned ClusterRoleBindings can persist long after the namespace is deleted.

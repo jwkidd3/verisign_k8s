@@ -25,22 +25,22 @@ variable "vpc_cidr" {
 variable "node_instance_type" {
   description = "EC2 instance type for worker nodes"
   type        = string
-  default     = "m5.xlarge"
+  default     = "m5.2xlarge"
 }
 
 variable "node_desired" {
   type    = number
-  default = 3
+  default = 6
 }
 
 variable "node_min" {
   type    = number
-  default = 2
+  default = 4
 }
 
 variable "node_max" {
   type    = number
-  default = 5
+  default = 8
 }
 
 variable "enable_dns" {

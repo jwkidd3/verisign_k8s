@@ -341,6 +341,17 @@
                 </aside>
             </section>
 
+            <section>
+                <h2>&#x2699;&#xFE0F; Environment Setup</h2>
+                <p>Set your student identifier (use your first name or assigned number):</p>
+                <pre><code class="language-bash"># Set your unique student name
+export STUDENT_NAME=&lt;your-name&gt;
+echo "Student: $STUDENT_NAME"</code></pre>
+                <div class="highlight-box warning">
+                    <strong>Important:</strong> This shared cluster is used by all 22 students. Your <code>STUDENT_NAME</code> ensures your resources don't conflict with others.
+                </div>
+            </section>
+
             <!-- ========== STEP 1: Explore CI/CD Pipeline Structure ========== -->
             <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="section-divider">
                 <h2>Step 1</h2>
@@ -529,7 +540,7 @@ mv index.html.bak index.html
 export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query \
   Account --output text)
 export ECR_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com"
-export ECR_REPO="cicd-lab-app"
+export ECR_REPO="cicd-lab-app-$STUDENT_NAME"
 
 aws ecr create-repository --repository-name $ECR_REPO \
   --region us-east-1 || echo "Repository already exists"
@@ -580,7 +591,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: cicd-demo
-  namespace: cicd-lab
+  namespace: cicd-lab-$STUDENT_NAME
   annotations: { git-commit: "${GIT_SHA}" }
 spec:
   replicas: 3
@@ -628,19 +639,19 @@ spec:
                 <h2>&#x1F680; Deploy with kubectl</h2>
                 <p>Substitute variables and apply the manifest:</p>
                 <pre><code class="language-bash" data-trim>
-kubectl create namespace cicd-lab
+kubectl create namespace cicd-lab-$STUDENT_NAME
 
 mkdir -p ~/cicd-lab/k8s
 
 envsubst &lt; k8s/deployment.yaml | kubectl apply -f -
 
-kubectl rollout status deployment/cicd-demo -n cicd-lab
+kubectl rollout status deployment/cicd-demo -n cicd-lab-$STUDENT_NAME
 
-kubectl get pods -n cicd-lab -l app=cicd-demo
-kubectl get svc -n cicd-lab
+kubectl get pods -n cicd-lab-$STUDENT_NAME -l app=cicd-demo
+kubectl get svc -n cicd-lab-$STUDENT_NAME
 
 kubectl run curl-test --image=curlimages/curl --rm -it --restart=Never \
-  -n cicd-lab -- curl -s cicd-demo-svc
+  -n cicd-lab-$STUDENT_NAME -- curl -s cicd-demo-svc
                 </code></pre>
                 <aside class="notes">Expected Output: 3 pods running with the ECR image. The curl test should return the HTML page showing the build SHA.
                     Why Not kubectl in Production? Imperative deployments lack auditability, drift detection, and automated reconciliation. GitOps tools address all of these concerns.
@@ -676,19 +687,16 @@ kubectl run curl-test --image=curlimages/curl --rm -it --restart=Never \
                 <h2>&#x1F4E6; Verify ArgoCD Installation</h2>
                 <p>Check if ArgoCD is available in the cluster:</p>
                 <pre><code class="language-bash" data-trim>
-# Check if ArgoCD is installed
-kubectl get namespace argocd
-
-# List ArgoCD components
+# ArgoCD is pre-installed by the instructor
 kubectl get pods -n argocd
 
 # Check the ArgoCD CLI
 argocd version
                 </code></pre>
-                <aside class="notes">If ArgoCD is available: You should see pods for argocd-server, argocd-repo-server, argocd-application-controller, and argocd-dex-server all in Running state.
-                    If ArgoCD is not installed: Review the Application CRD definition below to understand the pattern. You can install ArgoCD with: kubectl create namespace argocd && kubectl apply -n argocd -f \ https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
-                    
-                    If ArgoCD is not installed, walk through the concepts using the CRD definition as a reference. The important thing is understanding the pattern, not necessarily having a running ArgoCD instance.
+                <div class="highlight-box warning">
+                    <strong>Important:</strong> ArgoCD has been pre-installed on the cluster. Do not reinstall or delete the argocd namespace.
+                </div>
+                <aside class="notes">ArgoCD is shared by all students. Students should verify it is running but must not reinstall or delete it. They should see pods for argocd-server, argocd-repo-server, argocd-application-controller, and argocd-dex-server all in Running state.
                 </aside>
             </section>
 
@@ -698,7 +706,7 @@ argocd version
                 <pre><code class="language-yaml" data-trim>
 apiVersion: argoproj.io/v1alpha1
 kind: Application
-metadata: { name: cicd-demo, namespace: argocd }
+metadata: { name: cicd-demo-$STUDENT_NAME, namespace: argocd }
 spec:
   project: default
   source:
@@ -707,7 +715,7 @@ spec:
     path: k8s
   destination:
     server: https://kubernetes.default.svc
-    namespace: cicd-lab
+    namespace: cicd-lab-$STUDENT_NAME
   syncPolicy:
     automated: { prune: true, selfHeal: true }
     syncOptions: [CreateNamespace=true]
@@ -746,11 +754,11 @@ spec:
                 <pre><code class="language-bash" data-trim>
 kubectl apply -f argocd-app.yaml
 
-argocd app get cicd-demo
+argocd app get cicd-demo-$STUDENT_NAME
 
-argocd app sync cicd-demo
+argocd app sync cicd-demo-$STUDENT_NAME
 
-argocd app wait cicd-demo --health
+argocd app wait cicd-demo-$STUDENT_NAME --health
 
 kubectl get svc argocd-server -n argocd
 kubectl -n argocd get secret argocd-initial-admin-secret \
@@ -819,11 +827,11 @@ docker push $ECR_REGISTRY/$ECR_REPO:$NEW_SHA
 
 envsubst &lt; k8s/deployment.yaml | kubectl apply -f -
 
-kubectl rollout status deployment/cicd-demo -n cicd-lab
+kubectl rollout status deployment/cicd-demo -n cicd-lab-$STUDENT_NAME
 
 
 kubectl run curl-test2 --image=curlimages/curl --rm -it --restart=Never \
-  -n cicd-lab -- curl -s cicd-demo-svc
+  -n cicd-lab-$STUDENT_NAME -- curl -s cicd-demo-svc
                 </code></pre>
                 <aside class="notes">Expected Output: The curl response should show CI/CD Demo v2 with the new build SHA. The deployment annotation should show the new git commit.
                     
@@ -872,10 +880,10 @@ git push origin main
                         <h4>&#x26A1; ArgoCD Rollback (Quick)</h4>
                         <pre style="font-size:0.8em;"><code class="language-bash" data-trim>
 # View sync history
-argocd app history cicd-demo
+argocd app history cicd-demo-$STUDENT_NAME
 
 # Rollback to previous version
-argocd app rollback cicd-demo 1
+argocd app rollback cicd-demo-$STUDENT_NAME 1
                         </code></pre>
                         <p class="small-text">Faster but creates drift between git and cluster. ArgoCD will eventually re-sync from git.</p>
                     </div>
@@ -977,23 +985,25 @@ flux reconcile kustomization flux-system --with-source
                 <h2>&#x1F9F9; Clean Up Resources</h2>
                 <p>Remove all resources created during this lab:</p>
                 <pre><code class="language-bash" data-trim>
-kubectl delete application cicd-demo -n argocd --ignore-not-found
+kubectl delete application cicd-demo-$STUDENT_NAME -n argocd --ignore-not-found
 
-kubectl delete namespace cicd-lab
+kubectl delete namespace cicd-lab-$STUDENT_NAME
 
-aws ecr delete-repository --repository-name cicd-lab-app \
+aws ecr delete-repository --repository-name cicd-lab-app-$STUDENT_NAME \
   --region us-east-1 --force || echo "Skipping ECR cleanup"
 
 rm -rf ~/cicd-lab
 
 docker rmi $(docker images my-app -q) 2>/dev/null || true
 
-kubectl get namespace cicd-lab
+kubectl get namespace cicd-lab-$STUDENT_NAME
                 </code></pre>
-                <aside class="notes">Expected Output: namespace "cicd-lab" deleted Error from server (NotFound): namespaces "cicd-lab" not found
-                    Note: If you installed ArgoCD specifically for this lab and no longer need it: kubectl delete namespace argocd . Be careful not to remove a shared ArgoCD installation.
-                    
-                    When ArgoCD manages resources, deleting the Application CRD triggers ArgoCD to prune the managed resources. Always delete ArgoCD Applications before deleting the namespace to ensure clean teardown.
+                <div class="highlight-box danger">
+                    <strong>Do NOT delete the argocd namespace</strong> &mdash; it is shared by all students. Only delete your own Application and namespace.
+                </div>
+                <aside class="notes">Expected Output: namespace "cicd-lab-$STUDENT_NAME" deleted Error from server (NotFound): namespaces "cicd-lab-$STUDENT_NAME" not found
+
+                    When ArgoCD manages resources, deleting the Application CRD triggers ArgoCD to prune the managed resources. Always delete ArgoCD Applications before deleting the namespace to ensure clean teardown. Do NOT delete the argocd namespace.
                 </aside>
             </section>
 

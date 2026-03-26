@@ -342,6 +342,17 @@
             </section>
 
             <section>
+                <h2>&#x2699;&#xFE0F; Environment Setup</h2>
+                <p>Set your student identifier (use your first name or assigned number):</p>
+                <pre><code class="language-bash"># Set your unique student name
+export STUDENT_NAME=&lt;your-name&gt;
+echo "Student: $STUDENT_NAME"</code></pre>
+                <div class="highlight-box warning">
+                    <strong>Important:</strong> This shared cluster is used by all 22 students. Your <code>STUDENT_NAME</code> ensures your resources don't conflict with others.
+                </div>
+            </section>
+
+            <section>
                 <h2>&#x1F3AF; Three Types of Probes</h2>
                 <div class="three-columns">
                     <div class="card">
@@ -381,12 +392,12 @@
                 <h2>&#x1F6E0;&#xFE0F; Set Up the Lab Namespace</h2>
                 <pre><code class="language-bash" data-trim>
 # Create the lab namespace
-kubectl create namespace probes-lab
+kubectl create namespace probes-lab-$STUDENT_NAME
 
 # Set as the current context
-kubectl config set-context --current --namespace=probes-lab
+kubectl config set-context --current --namespace=probes-lab-$STUDENT_NAME
                 </code></pre>
-                <aside class="notes">Expected Output: namespace/probes-lab created Context modified.
+                <aside class="notes">Expected Output: namespace/probes-lab-$STUDENT_NAME created Context modified.
                     
                     Starting with a clean namespace as always for isolation and easy cleanup.
                 </aside>
@@ -400,7 +411,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: no-probes-app
-  namespace: probes-lab
+  namespace: probes-lab-$STUDENT_NAME
 spec:
   replicas: 2
   selector:
@@ -461,7 +472,7 @@ kubectl exec $curl_pod -- curl -s -o /dev/null -w "%{http_code}" localhost:80
 cat &lt;&lt;'EOF' | kubectl apply -f -
 apiVersion: apps/v1
 kind: Deployment
-metadata: { name: liveness-http, namespace: probes-lab }
+metadata: { name: liveness-http, namespace: probes-lab-$STUDENT_NAME }
 spec:
   replicas: 2
   selector:
@@ -525,7 +536,7 @@ kubectl describe pod $LIVE_POD | grep -A 5 "Liveness"
 cat &lt;&lt;'EOF' | kubectl apply -f -
 apiVersion: apps/v1
 kind: Deployment
-metadata: { name: readiness-app, namespace: probes-lab }
+metadata: { name: readiness-app, namespace: probes-lab-$STUDENT_NAME }
 # ... spec.replicas: 3, selector/template labels: app: readiness-app
     spec:
       containers:
@@ -627,7 +638,7 @@ kubectl get endpoints readiness-svc
 cat &lt;&lt;'EOF' | kubectl apply -f -
 apiVersion: apps/v1
 kind: Deployment
-metadata: { name: slow-start-app, namespace: probes-lab }
+metadata: { name: slow-start-app, namespace: probes-lab-$STUDENT_NAME }
 # ... spec.replicas: 1, selector/template labels: app: slow-start-app
     spec:
       containers:
@@ -658,7 +669,7 @@ kubectl get pods -l app=slow-start-app -w
 
 # In another terminal, watch events
 kubectl get events --field-selector reason=Unhealthy \
-  -n probes-lab -w
+  -n probes-lab-$STUDENT_NAME -w
                 </code></pre>
                 <aside class="notes">Expected Timeline: 0-5s: Container starting, startup probe not yet active 5-30s: Startup probe fails (app still initializing) -- this is OK ~35s: App becomes responsive, startup probe passes ~35s+: Liveness and readiness probes begin
                     Without Startup Probe: The liveness probe would kill the container after 3 failures (30 seconds), before the app even finishes initializing!
@@ -782,7 +793,7 @@ EOF
 cat &lt;&lt;'EOF' | kubectl apply -f -
 apiVersion: apps/v1
 kind: Deployment
-metadata: { name: tcp-probe-app, namespace: probes-lab }
+metadata: { name: tcp-probe-app, namespace: probes-lab-$STUDENT_NAME }
 # ... spec.replicas: 1, selector/template labels: app: tcp-probe-app
     spec:
       containers:
@@ -840,7 +851,7 @@ kubectl describe pod $TCP_POD | grep -A 3 "Liveness\|Readiness"
 cat &lt;&lt;'EOF' | kubectl apply -f -
 apiVersion: apps/v1
 kind: Deployment
-metadata: { name: exec-probe-app, namespace: probes-lab }
+metadata: { name: exec-probe-app, namespace: probes-lab-$STUDENT_NAME }
 spec:
   replicas: 1
   selector:
@@ -898,7 +909,7 @@ kubectl get pods -l app=exec-probe-app -w
 cat &lt;&lt;'EOF' | kubectl apply -f -
 apiVersion: apps/v1
 kind: Deployment
-metadata: { name: graceful-app, namespace: probes-lab }
+metadata: { name: graceful-app, namespace: probes-lab-$STUDENT_NAME }
 # ... spec.replicas: 2, selector/template labels: app: graceful-app
     spec:
       terminationGracePeriodSeconds: 45
@@ -956,7 +967,7 @@ kubectl delete pod $GRACEFUL_POD
 cat &lt;&lt;'EOF' | kubectl apply -f -
 apiVersion: apps/v1
 kind: Deployment
-metadata: { name: pdb-app, namespace: probes-lab }
+metadata: { name: pdb-app, namespace: probes-lab-$STUDENT_NAME }
 # ... spec.replicas: 4, selector/template labels: app: pdb-app
     spec:
       containers:
@@ -968,7 +979,7 @@ metadata: { name: pdb-app, namespace: probes-lab }
 ---
 apiVersion: policy/v1
 kind: PodDisruptionBudget
-metadata: { name: pdb-app-pdb, namespace: probes-lab }
+metadata: { name: pdb-app-pdb, namespace: probes-lab-$STUDENT_NAME }
 spec:
   minAvailable: 2
   selector:
@@ -984,10 +995,10 @@ EOF
                 <h2>&#x1F50D; Examine the PDB</h2>
                 <pre><code class="language-bash" data-trim>
 # View the PDB status
-kubectl get pdb -n probes-lab
+kubectl get pdb -n probes-lab-$STUDENT_NAME
 
 # Describe for details
-kubectl describe pdb pdb-app-pdb -n probes-lab
+kubectl describe pdb pdb-app-pdb -n probes-lab-$STUDENT_NAME
                 </code></pre>
                 <aside class="notes">Expected Output: NAME MIN AVAILABLE MAX UNAVAILABLE ALLOWED DISRUPTIONS AGE pdb-app-pdb 2 N/A 2 10s</aside>
                 <div class="key-point fragment">
@@ -1018,7 +1029,7 @@ kubectl get pods -l app=pdb-app -o wide
 kubectl delete pod -l app=pdb-app --grace-period=0 --force &
 
 # Immediately check PDB status
-kubectl get pdb pdb-app-pdb -n probes-lab -w
+kubectl get pdb pdb-app-pdb -n probes-lab-$STUDENT_NAME -w
                 </code></pre>
                 <aside class="notes">Note: Direct kubectl delete pod does NOT respect PDBs. PDBs are enforced by the Eviction API, used by kubectl drain and cluster autoscaler.
                     
@@ -1040,6 +1051,9 @@ kubectl drain $NODE_NAME \
   --dry-run=client
 
                 </code></pre>
+                <div class="highlight-box danger">
+                    <strong>Shared Cluster Warning:</strong> NEVER run <code>kubectl drain</code> without <code>--dry-run=client</code> in a shared cluster. A real drain would evict all students' workloads from the node.
+                </div>
                 <aside class="notes">Caution: Only drain a node in a multi-node cluster! If you only have one node, the drain will block because the PDB cannot be satisfied.</aside>
                 <div class="fragment">
                     <pre><code class="language-bash" data-trim>
@@ -1065,12 +1079,12 @@ kubectl drain $NODE_NAME \
                 <h2>&#x1F9F9; Clean Up Lab Resources</h2>
                 <pre><code class="language-bash" data-trim>
 # Delete the lab namespace (removes all resources)
-kubectl delete namespace probes-lab
+kubectl delete namespace probes-lab-$STUDENT_NAME
 
 # Verify cleanup
-kubectl get namespace probes-lab
+kubectl get namespace probes-lab-$STUDENT_NAME
                 </code></pre>
-                <aside class="notes">Expected: Error from server (NotFound): namespaces "probes-lab" not found
+                <aside class="notes">Expected: Error from server (NotFound): namespaces "probes-lab-$STUDENT_NAME" not found
                     Reminder: If you drained a node in Step 10, make sure to uncordon it: kubectl uncordon $NODE_NAME
                     
                     Verify the node is uncordoned if it was drained. A cordoned node will not accept new pods and can cause scheduling issues for other workloads.

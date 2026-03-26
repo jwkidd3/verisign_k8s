@@ -16,12 +16,17 @@ output "flux_repo_url" {
 
 output "irsa_roles" {
   value = var.enable_dns ? {
-    cert_manager = module.irsa[0].cert_manager_role_arn
-    external_dns = module.irsa[0].external_dns_role_arn
+    cert_manager = module.irsa.cert_manager_role_arn
+    external_dns = module.irsa.external_dns_role_arn
   } : {
     cert_manager = "DNS disabled — set enable_dns = true with route53_zone_id and domain"
     external_dns = "DNS disabled — set enable_dns = true with route53_zone_id and domain"
   }
+}
+
+output "irsa_demo_bucket" {
+  description = "S3 bucket name for IRSA lab demo"
+  value       = module.irsa.demo_bucket_name
 }
 
 output "dns_enabled" {
@@ -48,4 +53,9 @@ output "ebs_kms_key_arn" {
 
 output "storage_classes" {
   value = module.eks.storage_classes
+}
+
+output "student_role_arn" {
+  description = "IAM role ARN for student access"
+  value       = module.eks.student_role_arn
 }

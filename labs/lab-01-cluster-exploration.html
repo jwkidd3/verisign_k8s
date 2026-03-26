@@ -341,6 +341,17 @@
                 </aside>
             </section>
 
+            <section>
+                <h2>&#9881;&#65039; Environment Setup</h2>
+                <p>Set your student identifier (use your first name or assigned number):</p>
+                <pre><code class="language-bash"># Set your unique student name
+export STUDENT_NAME=&lt;your-name&gt;
+echo "Student: $STUDENT_NAME"</code></pre>
+                <div class="highlight-box warning">
+                    <strong>Important:</strong> This shared cluster is used by all 22 students. Your <code>STUDENT_NAME</code> ensures your resources don't conflict with others.
+                </div>
+            </section>
+
             <!-- ========== STEP 1: Verify Cluster Connectivity ========== -->
             <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="section-divider">
                 <h2>Step 1</h2>
@@ -576,10 +587,10 @@ kubectl get all -A
                 <p>Create an isolated namespace for your work:</p>
                 <pre><code class="language-bash" data-trim>
 # Create your personal namespace
-kubectl create namespace lab01
+kubectl create namespace lab01-$STUDENT_NAME
 
 # Set it as your default context (optional but convenient)
-kubectl config set-context --current --namespace=lab01
+kubectl config set-context --current --namespace=lab01-$STUDENT_NAME
 
 # Verify you are in the correct namespace
 kubectl config view --minify | grep namespace
@@ -594,7 +605,7 @@ kubectl create deployment nginx-lab --image=nginx:1.25 --replicas=2
 kubectl expose deployment nginx-lab --port=80 --target-port=80
 
 # Verify resources were created
-kubectl get all -n lab01
+kubectl get all -n lab01-$STUDENT_NAME
                     </code></pre>
                 </div>
                 <div class="highlight-box success fragment">
@@ -631,10 +642,10 @@ kubectl get all -n lab01
                 <p>Inspect your running pods in depth:</p>
                 <pre><code class="language-bash" data-trim>
 # Get pod names
-kubectl get pods -n lab01
+kubectl get pods -n lab01-$STUDENT_NAME
 
 # Describe a pod (replace with actual pod name)
-kubectl describe pod &lt;POD_NAME&gt; -n lab01
+kubectl describe pod &lt;POD_NAME&gt; -n lab01-$STUDENT_NAME
                 </code></pre>
                 <div class="concept-box fragment">
                     <h4>&#x1F4A1; What to Look For in describe</h4>
@@ -655,13 +666,13 @@ kubectl describe pod &lt;POD_NAME&gt; -n lab01
                 <p>View container logs and exec into a running container:</p>
                 <pre><code class="language-bash" data-trim>
 # View logs from a pod
-kubectl logs &lt;POD_NAME&gt; -n lab01
+kubectl logs &lt;POD_NAME&gt; -n lab01-$STUDENT_NAME
 
 # Follow logs in real-time (Ctrl+C to exit)
-kubectl logs &lt;POD_NAME&gt; -n lab01 --follow
+kubectl logs &lt;POD_NAME&gt; -n lab01-$STUDENT_NAME --follow
 
 # Execute a command inside the container
-kubectl exec -it &lt;POD_NAME&gt; -n lab01 -- /bin/bash
+kubectl exec -it &lt;POD_NAME&gt; -n lab01-$STUDENT_NAME -- /bin/bash
 
 # Inside the container, explore:
 cat /etc/nginx/nginx.conf
@@ -705,13 +716,13 @@ exit
                 <p>Scale your deployment up and observe the changes:</p>
                 <pre><code class="language-bash" data-trim>
 # Scale up to 5 replicas
-kubectl scale deployment nginx-lab --replicas=5 -n lab01
+kubectl scale deployment nginx-lab --replicas=5 -n lab01-$STUDENT_NAME
 
 # Watch pods come up in real-time (Ctrl+C to exit)
-kubectl get pods -n lab01 -w
+kubectl get pods -n lab01-$STUDENT_NAME -w
 
 # Verify the deployment status
-kubectl get deployment nginx-lab -n lab01
+kubectl get deployment nginx-lab -n lab01-$STUDENT_NAME
                 </code></pre>
                 <div class="highlight-box success fragment">
                     <strong>&#x2705; Expected Output:</strong> The deployment should show <code>5/5</code> ready replicas. All 5 pods should be in <code>Running</code> state within a few seconds.
@@ -720,10 +731,10 @@ kubectl get deployment nginx-lab -n lab01
                     <p>Now scale back down:</p>
                     <pre><code class="language-bash" data-trim>
 # Scale down to 2 replicas
-kubectl scale deployment nginx-lab --replicas=2 -n lab01
+kubectl scale deployment nginx-lab --replicas=2 -n lab01-$STUDENT_NAME
 
 # Watch pods terminate
-kubectl get pods -n lab01 -w
+kubectl get pods -n lab01-$STUDENT_NAME -w
                     </code></pre>
                 </div>
                 <div class="key-point fragment">
@@ -760,7 +771,7 @@ kubectl get pods -n lab01 -w
                 <p>Use port-forwarding to access your service locally:</p>
                 <pre><code class="language-bash" data-trim>
 # Forward local port 8080 to the service port 80
-kubectl port-forward service/nginx-lab 8080:80 -n lab01
+kubectl port-forward service/nginx-lab 8080:80 -n lab01-$STUDENT_NAME
                 </code></pre>
                 <div class="fragment">
                     <p>Open a <strong>second terminal</strong> and test the connection:</p>
@@ -812,7 +823,7 @@ curl -I http://localhost:8080
 kubectl top nodes
 
 # View pod resource usage in your namespace
-kubectl top pods -n lab01
+kubectl top pods -n lab01-$STUDENT_NAME
 
 # View pod resource usage across all namespaces
 kubectl top pods -A --sort-by=cpu
@@ -861,13 +872,13 @@ kubectl get pods -n kube-system | grep metrics-server
 kubectl config set-context --current --namespace=default
 
 # Delete the entire lab namespace (and everything in it)
-kubectl delete namespace lab01
+kubectl delete namespace lab01-$STUDENT_NAME
 
 # Verify it is gone
 kubectl get namespaces
                 </code></pre>
                 <div class="highlight-box success fragment">
-                    <strong>&#x2705; Checkpoint:</strong> The <code>lab01</code> namespace should no longer appear in the namespace list. All deployments, pods, and services within it are automatically deleted.
+                    <strong>&#x2705; Checkpoint:</strong> The <code>lab01-$STUDENT_NAME</code> namespace should no longer appear in the namespace list. All deployments, pods, and services within it are automatically deleted.
                 </div>
                 <div class="key-point fragment">
                     <strong>&#x1F511; Key Point:</strong> Deleting a namespace cascades the deletion to <em>all</em> resources within it. This is the cleanest way to tear down an environment, but be careful &mdash; it cannot be undone.

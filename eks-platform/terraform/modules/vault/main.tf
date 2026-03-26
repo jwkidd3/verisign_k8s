@@ -15,6 +15,13 @@ terraform {
   }
 }
 
+variable "vault_root_token" {
+  description = "Vault dev root token"
+  type        = string
+  default     = "root"
+  sensitive   = true
+}
+
 resource "helm_release" "vault" {
   name             = "vault"
   repository       = "https://helm.releases.hashicorp.com"
@@ -29,7 +36,7 @@ resource "helm_release" "vault" {
 
   set {
     name  = "server.dev.devRootToken"
-    value = "root"
+    value = var.vault_root_token
   }
 
   set {
@@ -81,7 +88,7 @@ resource "kubectl_manifest" "vault_bootstrap" {
                 - name: VAULT_ADDR
                   value: "http://vault.vault.svc:8200"
                 - name: VAULT_TOKEN
-                  value: "root"
+                  value: "${var.vault_root_token}"
               command:
                 - /bin/sh
                 - -c

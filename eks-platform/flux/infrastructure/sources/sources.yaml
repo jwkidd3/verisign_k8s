@@ -71,7 +71,21 @@ spec:
   interval: 1h
   url: https://kube-logging.github.io/helm-charts
 ---
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-resources:
-  - sources.yaml
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: ingress-nginx
+  namespace: flux-system
+spec:
+  interval: 24h
+  url: https://kubernetes.github.io/ingress-nginx
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: argo
+  namespace: flux-system
+spec:
+  interval: 24h
+  url: https://argoproj.github.io/argo-helm
+

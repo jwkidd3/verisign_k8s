@@ -324,6 +324,17 @@
                 </aside>
             </section>
 
+            <section>
+                <h2>&#9881;&#65039; Environment Setup</h2>
+                <p>Set your student identifier (use your first name or assigned number):</p>
+                <pre><code class="language-bash"># Set your unique student name
+export STUDENT_NAME=&lt;your-name&gt;
+echo "Student: $STUDENT_NAME"</code></pre>
+                <div class="highlight-box warning">
+                    <strong>Important:</strong> This shared cluster is used by all 22 students. Your <code>STUDENT_NAME</code> ensures your resources don't conflict with others.
+                </div>
+            </section>
+
             <!-- Step 1: Explore StorageClasses -->
             <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="section-divider">
                 <h2>Step 1</h2>
@@ -338,7 +349,7 @@
                 <p>List all StorageClasses available on the cluster:</p>
                 <pre><code class="language-bash" data-trim>
 # Create a namespace for this lab
-$ kubectl create namespace lab-storage
+$ kubectl create namespace lab03-$STUDENT_NAME
 
 # List all StorageClasses
 $ kubectl get storageclass
@@ -401,7 +412,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: lab-data-pvc
-  namespace: lab-storage
+  namespace: lab03-$STUDENT_NAME
 spec:
   accessModes:
     - ReadWriteOnce
@@ -415,7 +426,7 @@ spec:
 $ kubectl apply -f lab-pvc.yaml
 
 # Check the PVC status
-$ kubectl get pvc -n lab-storage
+$ kubectl get pvc -n lab03-$STUDENT_NAME
                 </code></pre>
                 <aside class="notes">
                     Note: The PVC status will show Pending because the binding mode is WaitForFirstConsumer. The volume will not be provisioned until a pod references this PVC. This is expected behavior. Students may be confused by the Pending status. Emphasize that this is expected with WaitForFirstConsumer. The volume does not get created until a pod actually mounts it. This prevents creating volumes in the wrong availability zone. ReadWriteOnce means only one node can mount the volume at a time, which is the standard mode for EBS volumes.
@@ -440,7 +451,7 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: data-writer
-  namespace: lab-storage
+  namespace: lab03-$STUDENT_NAME
 spec:
   containers:
     - name: writer
@@ -451,7 +462,7 @@ spec:
 $ kubectl apply -f lab-writer-pod.yaml
 
 # Wait for the pod to be running
-$ kubectl get pod data-writer -n lab-storage -w
+$ kubectl get pod data-writer -n lab03-$STUDENT_NAME -w
                 </code></pre>
                 <aside class="notes">
                     Once the pod is created, Kubernetes will bind the PVC and provision the EBS volume. The busybox container writes a timestamp and hostname to a file in the mounted volume, then sleeps. Students should wait until the pod status shows Running before proceeding.
@@ -463,13 +474,13 @@ $ kubectl get pod data-writer -n lab-storage -w
                 <p>Check that the PVC is now bound and the data was written:</p>
                 <pre><code class="language-bash" data-trim>
 # Check PVC status - should now be Bound
-$ kubectl get pvc -n lab-storage
+$ kubectl get pvc -n lab03-$STUDENT_NAME
 
 # Verify the data was written
-$ kubectl exec data-writer -n lab-storage -- cat /data/testfile.txt
+$ kubectl exec data-writer -n lab03-$STUDENT_NAME -- cat /data/testfile.txt
 
 # Check the pod logs
-$ kubectl logs data-writer -n lab-storage
+$ kubectl logs data-writer -n lab03-$STUDENT_NAME
                 </code></pre>
                 <div class="highlight-box success">
                     <p style="margin:0;"><strong>Expected Output:</strong></p>
@@ -501,13 +512,13 @@ Lab 3 persistence test
                 <p>Delete the pod, create a reader pod, and verify data survives:</p>
                 <pre><code class="language-bash" data-trim>
 # Delete the writer pod and verify PVC is still Bound
-$ kubectl delete pod data-writer -n lab-storage
-$ kubectl get pvc -n lab-storage
+$ kubectl delete pod data-writer -n lab03-$STUDENT_NAME
+$ kubectl get pvc -n lab03-$STUDENT_NAME
                 </code></pre>
                 <p>Save a <code>lab-reader-pod.yaml</code> that mounts the same PVC, then apply and verify:</p>
                 <pre><code class="language-bash" data-trim>
 $ kubectl apply -f lab-reader-pod.yaml
-$ kubectl logs data-reader -n lab-storage
+$ kubectl logs data-reader -n lab03-$STUDENT_NAME
                 </code></pre>
                 <aside class="notes">
                     This is the key insight of the lab. The PVC and its underlying PV persist independently of any pod. The data written by the first pod is still available to the second pod. This is exactly how databases, message queues, and other stateful services maintain data across pod restarts and rescheduling events. Point out that the PVC remained Bound even after the pod was deleted.
@@ -531,7 +542,7 @@ $ kubectl logs data-reader -n lab-storage
 $ kubectl get pv
 
 # Describe the PV (use the name from the output above)
-$ PV_NAME=$(kubectl get pvc lab-data-pvc -n lab-storage \
+$ PV_NAME=$(kubectl get pvc lab-data-pvc -n lab03-$STUDENT_NAME \
   -o jsonpath='{.spec.volumeName}')
 $ kubectl describe pv $PV_NAME
                 </code></pre>
@@ -542,7 +553,7 @@ Source:
   Type:       AWSElasticBlockStore (or CSI)
   VolumeID:   vol-0abc123def456789
   FSType:     ext4
-Claim:        lab-storage/lab-data-pvc
+Claim:        lab03-$STUDENT_NAME/lab-data-pvc
 Node Affinity:
   Required Terms:
     topology.kubernetes.io/zone: us-east-1a
@@ -572,7 +583,7 @@ Node Affinity:
 # Save as lab-statefulset.yaml
 apiVersion: apps/v1
 kind: StatefulSet
-metadata: { name: web, namespace: lab-storage }
+metadata: { name: web, namespace: lab03-$STUDENT_NAME }
 spec:
   serviceName: "web-headless"
   replicas: 3
@@ -594,7 +605,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: web-headless
-  namespace: lab-storage
+  namespace: lab03-$STUDENT_NAME
 spec:
   clusterIP: None
   selector: { app: web }
@@ -603,7 +614,7 @@ spec:
                 <pre><code class="language-bash" data-trim>
 $ kubectl apply -f lab-headless-svc.yaml
 $ kubectl apply -f lab-statefulset.yaml
-$ kubectl get pods -n lab-storage -l app=web -w
+$ kubectl get pods -n lab03-$STUDENT_NAME -l app=web -w
                 </code></pre>
 
                 <aside class="notes">
@@ -625,14 +636,14 @@ $ kubectl get pods -n lab-storage -l app=web -w
                 <p>Examine the predictable naming and DNS records:</p>
                 <pre><code class="language-bash" data-trim>
 # List pods - note the sequential naming
-$ kubectl get pods -n lab-storage -l app=web -o wide
+$ kubectl get pods -n lab03-$STUDENT_NAME -l app=web -o wide
 
 # List the auto-created PVCs
-$ kubectl get pvc -n lab-storage
+$ kubectl get pvc -n lab03-$STUDENT_NAME
 
 # Test DNS resolution for each pod
-$ kubectl run dns-test --image=busybox:1.36 -n lab-storage --rm -it \
-  --restart=Never -- nslookup web-0.web-headless.lab-storage.svc.cluster.local
+$ kubectl run dns-test --image=busybox:1.36 -n lab03-$STUDENT_NAME --rm -it \
+  --restart=Never -- nslookup web-0.web-headless.lab03-$STUDENT_NAME.svc.cluster.local
                 </code></pre>
                 <div class="highlight-box success">
                     <p style="margin:0;"><strong>Expected Output:</strong></p>
@@ -670,22 +681,22 @@ web-data-web-2      Bound    pvc-...       1Gi
                 <p>Write unique content to each pod's volume:</p>
                 <pre><code class="language-bash" data-trim>
 # Write unique data to each pod
-$ kubectl exec web-0 -n lab-storage -- \
+$ kubectl exec web-0 -n lab03-$STUDENT_NAME -- \
   sh -c 'echo "Hello from web-0" \
   > /usr/share/nginx/html/index.html'
 
-$ kubectl exec web-1 -n lab-storage -- \
+$ kubectl exec web-1 -n lab03-$STUDENT_NAME -- \
   sh -c 'echo "Hello from web-1" \
   > /usr/share/nginx/html/index.html'
 
-$ kubectl exec web-2 -n lab-storage -- \
+$ kubectl exec web-2 -n lab03-$STUDENT_NAME -- \
   sh -c 'echo "Hello from web-2" \
   > /usr/share/nginx/html/index.html'
 
 # Verify each pod serves its own content
 $ for i in 0 1 2; do
     echo "--- web-$i ---"
-    kubectl exec web-$i -n lab-storage -- curl -s localhost
+    kubectl exec web-$i -n lab03-$STUDENT_NAME -- curl -s localhost
   done
                 </code></pre>
                 <aside class="notes">
@@ -698,13 +709,13 @@ $ for i in 0 1 2; do
                 <p>Delete a pod and verify its data survives:</p>
                 <pre><code class="language-bash" data-trim>
 # Delete web-1
-$ kubectl delete pod web-1 -n lab-storage
+$ kubectl delete pod web-1 -n lab03-$STUDENT_NAME
 
 # Watch it get recreated with the same name
-$ kubectl get pods -n lab-storage -l app=web -w
+$ kubectl get pods -n lab03-$STUDENT_NAME -l app=web -w
 
 # Once web-1 is Running again, verify data persisted
-$ kubectl exec web-1 -n lab-storage -- curl -s localhost
+$ kubectl exec web-1 -n lab03-$STUDENT_NAME -- curl -s localhost
                 </code></pre>
                 <div class="highlight-box success">
                     <p style="margin:0;"><strong>Success:</strong> The recreated <code>web-1</code> pod still serves "Hello from web-1" because it reattached to the same PVC (<code>web-data-web-1</code>).</p>
@@ -731,17 +742,17 @@ $ kubectl exec web-1 -n lab-storage -- curl -s localhost
                 <p>Scale from 3 to 5 replicas and observe ordered creation:</p>
                 <pre><code class="language-bash" data-trim>
 # Scale up to 5 replicas
-$ kubectl scale statefulset web -n lab-storage --replicas=5
+$ kubectl scale statefulset web -n lab03-$STUDENT_NAME --replicas=5
 
 # Watch the ordered scale-up
-$ kubectl get pods -n lab-storage -l app=web -w
+$ kubectl get pods -n lab03-$STUDENT_NAME -l app=web -w
                 </code></pre>
                 <div class="highlight-box success">
                     <p style="margin:0;"><strong>Expected:</strong> <code>web-3</code> is created first, then <code>web-4</code> after <code>web-3</code> is Running. New PVCs <code>web-data-web-3</code> and <code>web-data-web-4</code> are also created.</p>
                 </div>
                 <pre><code class="language-bash" data-trim>
 # Verify new PVCs were created
-$ kubectl get pvc -n lab-storage
+$ kubectl get pvc -n lab03-$STUDENT_NAME
                 </code></pre>
                 <aside class="notes">
                     Scale-up is ordered: web-3 must be Running and Ready before web-4 starts. Each new replica gets its own PVC automatically from the volumeClaimTemplate. This ordered startup is critical for distributed databases where new replicas need to sync from existing ones before the next replica can join.
@@ -753,17 +764,17 @@ $ kubectl get pvc -n lab-storage
                 <p>Scale down from 5 to 2 replicas and observe ordered termination:</p>
                 <pre><code class="language-bash" data-trim>
 # Scale down to 2 replicas
-$ kubectl scale statefulset web -n lab-storage --replicas=2
+$ kubectl scale statefulset web -n lab03-$STUDENT_NAME --replicas=2
 
 # Watch the ordered scale-down
-$ kubectl get pods -n lab-storage -l app=web -w
+$ kubectl get pods -n lab03-$STUDENT_NAME -l app=web -w
                 </code></pre>
                 <div class="highlight-box success">
                     <p style="margin:0;"><strong>Expected:</strong> Pods are removed in reverse order: <code>web-4</code> terminates first, then <code>web-3</code>, then <code>web-2</code>.</p>
                 </div>
                 <pre><code class="language-bash" data-trim>
 # Check PVCs - they persist even after scale-down!
-$ kubectl get pvc -n lab-storage
+$ kubectl get pvc -n lab03-$STUDENT_NAME
                 </code></pre>
                 <div class="highlight-box warning">
                     <p style="margin:0;"><strong>Important:</strong> PVCs are <strong>not</strong> deleted when a StatefulSet scales down. This is by design &mdash; it protects data. The PVCs for web-2, web-3, and web-4 still exist and will be reattached if you scale back up.</p>
@@ -790,18 +801,17 @@ $ kubectl get pvc -n lab-storage
 $ kubectl get storageclass gp2 -o jsonpath='{.allowVolumeExpansion}'
                 </code></pre>
                 <div class="highlight-box warning">
-                    <p style="margin:0;"><strong>Note:</strong> If the output is empty or <code>false</code>, you need to patch the StorageClass first:</p>
+                    <strong>Note:</strong> The StorageClass has been pre-configured by the instructor to allow volume expansion. Verify with:
                 </div>
                 <pre><code class="language-bash" data-trim>
-# Enable volume expansion if needed
-$ kubectl patch storageclass gp2 -p '{"allowVolumeExpansion": true}'
+$ kubectl get storageclass gp2 -o jsonpath='{.allowVolumeExpansion}'
 
 # Expand the PVC for web-0 from 1Gi to 2Gi
-$ kubectl patch pvc web-data-web-0 -n lab-storage \
+$ kubectl patch pvc web-data-web-0 -n lab03-$STUDENT_NAME \
   -p '{"spec":{"resources":{"requests":{"storage":"2Gi"}}}}'
 
 # Monitor the expansion
-$ kubectl get pvc web-data-web-0 -n lab-storage -w
+$ kubectl get pvc web-data-web-0 -n lab03-$STUDENT_NAME -w
                 </code></pre>
                 <aside class="notes">
                     Expected: The PVC capacity will update to 2Gi. The underlying EBS volume is resized by the CSI driver. Filesystem expansion happens automatically when the pod is restarted or in-place on newer drivers. Warning: Volume expansion is a one-way operation. You cannot shrink a PVC after expanding it. Always verify the target size before applying. Volume expansion is supported by most modern CSI drivers including the EBS CSI driver. Emphasize that expansion cannot be reversed. In production, always coordinate volume expansion with the application team.
@@ -822,16 +832,16 @@ $ kubectl get pvc web-data-web-0 -n lab-storage -w
                 <p>Remove all resources created during this lab:</p>
                 <pre><code class="language-bash" data-trim>
 # Delete the StatefulSet first
-$ kubectl delete statefulset web -n lab-storage
+$ kubectl delete statefulset web -n lab03-$STUDENT_NAME
 
 # Delete remaining pods
-$ kubectl delete pod data-reader -n lab-storage --ignore-not-found
+$ kubectl delete pod data-reader -n lab03-$STUDENT_NAME --ignore-not-found
 
 # Delete all PVCs in the namespace
-$ kubectl delete pvc --all -n lab-storage
+$ kubectl delete pvc --all -n lab03-$STUDENT_NAME
 
 # Delete the namespace (cleans up services and any remaining resources)
-$ kubectl delete namespace lab-storage
+$ kubectl delete namespace lab03-$STUDENT_NAME
 
 # Verify PVs are also deleted (due to Delete reclaim policy)
 $ kubectl get pv

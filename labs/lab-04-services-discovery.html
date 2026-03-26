@@ -321,6 +321,17 @@
                 </aside>
             </section>
 
+            <section>
+                <h2>&#9881;&#65039; Environment Setup</h2>
+                <p>Set your student identifier (use your first name or assigned number):</p>
+                <pre><code class="language-bash"># Set your unique student name
+export STUDENT_NAME=&lt;your-name&gt;
+echo "Student: $STUDENT_NAME"</code></pre>
+                <div class="highlight-box warning">
+                    <strong>Important:</strong> This shared cluster is used by all 22 students. Your <code>STUDENT_NAME</code> ensures your resources don't conflict with others.
+                </div>
+            </section>
+
             <!-- Step 1: Deploy Multi-Tier Application -->
             <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="section-divider">
                 <h2>Step 1</h2>
@@ -334,13 +345,13 @@
                 <h2>&#128640; Step 1: Create the Namespace and Backend</h2>
                 <p>Set up the lab namespace and deploy the backend tier:</p>
                 <pre><code class="language-bash" data-trim>
-$ kubectl create namespace lab-services
+$ kubectl create namespace lab04-$STUDENT_NAME
                 </code></pre>
                 <pre><code class="language-yaml" data-trim>
 # Save as backend-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
-metadata: { name: backend, namespace: lab-services }
+metadata: { name: backend, namespace: lab04-$STUDENT_NAME }
 spec:
   replicas: 3
   selector:
@@ -350,7 +361,7 @@ spec:
 # ... (remaining lines omitted for brevity)</code></pre>
                 <pre><code class="language-bash" data-trim>
 $ kubectl apply -f backend-deployment.yaml
-$ kubectl get pods -n lab-services -l tier=api -w
+$ kubectl get pods -n lab04-$STUDENT_NAME -l tier=api -w
                 </code></pre>
                 <aside class="notes">
                     The backend uses httpbin, a well-known HTTP testing service that echoes request details. It has three replicas to demonstrate load balancing later. The readiness probe ensures only healthy pods receive traffic. Wait until all three replicas show Ready before proceeding.
@@ -366,7 +377,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend
-  namespace: lab-services
+  namespace: lab04-$STUDENT_NAME
 spec:
   replicas: 2
   selector:
@@ -378,7 +389,7 @@ spec:
 $ kubectl apply -f frontend-deployment.yaml
 
 # Verify all pods are running
-$ kubectl get pods -n lab-services -o wide
+$ kubectl get pods -n lab04-$STUDENT_NAME -o wide
                 </code></pre>
                 <aside class="notes">
                     Checkpoint: You should have 5 pods running — 3 backend and 2 frontend. All should show 1/1 Ready. The frontend exposes both port 80 and 443 to demonstrate multi-port Services later. At this point, neither tier can communicate with the other because no Services exist yet. This is the baseline state before we add networking.
@@ -403,7 +414,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: backend-svc
-  namespace: lab-services
+  namespace: lab04-$STUDENT_NAME
 spec:
   type: ClusterIP
   selector:
@@ -415,8 +426,8 @@ spec:
 $ kubectl apply -f backend-svc.yaml
 
 # Examine the Service
-$ kubectl get svc backend-svc -n lab-services
-$ kubectl describe svc backend-svc -n lab-services
+$ kubectl get svc backend-svc -n lab04-$STUDENT_NAME
+$ kubectl describe svc backend-svc -n lab04-$STUDENT_NAME
                 </code></pre>
                 <aside class="notes">
                     Expected Output: NAME backend-svc, TYPE ClusterIP, CLUSTER-IP 10.100.45.120, PORT(S) 80/TCP. Point out the ClusterIP address and explain it is a virtual IP that only exists in iptables or IPVS rules on each node. There is no external-IP because ClusterIP Services are internal-only by design. The describe output shows the Endpoints, which should list the IPs of all three backend pods. If Endpoints is empty, the selector labels do not match any pods.
@@ -439,24 +450,24 @@ $ kubectl describe svc backend-svc -n lab-services
                 <p>Exec into a frontend pod and discover the backend via DNS:</p>
                 <pre><code class="language-bash" data-trim>
 # Get a frontend pod name
-$ FRONTEND_POD=$(kubectl get pod -n lab-services -l tier=web \
+$ FRONTEND_POD=$(kubectl get pod -n lab04-$STUDENT_NAME -l tier=web \
   -o jsonpath='{.items[0].metadata.name}')
 
 # Install curl in the nginx container (for testing)
-$ kubectl exec $FRONTEND_POD -n lab-services -- \
-  apt-get update -qq && kubectl exec $FRONTEND_POD -n lab-services -- \
+$ kubectl exec $FRONTEND_POD -n lab04-$STUDENT_NAME -- \
+  apt-get update -qq && kubectl exec $FRONTEND_POD -n lab04-$STUDENT_NAME -- \
   apt-get install -y -qq curl dnsutils > /dev/null
 
 # Test DNS resolution of the backend service
-$ kubectl exec $FRONTEND_POD -n lab-services -- nslookup backend-svc
+$ kubectl exec $FRONTEND_POD -n lab04-$STUDENT_NAME -- nslookup backend-svc
                 </code></pre>
                 <pre><code class="language-bash" data-trim>
 # Curl the backend through the Service
-$ kubectl exec $FRONTEND_POD -n lab-services -- \
+$ kubectl exec $FRONTEND_POD -n lab04-$STUDENT_NAME -- \
   curl -s backend-svc/ip
                 </code></pre>
                 <aside class="notes">
-                    Expected Output: nslookup returns backend-svc.lab-services.svc.cluster.local resolving to the ClusterIP (e.g., 10.100.45.120). Key Insight: Inside the same namespace, you can reach the Service using just its name (backend-svc). Kubernetes DNS automatically resolves it to the ClusterIP address. The curl command hits the httpbin /ip endpoint which returns the client IP as seen by the backend. Run curl multiple times to show that different backend pods may respond.
+                    Expected Output: nslookup returns backend-svc.lab04-$STUDENT_NAME.svc.cluster.local resolving to the ClusterIP (e.g., 10.100.45.120). Key Insight: Inside the same namespace, you can reach the Service using just its name (backend-svc). Kubernetes DNS automatically resolves it to the ClusterIP address. The curl command hits the httpbin /ip endpoint which returns the client IP as seen by the backend. Run curl multiple times to show that different backend pods may respond.
                 </aside>
             </section>
 
@@ -474,15 +485,15 @@ $ kubectl exec $FRONTEND_POD -n lab-services -- \
                 <p>Explore the DNS hierarchy for Services:</p>
                 <pre><code class="language-bash" data-trim>
 # Full FQDN lookup
-$ kubectl exec $FRONTEND_POD -n lab-services -- \
-  nslookup backend-svc.lab-services.svc.cluster.local
+$ kubectl exec $FRONTEND_POD -n lab04-$STUDENT_NAME -- \
+  nslookup backend-svc.lab04-$STUDENT_NAME.svc.cluster.local
 
 # Dig for detailed DNS record information
-$ kubectl exec $FRONTEND_POD -n lab-services -- \
-  dig backend-svc.lab-services.svc.cluster.local +short
+$ kubectl exec $FRONTEND_POD -n lab04-$STUDENT_NAME -- \
+  dig backend-svc.lab04-$STUDENT_NAME.svc.cluster.local +short
 
 # Verify the search domains configured in the pod
-$ kubectl exec $FRONTEND_POD -n lab-services -- cat /etc/resolv.conf
+$ kubectl exec $FRONTEND_POD -n lab04-$STUDENT_NAME -- cat /etc/resolv.conf
                 </code></pre>
                 <div class="concept-box">
                     <h4>DNS Resolution Hierarchy</h4>
@@ -500,17 +511,17 @@ $ kubectl exec $FRONTEND_POD -n lab-services -- cat /etc/resolv.conf
                             </tr>
                             <tr>
                                 <td><code>svc.namespace</code> (cross-ns)</td>
-                                <td><code>backend-svc.lab-services</code></td>
+                                <td><code>backend-svc.lab04-$STUDENT_NAME</code></td>
                             </tr>
                             <tr>
                                 <td>FQDN</td>
-                                <td><code>backend-svc.lab-services.svc.cluster.local</code></td>
+                                <td><code>backend-svc.lab04-$STUDENT_NAME.svc.cluster.local</code></td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
                 <aside class="notes">
-                    Expected resolv.conf: nameserver 10.100.0.10, search lab-services.svc.cluster.local svc.cluster.local cluster.local, options ndots:5. The resolv.conf file shows the DNS search domains. Because of these search domains and the ndots:5 setting, short names like backend-svc are resolved by appending each search domain in order. For cross-namespace communication, you must include at least the namespace in the DNS name. The FQDN ending with a dot (cluster.local.) avoids all search domain lookups and is the most efficient form for production configurations.
+                    Expected resolv.conf: nameserver 10.100.0.10, search lab04-$STUDENT_NAME.svc.cluster.local svc.cluster.local cluster.local, options ndots:5. The resolv.conf file shows the DNS search domains. Because of these search domains and the ndots:5 setting, short names like backend-svc are resolved by appending each search domain in order. For cross-namespace communication, you must include at least the namespace in the DNS name. The FQDN ending with a dot (cluster.local.) avoids all search domain lookups and is the most efficient form for production configurations.
                 </aside>
             </section>
 
@@ -532,7 +543,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: frontend-nodeport
-  namespace: lab-services
+  namespace: lab04-$STUDENT_NAME
 spec:
   type: NodePort
   selector:
@@ -540,12 +551,17 @@ spec:
 # ... (remaining lines omitted for brevity)</code></pre>
                 <pre><code class="language-bash" data-trim>
 $ kubectl apply -f frontend-nodeport.yaml
-$ kubectl get svc frontend-nodeport -n lab-services
+$ kubectl get svc frontend-nodeport -n lab04-$STUDENT_NAME
 $ kubectl get nodes -o wide
-$ curl http://&lt;NODE-EXTERNAL-IP&gt;:30080
+$ NODE_PORT=$(kubectl get svc frontend-nodeport -n lab04-$STUDENT_NAME -o jsonpath='{.spec.ports[0].nodePort}')
+$ echo "NodePort assigned: $NODE_PORT"
+$ curl http://&lt;NODE-EXTERNAL-IP&gt;:$NODE_PORT
                 </code></pre>
+                <div class="highlight-box warning">
+                    <strong>Note:</strong> Kubernetes will auto-assign an available NodePort. Find it with <code>kubectl get svc</code>.
+                </div>
                 <aside class="notes">
-                    Expected Output: frontend-nodeport NodePort 10.100.78.200 80:30080/TCP. Note: In EKS, node security groups may block NodePort traffic by default. NodePort is primarily useful for development and testing — production workloads should use LoadBalancer or Ingress instead. The nodePort 30080 is allocated on every node in the cluster. The valid NodePort range is 30000-32767 by default. NodePort also creates a ClusterIP, so the Service is accessible both internally and externally.
+                    Expected Output: frontend-nodeport NodePort with an auto-assigned port in the 30000-32767 range. Note: In EKS, node security groups may block NodePort traffic by default. NodePort is primarily useful for development and testing — production workloads should use LoadBalancer or Ingress instead. The valid NodePort range is 30000-32767 by default. NodePort also creates a ClusterIP, so the Service is accessible both internally and externally.
                 </aside>
             </section>
 
@@ -560,6 +576,9 @@ $ curl http://&lt;NODE-EXTERNAL-IP&gt;:30080
 
             <section>
                 <h2>&#9889; Step 6: Create a LoadBalancer Service</h2>
+                <div class="highlight-box danger">
+                    <strong>Instructor Demo:</strong> LoadBalancer services create real AWS NLBs (~$16/day each). In a shared cluster, observe the instructor's demo instead of creating your own. If directed to proceed, clean up immediately after testing.
+                </div>
                 <p>Expose the frontend via an AWS Load Balancer:</p>
                 <pre><code class="language-yaml" data-trim>
 # Save as frontend-lb.yaml
@@ -567,7 +586,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: frontend-lb
-  namespace: lab-services
+  namespace: lab04-$STUDENT_NAME
   annotations:
     service.beta.kubernetes.io/aws-load-balancer-type: "external"
     service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
@@ -579,7 +598,7 @@ spec:
 $ kubectl apply -f frontend-lb.yaml
 
 # Watch for the external hostname/IP to be assigned
-$ kubectl get svc frontend-lb -n lab-services -w
+$ kubectl get svc frontend-lb -n lab04-$STUDENT_NAME -w
                 </code></pre>
                 <aside class="notes">
                     Expected: After 1-3 minutes, EXTERNAL-IP will show an AWS NLB hostname. Common Issue: If EXTERNAL-IP stays as pending for more than 5 minutes, check that the AWS Load Balancer Controller is installed: kubectl get deployment -n kube-system aws-load-balancer-controller. The annotations are specific to the AWS Load Balancer Controller. The nlb-target-type: ip routes directly to pod IPs (bypassing NodePort), which is more efficient. The scheme: internet-facing creates a public-facing NLB.
@@ -591,7 +610,7 @@ $ kubectl get svc frontend-lb -n lab-services -w
                 <p>Verify the LoadBalancer is routing traffic:</p>
                 <pre><code class="language-bash" data-trim>
 # Get the LoadBalancer hostname
-$ LB_HOST=$(kubectl get svc frontend-lb -n lab-services \
+$ LB_HOST=$(kubectl get svc frontend-lb -n lab04-$STUDENT_NAME \
   -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
 
 # Test the endpoint
@@ -607,7 +626,7 @@ $ for i in $(seq 1 6); do
                 </div>
                 <pre><code class="language-bash" data-trim>
 # Examine the Service details
-$ kubectl describe svc frontend-lb -n lab-services
+$ kubectl describe svc frontend-lb -n lab04-$STUDENT_NAME
                 </code></pre>
                 <aside class="notes">
                     The describe output shows the LoadBalancer Ingress hostname and the events from the cloud provider. If DNS has not propagated yet, wait a minute and retry. The for loop demonstrates load balancing by making multiple requests. In production, the NLB hostname would be aliased to a friendly domain name via Route53.
@@ -628,14 +647,14 @@ $ kubectl describe svc frontend-lb -n lab-services
                 <p>Inspect the Endpoints backing the backend Service:</p>
                 <pre><code class="language-bash" data-trim>
 # View the Endpoints resource
-$ kubectl get endpoints backend-svc -n lab-services
+$ kubectl get endpoints backend-svc -n lab04-$STUDENT_NAME
 
 # View EndpointSlices (the modern replacement)
-$ kubectl get endpointslices -n lab-services \
+$ kubectl get endpointslices -n lab04-$STUDENT_NAME \
   -l kubernetes.io/service-name=backend-svc
 
 # Describe for full details
-$ kubectl describe endpointslice -n lab-services \
+$ kubectl describe endpointslice -n lab04-$STUDENT_NAME \
   -l kubernetes.io/service-name=backend-svc
                 </code></pre>
                 <div class="highlight-box success">
@@ -662,14 +681,14 @@ backend-svc   10.0.1.15:80,10.0.2.22:80,10.0.3.18:80   10m
                 <p>Scale the backend and watch Endpoints change:</p>
                 <pre><code class="language-bash" data-trim>
 # In one terminal, watch endpoints
-$ kubectl get endpoints backend-svc -n lab-services -w
+$ kubectl get endpoints backend-svc -n lab04-$STUDENT_NAME -w
 
 # In another terminal, scale the backend down
-$ kubectl scale deployment backend -n lab-services --replicas=1
+$ kubectl scale deployment backend -n lab04-$STUDENT_NAME --replicas=1
 
 # Observe endpoints reduce to 1 IP
 # Then scale back up
-$ kubectl scale deployment backend -n lab-services --replicas=3
+$ kubectl scale deployment backend -n lab04-$STUDENT_NAME --replicas=3
 
 # Observe endpoints grow back to 3 IPs
                 </code></pre>
@@ -699,7 +718,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: backend-headless
-  namespace: lab-services
+  namespace: lab04-$STUDENT_NAME
 spec:
   clusterIP: None
   selector:
@@ -712,7 +731,7 @@ spec:
                 </code></pre>
                 <pre><code class="language-bash" data-trim>
 $ kubectl apply -f backend-headless.yaml
-$ kubectl get svc backend-headless -n lab-services
+$ kubectl get svc backend-headless -n lab04-$STUDENT_NAME
                 </code></pre>
                 <aside class="notes">
                     Expected: The CLUSTER-IP column shows None. The key difference is clusterIP: None. Without a virtual IP, the Service cannot load-balance traffic. Instead, it serves as a DNS-only discovery mechanism. This is used with StatefulSets (as seen in Lab 3) and any application that implements its own load balancing or needs to enumerate all backend instances.
@@ -724,12 +743,12 @@ $ kubectl get svc backend-headless -n lab-services
                 <p>Compare DNS responses between normal and headless Services:</p>
                 <pre><code class="language-bash" data-trim>
 # Normal ClusterIP Service - returns the virtual IP
-$ kubectl exec $FRONTEND_POD -n lab-services -- \
-  dig backend-svc.lab-services.svc.cluster.local +short
+$ kubectl exec $FRONTEND_POD -n lab04-$STUDENT_NAME -- \
+  dig backend-svc.lab04-$STUDENT_NAME.svc.cluster.local +short
 
 # Headless Service - returns individual pod IPs
-$ kubectl exec $FRONTEND_POD -n lab-services -- \
-  dig backend-headless.lab-services.svc.cluster.local +short
+$ kubectl exec $FRONTEND_POD -n lab04-$STUDENT_NAME -- \
+  dig backend-headless.lab04-$STUDENT_NAME.svc.cluster.local +short
                 </code></pre>
                 <div class="key-point">
                     <strong>Key Difference:</strong> A ClusterIP Service returns one virtual IP (load balancing happens at the network layer). A headless Service returns all pod IPs (the client decides which pod to connect to).
@@ -757,7 +776,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: backend-sticky
-  namespace: lab-services
+  namespace: lab04-$STUDENT_NAME
 spec:
   type: ClusterIP
   selector:
@@ -767,7 +786,7 @@ spec:
 # ... (remaining lines omitted for brevity)</code></pre>
                 <pre><code class="language-bash" data-trim>
 $ kubectl apply -f backend-sticky.yaml
-$ kubectl describe svc backend-sticky -n lab-services | grep -A 2 \
+$ kubectl describe svc backend-sticky -n lab04-$STUDENT_NAME | grep -A 2 \
   "Session Affinity"
                 </code></pre>
                 <aside class="notes">
@@ -781,13 +800,13 @@ $ kubectl describe svc backend-sticky -n lab-services | grep -A 2 \
                 <pre><code class="language-bash" data-trim>
 # Without session affinity - requests are distributed
 $ for i in $(seq 1 6); do
-    kubectl exec $FRONTEND_POD -n lab-services -- \
+    kubectl exec $FRONTEND_POD -n lab04-$STUDENT_NAME -- \
       curl -s backend-svc/headers | grep -o '"Host":.*'
   done
 
 # With session affinity - all requests go to the same pod
 $ for i in $(seq 1 6); do
-    kubectl exec $FRONTEND_POD -n lab-services -- \
+    kubectl exec $FRONTEND_POD -n lab04-$STUDENT_NAME -- \
       curl -s backend-sticky/headers | grep -o '"Host":.*'
   done
                 </code></pre>
@@ -817,7 +836,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: frontend-multiport
-  namespace: lab-services
+  namespace: lab04-$STUDENT_NAME
 spec:
   type: ClusterIP
   selector:
@@ -827,8 +846,8 @@ spec:
 # ... (remaining lines omitted for brevity)</code></pre>
                 <pre><code class="language-bash" data-trim>
 $ kubectl apply -f frontend-multiport.yaml
-$ kubectl get svc frontend-multiport -n lab-services
-$ kubectl describe svc frontend-multiport -n lab-services
+$ kubectl get svc frontend-multiport -n lab04-$STUDENT_NAME
+$ kubectl describe svc frontend-multiport -n lab04-$STUDENT_NAME
                 </code></pre>
                 <aside class="notes">
                     Expected Output: frontend-multiport ClusterIP 10.100.92.50 80/TCP,443/TCP. Multi-port Services are common in production. Web servers expose HTTP and HTTPS. Applications expose a main port and a metrics port for Prometheus. The name field is mandatory for multi-port Services and is used in DNS SRV records. Clients can also reference ports by name in Ingress and other configurations.
@@ -842,12 +861,12 @@ $ kubectl describe svc frontend-multiport -n lab-services
                 <p>Examine the SRV records created for named ports:</p>
                 <pre><code class="language-bash" data-trim>
 # Query SRV records for the http port
-$ kubectl exec $FRONTEND_POD -n lab-services -- \
-  dig SRV _http._tcp.frontend-multiport.lab-services.svc.cluster.local +short
+$ kubectl exec $FRONTEND_POD -n lab04-$STUDENT_NAME -- \
+  dig SRV _http._tcp.frontend-multiport.lab04-$STUDENT_NAME.svc.cluster.local +short
 
 # Query SRV records for the https port
-$ kubectl exec $FRONTEND_POD -n lab-services -- \
-  dig SRV _https._tcp.frontend-multiport.lab-services.svc.cluster.local +short
+$ kubectl exec $FRONTEND_POD -n lab04-$STUDENT_NAME -- \
+  dig SRV _https._tcp.frontend-multiport.lab04-$STUDENT_NAME.svc.cluster.local +short
                 </code></pre>
                 <div class="highlight-box success">
                     <p style="margin:0;"><strong>Expected:</strong> SRV records return the port number and the Service hostname, allowing clients to discover both the address and port dynamically.</p>
@@ -874,18 +893,18 @@ $ kubectl exec $FRONTEND_POD -n lab-services -- \
                 <p>Remove all resources created during this lab:</p>
                 <pre><code class="language-bash" data-trim>
 # Delete the LoadBalancer Service first (triggers NLB deletion)
-$ kubectl delete svc frontend-lb -n lab-services
+$ kubectl delete svc frontend-lb -n lab04-$STUDENT_NAME
 
 # Wait for NLB deprovisioning (check AWS console or wait ~60s)
 $ echo "Waiting for NLB deprovisioning..."
 $ sleep 30
 
 # Delete the entire namespace (removes all remaining resources)
-$ kubectl delete namespace lab-services
+$ kubectl delete namespace lab04-$STUDENT_NAME
 
 # Verify cleanup
-$ kubectl get all -n lab-services
-$ kubectl get svc -n lab-services
+$ kubectl get all -n lab04-$STUDENT_NAME
+$ kubectl get svc -n lab04-$STUDENT_NAME
                 </code></pre>
                 <aside class="notes">
                     Tip: Delete the LoadBalancer Service before the namespace to ensure the AWS Load Balancer Controller has time to clean up the NLB. If you delete the namespace first, the NLB may become orphaned and require manual cleanup in AWS. Orphaned NLBs incur ongoing AWS charges. Always verify that the NLB has been deprovisioned by checking the AWS console or running aws elbv2 describe-load-balancers. Order of deletion matters here. The LoadBalancer Service must be deleted while the AWS Load Balancer Controller is still running and the finalizer can execute.

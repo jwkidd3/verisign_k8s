@@ -154,6 +154,76 @@ kubectl get clusterflow,clusteroutput -n logging    # Logging pipeline
 kubectl logs -n external-dns -l app.kubernetes.io/name=external-dns --tail=20
 ```
 
+## Multi-Student Shared Cluster (22 Students)
+
+### Capacity Planning
+
+The cluster is sized for 22 concurrent students:
+- **Node group**: 6x m5.2xlarge (8 vCPU, 32 GiB each), auto-scaling 4-8 nodes
+- **Pod capacity**: ~350 usable pods (after platform overhead)
+- **ResourceQuotas**: Auto-generated per lab namespace (4 CPU, 8Gi requests, 40 pods max)
+- **LimitRanges**: Default container limits (500m CPU, 512Mi memory)
+
+### Pre-installed Platform Components
+
+| Component | Namespace | Lab(s) |
+|-----------|-----------|--------|
+| Metrics Server | kube-system | Lab 02 |
+| Calico (NetworkPolicy) | calico-system | Lab 08 |
+| NGINX Ingress Controller | ingress-nginx | Lab 06 |
+| Envoy Gateway + Gateway API CRDs | envoy-gateway-system | Lab 06 |
+| Kyverno (Pod Security) | kyverno | Lab 07 |
+| Prometheus + Grafana | monitoring | Lab 09 |
+| ArgoCD | argocd | Lab 13 |
+| Flux | flux-system | Lab 14 |
+| Vault (dev mode) | vault | Lab 16 |
+| External Secrets Operator | external-secrets | Lab 16 |
+
+### Student Access Setup
+
+1. Students assume the IAM role `<cluster-name>-student-role`
+2. The role maps to Kubernetes group `students` via EKS access entry
+3. The `student-lab-role` ClusterRole grants:
+   - Create/delete namespaces matching `lab*`, `obs-*`, `deploy-*`, etc.
+   - Full access to namespaced resources within their own namespaces
+   - Read-only access to nodes, StorageClasses, CRDs
+   - Access to platform CRDs (Flux, Gateway API, Monitoring, ESO)
+
+### Student Onboarding
+
+```bash
+# Generate kubeconfig for a student (run as cluster admin)
+CLUSTER_NAME=verisign-k8s-lab
+REGION=us-east-1
+STUDENT_ROLE_ARN=$(terraform -chdir=eks-platform/terraform output -raw student_role_arn)
+
+aws eks update-kubeconfig \
+  --name $CLUSTER_NAME \
+  --region $REGION \
+  --role-arn $STUDENT_ROLE_ARN \
+  --kubeconfig student-kubeconfig.yaml
+
+# Distribute student-kubeconfig.yaml to students
+```
+
+### Lab Prerequisites Checklist
+
+Before class, verify all platform components are running:
+
+```bash
+# Check all platform pods
+kubectl get pods -A | grep -E '(ingress-nginx|envoy-gateway|argocd|monitoring|vault|external-secrets|calico|kyverno|flux)'
+
+# Verify IRSA demo bucket
+aws s3 ls s3://<cluster-name>-irsa-demo/
+
+# Verify Vault is accessible
+kubectl exec -n vault vault-0 -- vault status
+
+# Test student RBAC
+kubectl auth can-i create namespaces --as-group=students
+```
+
 ## Teardown
 
 ```bash

@@ -325,6 +325,17 @@
                 </aside>
             </section>
 
+            <section>
+                <h2>&#9881;&#65039; Environment Setup</h2>
+                <p>Set your student identifier (use your first name or assigned number):</p>
+                <pre><code class="language-bash"># Set your unique student name
+export STUDENT_NAME=&lt;your-name&gt;
+echo "Student: $STUDENT_NAME"</code></pre>
+                <div class="highlight-box warning">
+                    <strong>Important:</strong> This shared cluster is used by all 22 students. Your <code>STUDENT_NAME</code> ensures your resources don't conflict with others.
+                </div>
+            </section>
+
             <!-- Step 1: Verify Ingress Controller -->
             <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="section-divider">
                 <h2>Step 1</h2>
@@ -368,7 +379,7 @@ nginx   k8s.io/ingress-nginx           &lt;none&gt;       10d</pre>
                 <h2>&#128640; Step 1: Create Lab Namespace</h2>
                 <pre><code class="language-bash" data-trim>
 # Create the lab namespace
-$ kubectl create namespace lab-ingress
+$ kubectl create namespace lab06-$STUDENT_NAME
 
 # Verify the Ingress controller service has an external IP/hostname
 $ kubectl get svc -n ingress-nginx
@@ -402,7 +413,7 @@ ingress-nginx-controller          LoadBalancer   10.100.x.x    a]b1c2d3e4...elb.
 # Save as app-v1.yaml
 apiVersion: apps/v1
 kind: Deployment
-metadata: { name: app-v1, namespace: lab-ingress }
+metadata: { name: app-v1, namespace: lab06-$STUDENT_NAME }
 spec:
   replicas: 2
   selector: { matchLabels: { app: web, version: v1 } }
@@ -421,7 +432,7 @@ spec:
 # Save as app-v2.yaml
 apiVersion: apps/v1
 kind: Deployment
-metadata: { name: app-v2, namespace: lab-ingress }
+metadata: { name: app-v2, namespace: lab06-$STUDENT_NAME }
 spec:
   replicas: 2
   selector: { matchLabels: { app: web, version: v2 } }
@@ -434,8 +445,8 @@ $ kubectl apply -f app-v1.yaml
 $ kubectl apply -f app-v2.yaml
 
 # Verify all pods are running
-$ kubectl get pods -n lab-ingress -l app=web
-$ kubectl get svc -n lab-ingress
+$ kubectl get pods -n lab06-$STUDENT_NAME -l app=web
+$ kubectl get svc -n lab06-$STUDENT_NAME
                 </code></pre>
 
                 <aside class="notes">
@@ -458,27 +469,27 @@ $ kubectl get svc -n lab-ingress
 # Save as ingress-host.yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
-metadata: { name: app-ingress-host, namespace: lab-ingress,
+metadata: { name: app-ingress-host, namespace: lab06-$STUDENT_NAME,
   annotations: { nginx.ingress.kubernetes.io/rewrite-target: / } }
 spec:
   ingressClassName: nginx
   rules:
-    - host: v1.lab.local
+    - host: v1-$STUDENT_NAME.lab.local
       http:
         paths:
           - { path: /, pathType: Prefix,
               backend: { service: { name: app-v1-svc, port: { number: 80 } } } }
-    - host: v2.lab.local
+    - host: v2-$STUDENT_NAME.lab.local
       http:
         paths:
           - { path: /, pathType: Prefix,
               backend: { service: { name: app-v2-svc, port: { number: 80 } } } }
                 </code></pre>
                 <pre><code class="language-bash" data-trim>
-$ kubectl apply -f ingress-host.yaml && kubectl get ingress -n lab-ingress
+$ kubectl apply -f ingress-host.yaml && kubectl get ingress -n lab06-$STUDENT_NAME
                 </code></pre>
                 <aside class="notes">
-                    This Ingress defines two host rules. Requests to v1.lab.local are routed to app-v1-svc, and requests to v2.lab.local are routed to app-v2-svc. The ingressClassName must match an available IngressClass. If using AWS ALB Controller, change ingressClassName to alb and add the appropriate annotations. The rewrite-target annotation is specific to NGINX Ingress Controller.
+                    This Ingress defines two host rules. Requests to v1-$STUDENT_NAME.lab.local are routed to app-v1-svc, and requests to v2-$STUDENT_NAME.lab.local are routed to app-v2-svc. The ingressClassName must match an available IngressClass. If using AWS ALB Controller, change ingressClassName to alb and add the appropriate annotations. The rewrite-target annotation is specific to NGINX Ingress Controller.
                 </aside>
             </section>
 
@@ -486,17 +497,17 @@ $ kubectl apply -f ingress-host.yaml && kubectl get ingress -n lab-ingress
                 <h2>&#128640; Step 3: Verify the Ingress</h2>
                 <pre><code class="language-bash" data-trim>
 # Check Ingress details
-$ kubectl describe ingress app-ingress-host -n lab-ingress
+$ kubectl describe ingress app-ingress-host -n lab06-$STUDENT_NAME
                 </code></pre>
                 <div class="highlight-box success fragment">
                     <strong>&#9989; Expected Output:</strong>
                     <pre style="margin: 5px 0; font-size: 0.85em; background: transparent; color: inherit;">Name:             app-ingress-host
-Namespace:        lab-ingress
+Namespace:        lab06-$STUDENT_NAME
 Rules:
   Host           Path  Backends
   ----           ----  --------
-  v1.lab.local   /     app-v1-svc:80 (10.0.x.x:8080,10.0.x.x:8080)
-  v2.lab.local   /     app-v2-svc:80 (10.0.x.x:8080,10.0.x.x:8080)</pre>
+  v1-$STUDENT_NAME.lab.local   /     app-v1-svc:80 (10.0.x.x:8080,10.0.x.x:8080)
+  v2-$STUDENT_NAME.lab.local   /     app-v2-svc:80 (10.0.x.x:8080,10.0.x.x:8080)</pre>
                 </div>
                 <div class="highlight-box fragment">
                     <strong>&#128161; Note:</strong> The Backends column shows the pod IP addresses. If it shows <code>&lt;error: endpoints ... not found&gt;</code>, the service selector does not match any pods.
@@ -525,27 +536,27 @@ $ INGRESS_IP=$(kubectl get svc -n ingress-nginx ingress-nginx-controller \
 $ echo "Ingress address: $INGRESS_IP"
 
 # Test routing to v1
-$ curl -s -H "Host: v1.lab.local" http://$INGRESS_IP
+$ curl -s -H "Host: v1-$STUDENT_NAME.lab.local" http://$INGRESS_IP
 
 # Test routing to v2
-$ curl -s -H "Host: v2.lab.local" http://$INGRESS_IP
+$ curl -s -H "Host: v2-$STUDENT_NAME.lab.local" http://$INGRESS_IP
 
 # Test with an unknown host (should get 404)
 $ curl -s -H "Host: unknown.lab.local" http://$INGRESS_IP
                 </code></pre>
                 <div class="highlight-box success fragment">
                     <strong>&#9989; Expected Output:</strong>
-                    <pre style="margin: 5px 0; font-size: 0.85em; background: transparent; color: inherit;">$ curl -H "Host: v1.lab.local" http://$INGRESS_IP
+                    <pre style="margin: 5px 0; font-size: 0.85em; background: transparent; color: inherit;">$ curl -H "Host: v1-$STUDENT_NAME.lab.local" http://$INGRESS_IP
 Hello from App V1
 
-$ curl -H "Host: v2.lab.local" http://$INGRESS_IP
+$ curl -H "Host: v2-$STUDENT_NAME.lab.local" http://$INGRESS_IP
 Hello from App V2</pre>
                 </div>
                 <div class="highlight-box warning fragment">
                     <strong>&#9888;&#65039; AWS Note:</strong> On EKS, use the hostname instead of IP. If using NLB, the <code>jsonpath</code> field may be <code>.ip</code> instead of <code>.hostname</code>. Allow 2&ndash;3 minutes for DNS propagation after the load balancer is created.
                 </div>
                 <aside class="notes">
-                    The curl -H flag overrides the Host header, simulating DNS resolution. v1.lab.local routes to app-v1 and v2.lab.local routes to app-v2. The unknown host test should return a 404, confirming that the Ingress controller only routes configured hosts. On AWS, the EXTERNAL-IP is a DNS hostname, not an IP address. Students may need to wait for the ELB to finish provisioning.
+                    The curl -H flag overrides the Host header, simulating DNS resolution. v1-$STUDENT_NAME.lab.local routes to app-v1 and v2-$STUDENT_NAME.lab.local routes to app-v2. The unknown host test should return a 404, confirming that the Ingress controller only routes configured hosts. On AWS, the EXTERNAL-IP is a DNS hostname, not an IP address. Students may need to wait for the ELB to finish provisioning.
                 </aside>
             </section>
 
@@ -564,12 +575,12 @@ Hello from App V2</pre>
 # Save as ingress-path.yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
-metadata: { name: app-ingress-path, namespace: lab-ingress }
+metadata: { name: app-ingress-path, namespace: lab06-$STUDENT_NAME }
 annotations: { nginx.ingress.kubernetes.io/rewrite-target: / }
 spec:
   ingressClassName: nginx
   rules:
-    - host: app.lab.local
+    - host: app-$STUDENT_NAME.lab.local
       http:
         paths:
           - { path: /v1, pathType: Prefix,
@@ -591,23 +602,23 @@ $ kubectl apply -f ingress-path.yaml
                 <h2>&#128640; Step 5: Test Path-Based Routing</h2>
                 <pre><code class="language-bash" data-trim>
 # Test path /v1
-$ curl -s -H "Host: app.lab.local" http://$INGRESS_IP/v1
+$ curl -s -H "Host: app-$STUDENT_NAME.lab.local" http://$INGRESS_IP/v1
 
 # Test path /v2
-$ curl -s -H "Host: app.lab.local" http://$INGRESS_IP/v2
+$ curl -s -H "Host: app-$STUDENT_NAME.lab.local" http://$INGRESS_IP/v2
 
 # Test default path
-$ curl -s -H "Host: app.lab.local" http://$INGRESS_IP/
+$ curl -s -H "Host: app-$STUDENT_NAME.lab.local" http://$INGRESS_IP/
                 </code></pre>
                 <div class="highlight-box success fragment">
                     <strong>&#9989; Expected Output:</strong>
-                    <pre style="margin: 5px 0; font-size: 0.85em; background: transparent; color: inherit;">$ curl -H "Host: app.lab.local" http://$INGRESS_IP/v1
+                    <pre style="margin: 5px 0; font-size: 0.85em; background: transparent; color: inherit;">$ curl -H "Host: app-$STUDENT_NAME.lab.local" http://$INGRESS_IP/v1
 Hello from App V1
 
-$ curl -H "Host: app.lab.local" http://$INGRESS_IP/v2
+$ curl -H "Host: app-$STUDENT_NAME.lab.local" http://$INGRESS_IP/v2
 Hello from App V2
 
-$ curl -H "Host: app.lab.local" http://$INGRESS_IP/
+$ curl -H "Host: app-$STUDENT_NAME.lab.local" http://$INGRESS_IP/
 Hello from App V1</pre>
                 </div>
                 <div class="concept-box fragment">
@@ -640,13 +651,13 @@ $ openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
     -keyout tls-ingress.key -out tls-ingress.crt \
     -subj "/CN=*.lab.local/O=Verisign Lab"
 $ kubectl create secret tls lab-tls-secret \
-    --cert=tls-ingress.crt --key=tls-ingress.key -n lab-ingress
+    --cert=tls-ingress.crt --key=tls-ingress.key -n lab06-$STUDENT_NAME
                 </code></pre>
                 <pre><code class="language-yaml" data-trim>
 # Save as ingress-tls.yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
-metadata: { name: app-ingress-tls, namespace: lab-ingress,
+metadata: { name: app-ingress-tls, namespace: lab06-$STUDENT_NAME,
   annotations: { nginx.ingress.kubernetes.io/ssl-redirect: "true" } }
 spec:
   ingressClassName: nginx
@@ -705,7 +716,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: app-ingress-advanced
-  namespace: lab-ingress
+  namespace: lab06-$STUDENT_NAME
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /$2
     nginx.ingress.kubernetes.io/limit-rps: "10"
@@ -787,14 +798,14 @@ $ kubectl get crd | grep gateway
 # Save as gateway.yaml
 apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
-metadata: { name: lab-gateway-class }
-spec: { controllerName: gateway.nginx.org/nginx-gateway-controller }
+metadata: { name: lab-gateway-class-$STUDENT_NAME }
+spec: { controllerName: gateway.envoyproxy.io/gatewayclass-controller }
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
-metadata: { name: lab-gateway, namespace: lab-ingress }
+metadata: { name: lab-gateway, namespace: lab06-$STUDENT_NAME }
 spec:
-  gatewayClassName: lab-gateway-class
+  gatewayClassName: lab-gateway-class-$STUDENT_NAME
   listeners:
     - { name: http, protocol: HTTP, port: 80,
         allowedRoutes: { namespaces: { from: Same } } }
@@ -804,7 +815,7 @@ spec:
                 </code></pre>
                 <pre><code class="language-bash" data-trim>
 $ kubectl apply -f gateway.yaml
-$ kubectl get gateway -n lab-ingress
+$ kubectl get gateway -n lab06-$STUDENT_NAME
                 </code></pre>
                 <aside class="notes">
                     The GatewayClass is a cluster-scoped resource that defines the controller implementation (similar to IngressClass). The Gateway is namespace-scoped and defines listeners on specific ports and protocols. The allowedRoutes field controls which namespaces can attach routes to this Gateway. The TLS listener references the same TLS Secret we created in Step 6. This separation of concerns allows platform teams to manage Gateways while application teams manage Routes.
@@ -814,9 +825,9 @@ $ kubectl get gateway -n lab-ingress
             <section>
                 <h2>&#128640; Step 8: Verify Gateway Status</h2>
                 <pre><code class="language-bash" data-trim>
-$ kubectl get gateway lab-gateway -n lab-ingress -o yaml | \
+$ kubectl get gateway lab-gateway -n lab06-$STUDENT_NAME -o yaml | \
     kubectl neat 2>/dev/null || \
-    kubectl get gateway lab-gateway -n lab-ingress -o yaml
+    kubectl get gateway lab-gateway -n lab06-$STUDENT_NAME -o yaml
                 </code></pre>
                 <div class="highlight-box success fragment">
                     <strong>&#9989; Expected Status:</strong> The Gateway should show <code>Accepted: True</code> and <code>Programmed: True</code> conditions. If the controller is not running, the status will show <code>Accepted: False</code> with a reason.
@@ -863,11 +874,11 @@ $ kubectl get gateway lab-gateway -n lab-ingress -o yaml | \
 # Save as httproute.yaml
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
-metadata: { name: app-route, namespace: lab-ingress }
+metadata: { name: app-route, namespace: lab06-$STUDENT_NAME }
 spec:
   parentRefs:
     - { name: lab-gateway, sectionName: http }
-  hostnames: ["app.lab.local"]
+  hostnames: ["app-$STUDENT_NAME.lab.local"]
   rules:
     - matches:
         - path: { type: PathPrefix, value: / }
@@ -877,8 +888,8 @@ spec:
                 </code></pre>
                 <pre><code class="language-bash" data-trim>
 $ kubectl apply -f httproute.yaml
-$ kubectl get httproute -n lab-ingress
-$ kubectl describe httproute app-route -n lab-ingress
+$ kubectl get httproute -n lab06-$STUDENT_NAME
+$ kubectl describe httproute app-route -n lab06-$STUDENT_NAME
                 </code></pre>
                 <aside class="notes">
                     The HTTPRoute attaches to the Gateway via parentRefs. The weight field on backendRefs enables traffic splitting: 80% to v1 and 20% to v2. This is a native feature of Gateway API that requires custom annotations or service mesh with Ingress. The sectionName references the specific listener on the Gateway. This pattern is ideal for canary deployments where you gradually shift traffic from an old version to a new one.
@@ -889,12 +900,12 @@ $ kubectl describe httproute app-route -n lab-ingress
                 <h2>&#128640; Step 9: Test Traffic Splitting</h2>
                 <pre><code class="language-bash" data-trim>
 # Get the Gateway address
-$ GATEWAY_IP=$(kubectl get gateway lab-gateway -n lab-ingress \
+$ GATEWAY_IP=$(kubectl get gateway lab-gateway -n lab06-$STUDENT_NAME \
     -o jsonpath='{.status.addresses[0].value}')
 
 # Send 20 requests and count the distribution
 $ for i in $(seq 1 20); do
-    curl -s -H "Host: app.lab.local" http://$GATEWAY_IP
+    curl -s -H "Host: app-$STUDENT_NAME.lab.local" http://$GATEWAY_IP
 done | sort | uniq -c | sort -rn
                 </code></pre>
                 <div class="highlight-box success fragment">
@@ -927,17 +938,17 @@ done | sort | uniq -c | sort -rn
                 <pre><code class="language-bash" data-trim>
 # Deploy a test pod
 $ kubectl run egress-test --image=busybox:1.36 \
-    -n lab-ingress --restart=Never \
+    -n lab06-$STUDENT_NAME --restart=Never \
     --command -- sleep 3600
 
 # Test outbound connectivity (DNS and HTTP)
-$ kubectl exec egress-test -n lab-ingress -- \
+$ kubectl exec egress-test -n lab06-$STUDENT_NAME -- \
     nslookup kubernetes.default.svc.cluster.local
 
-$ kubectl exec egress-test -n lab-ingress -- \
-    wget -qO- --timeout=5 http://app-v1-svc.lab-ingress.svc.cluster.local
+$ kubectl exec egress-test -n lab06-$STUDENT_NAME -- \
+    wget -qO- --timeout=5 http://app-v1-svc.lab06-$STUDENT_NAME.svc.cluster.local
 
-$ kubectl exec egress-test -n lab-ingress -- \
+$ kubectl exec egress-test -n lab06-$STUDENT_NAME -- \
     wget -qO- --timeout=5 http://example.com
                 </code></pre>
                 <div class="highlight-box success fragment">
@@ -954,7 +965,7 @@ $ kubectl exec egress-test -n lab-ingress -- \
 # Save as egress-policy.yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
-metadata: { name: restrict-egress, namespace: lab-ingress }
+metadata: { name: restrict-egress, namespace: lab06-$STUDENT_NAME }
 spec:
   podSelector: { matchLabels: { run: egress-test } }
   policyTypes: [Egress]
@@ -967,14 +978,14 @@ spec:
       ports: [{ protocol: UDP, port: 53 }, { protocol: TCP, port: 53 }]
     - to:  # Allow cluster-internal HTTP
         - namespaceSelector:
-            matchLabels: { kubernetes.io/metadata.name: lab-ingress }
+            matchLabels: { kubernetes.io/metadata.name: lab06-$STUDENT_NAME }
       ports: [{ protocol: TCP, port: 80 }]
                 </code></pre>
                 <pre><code class="language-bash" data-trim>
 $ kubectl apply -f egress-policy.yaml
                 </code></pre>
                 <aside class="notes">
-                    This NetworkPolicy restricts egress from the test pod to only DNS (port 53 to kube-dns) and HTTP (port 80) to services within the lab-ingress namespace. All other egress traffic is denied, including access to external websites. The DNS exception is critical: without it, pods cannot resolve any service names. The namespaceSelector with the kubernetes.io/metadata.name label is a built-in label available on all namespaces.
+                    This NetworkPolicy restricts egress from the test pod to only DNS (port 53 to kube-dns) and HTTP (port 80) to services within the lab06-$STUDENT_NAME namespace. All other egress traffic is denied, including access to external websites. The DNS exception is critical: without it, pods cannot resolve any service names. The namespaceSelector with the kubernetes.io/metadata.name label is a built-in label available on all namespaces.
                 </aside>
             </section>
 
@@ -982,15 +993,15 @@ $ kubectl apply -f egress-policy.yaml
                 <h2>&#128640; Step 10: Verify Egress Restrictions</h2>
                 <pre><code class="language-bash" data-trim>
 # DNS should still work
-$ kubectl exec egress-test -n lab-ingress -- \
+$ kubectl exec egress-test -n lab06-$STUDENT_NAME -- \
     nslookup kubernetes.default.svc.cluster.local
 
 # Internal service access should work
-$ kubectl exec egress-test -n lab-ingress -- \
-    wget -qO- --timeout=5 http://app-v1-svc.lab-ingress.svc.cluster.local
+$ kubectl exec egress-test -n lab06-$STUDENT_NAME -- \
+    wget -qO- --timeout=5 http://app-v1-svc.lab06-$STUDENT_NAME.svc.cluster.local
 
 # External access should be BLOCKED
-$ kubectl exec egress-test -n lab-ingress -- \
+$ kubectl exec egress-test -n lab06-$STUDENT_NAME -- \
     wget -qO- --timeout=5 http://example.com
                 </code></pre>
                 <div class="highlight-box success fragment">
@@ -1020,14 +1031,14 @@ External:  wget: download timed out</pre>
                 <h2>&#128657; Step 11: Clean Up Resources</h2>
                 <pre><code class="language-bash" data-trim>
 # Delete the GatewayClass (cluster-scoped, not deleted with namespace)
-$ kubectl delete gatewayclass lab-gateway-class --ignore-not-found
+$ kubectl delete gatewayclass lab-gateway-class-$STUDENT_NAME --ignore-not-found
 
 # Delete the entire namespace
-$ kubectl delete namespace lab-ingress
+$ kubectl delete namespace lab06-$STUDENT_NAME
 
 # Verify cleanup
-$ kubectl get namespace lab-ingress
-$ kubectl get gatewayclass lab-gateway-class
+$ kubectl get namespace lab06-$STUDENT_NAME
+$ kubectl get gatewayclass lab-gateway-class-$STUDENT_NAME
 
 # Clean up local files
 $ rm -f app-v1.yaml app-v2.yaml ingress-host.yaml ingress-path.yaml \

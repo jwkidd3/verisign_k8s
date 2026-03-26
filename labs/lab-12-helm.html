@@ -341,6 +341,17 @@
                 </aside>
             </section>
 
+            <section>
+                <h2>&#x2699;&#xFE0F; Environment Setup</h2>
+                <p>Set your student identifier (use your first name or assigned number):</p>
+                <pre><code class="language-bash"># Set your unique student name
+export STUDENT_NAME=&lt;your-name&gt;
+echo "Student: $STUDENT_NAME"</code></pre>
+                <div class="highlight-box warning">
+                    <strong>Important:</strong> This shared cluster is used by all 22 students. Your <code>STUDENT_NAME</code> ensures your resources don't conflict with others.
+                </div>
+            </section>
+
             <!-- ========== STEP 1: Verify Helm Installation ========== -->
             <section data-background="linear-gradient(135deg, #2b6cb0 0%, #1a365d 100%)" class="section-divider">
                 <h2>Step 1</h2>
@@ -456,16 +467,16 @@ helm show chart bitnami/nginx
                 <h2>&#x1F680; Install nginx via Helm</h2>
                 <p>Install the Bitnami nginx chart with custom values:</p>
                 <pre><code class="language-bash" data-trim>
-kubectl create namespace helm-lab
+kubectl create namespace helm-lab-$STUDENT_NAME
 
 helm show values bitnami/nginx | head -50
 
 helm install my-nginx bitnami/nginx \
-  --namespace helm-lab \
+  --namespace helm-lab-$STUDENT_NAME \
   --set replicaCount=2 \
   --set service.type=ClusterIP
 
-kubectl get pods -n helm-lab -w
+kubectl get pods -n helm-lab-$STUDENT_NAME -w
                 </code></pre>
                 <aside class="notes">Expected Output: NAME: my-nginx STATUS: deployed REVISION: 1 Two nginx pods should reach Running state.
                     
@@ -501,15 +512,15 @@ kubectl get pods -n helm-lab -w
                 <h2>&#x1F50D; Inspect the Release</h2>
                 <p>Use Helm commands to examine the installed release:</p>
                 <pre><code class="language-bash" data-trim>
-helm list -n helm-lab
+helm list -n helm-lab-$STUDENT_NAME
 
-helm get values my-nginx -n helm-lab
+helm get values my-nginx -n helm-lab-$STUDENT_NAME
 
-helm get values my-nginx -n helm-lab --all
+helm get values my-nginx -n helm-lab-$STUDENT_NAME --all
 
-helm get manifest my-nginx -n helm-lab
+helm get manifest my-nginx -n helm-lab-$STUDENT_NAME
 
-helm get notes my-nginx -n helm-lab
+helm get notes my-nginx -n helm-lab-$STUDENT_NAME
                 </code></pre>
                 <aside class="notes">Expected Output: helm get values should show the overrides you specified (replicaCount: 2, service.type: ClusterIP). The manifest shows the actual YAML applied to the cluster.
                     Tip: Use helm get manifest to see exactly what Kubernetes resources were created. This is invaluable for debugging chart behavior.
@@ -548,16 +559,16 @@ helm get notes my-nginx -n helm-lab
                 <pre><code class="language-bash" data-trim>
 # Upgrade the release with more replicas
 helm upgrade my-nginx bitnami/nginx \
-  --namespace helm-lab \
+  --namespace helm-lab-$STUDENT_NAME \
   --set replicaCount=3 \
   --set service.type=ClusterIP
 
 # Verify the upgrade
-helm list -n helm-lab
-kubectl get pods -n helm-lab
+helm list -n helm-lab-$STUDENT_NAME
+kubectl get pods -n helm-lab-$STUDENT_NAME
 
 # Check the revision number has incremented
-helm status my-nginx -n helm-lab
+helm status my-nginx -n helm-lab-$STUDENT_NAME
                 </code></pre>
                 <aside class="notes">Expected Output: The release should now be at REVISION: 2 with 3 nginx pods running.
                     Important: When using --set during upgrade, previous --set values are not preserved unless you include them again or use --reuse-values .
@@ -595,22 +606,22 @@ helm status my-nginx -n helm-lab
                 <p>Explore release history and perform a rollback:</p>
                 <pre><code class="language-bash" data-trim>
 # View release history
-helm history my-nginx -n helm-lab
+helm history my-nginx -n helm-lab-$STUDENT_NAME
 
 # Rollback to revision 1
-helm rollback my-nginx 1 -n helm-lab
+helm rollback my-nginx 1 -n helm-lab-$STUDENT_NAME
 
 # Verify the rollback
-helm list -n helm-lab
-kubectl get pods -n helm-lab
+helm list -n helm-lab-$STUDENT_NAME
+kubectl get pods -n helm-lab-$STUDENT_NAME
 
 # Check history again (rollback creates a new revision)
-helm history my-nginx -n helm-lab
+helm history my-nginx -n helm-lab-$STUDENT_NAME
                 </code></pre>
                 <aside class="notes">Expected Output: After rollback, the release is at REVISION: 3 with 2 replicas (matching revision 1 values). The history shows all three revisions.</aside>
                 <div class="concept-box fragment">
                     <h4>&#x1F4A1; Release Storage</h4>
-                    <p>Helm stores release information as Kubernetes Secrets in the release namespace. Run <code>kubectl get secrets -n helm-lab -l owner=helm</code> to see them.</p>
+                    <p>Helm stores release information as Kubernetes Secrets in the release namespace. Run <code>kubectl get secrets -n helm-lab-$STUDENT_NAME -l owner=helm</code> to see them.</p>
                 </div>
                 <aside class="notes">
                     A rollback creates a new revision, it does not delete history. The history shows the rollback description. Helm stores each revision as a Secret, so the revisionHistoryLimit is controlled by the Helm max-history setting.
@@ -853,7 +864,7 @@ helm template my-release mychart/ --set appConfig.environment=staging
 
 # Dry-run install (connects to cluster but does not install)
 helm install my-release mychart/ \
-  --namespace helm-lab \
+  --namespace helm-lab-$STUDENT_NAME \
   --dry-run --debug
                 </code></pre>
                 <aside class="notes">Expected Output: helm lint should show ==> Linting mychart/ followed by 1 chart(s) linted, 0 chart(s) failed. Template output shows rendered YAML.
@@ -894,12 +905,12 @@ helm package mychart/
 ls mychart-*.tgz
 
 helm install my-custom-app mychart-0.1.0.tgz \
-  --namespace helm-lab \
+  --namespace helm-lab-$STUDENT_NAME \
   --set appConfig.environment=development \
   --set appConfig.logLevel=debug
 
-helm list -n helm-lab
-kubectl get all -n helm-lab -l app.kubernetes.io/instance=my-custom-app
+helm list -n helm-lab-$STUDENT_NAME
+kubectl get all -n helm-lab-$STUDENT_NAME -l app.kubernetes.io/instance=my-custom-app
                 </code></pre>
                 <aside class="notes">Expected Output: The package command creates mychart-0.1.0.tgz. The install creates a new release my-custom-app with the custom values.
                     
@@ -912,12 +923,12 @@ kubectl get all -n helm-lab -l app.kubernetes.io/instance=my-custom-app
                 <p>Confirm the custom ConfigMap was created with correct values:</p>
                 <pre><code class="language-bash" data-trim>
 # Check the ConfigMap
-kubectl get configmap -n helm-lab -l app.kubernetes.io/instance=my-custom-app
-kubectl describe configmap my-custom-app-mychart-config -n helm-lab
+kubectl get configmap -n helm-lab-$STUDENT_NAME -l app.kubernetes.io/instance=my-custom-app
+kubectl describe configmap my-custom-app-mychart-config -n helm-lab-$STUDENT_NAME
 
 # Verify environment variables in the pod
-kubectl exec -n helm-lab \
-  $(kubectl get pod -n helm-lab -l \
+kubectl exec -n helm-lab-$STUDENT_NAME \
+  $(kubectl get pod -n helm-lab-$STUDENT_NAME -l \
     app.kubernetes.io/instance=my-custom-app \
     -o jsonpath='{.items[0].metadata.name}') \
   -- env | grep -E "APP_|CUSTOM"
@@ -957,19 +968,19 @@ kubectl exec -n helm-lab \
                 <p>Remove all Helm releases and lab resources:</p>
                 <pre><code class="language-bash" data-trim>
 # Uninstall all releases
-helm uninstall my-nginx -n helm-lab
-helm uninstall my-custom-app -n helm-lab
+helm uninstall my-nginx -n helm-lab-$STUDENT_NAME
+helm uninstall my-custom-app -n helm-lab-$STUDENT_NAME
 
 # Verify releases are removed
-helm list -n helm-lab
+helm list -n helm-lab-$STUDENT_NAME
 
 # Delete the namespace
-kubectl delete namespace helm-lab
+kubectl delete namespace helm-lab-$STUDENT_NAME
 
 # Clean up local files
 rm -rf mychart/ mychart-*.tgz
                 </code></pre>
-                <aside class="notes">Expected Output: release "my-nginx" uninstalled release "my-custom-app" uninstalled namespace "helm-lab" deleted
+                <aside class="notes">Expected Output: release "my-nginx" uninstalled release "my-custom-app" uninstalled namespace "helm-lab-$STUDENT_NAME" deleted
                     Note: helm uninstall removes all Kubernetes resources created by the release. Use --keep-history if you want to preserve release history for auditing.
                     
                     Helm uninstall by default purges the release history. The --keep-history flag preserves it, allowing future rollbacks or auditing. In production, consider keeping history for compliance.

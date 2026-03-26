@@ -43,3 +43,7 @@ output "storage_classes" {
     performance = "io2-encrypted (Retain, high IOPS)"
   }
 }
+
+output "student_role_arn" {
+  value = aws_iam_role.student.arn
+}

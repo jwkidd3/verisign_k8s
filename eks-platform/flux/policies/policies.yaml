@@ -101,3 +101,60 @@ spec:
           spec:
             securityContext:
               runAsNonRoot: true
+---
+# ─── Auto-generate ResourceQuota for Lab Namespaces ─────────────────────────
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: generate-resource-quota
+  annotations:
+    policies.kyverno.io/title: Auto-generate ResourceQuota for lab namespaces
+    policies.kyverno.io/description: Creates ResourceQuota and LimitRange when a lab namespace is created
+spec:
+  rules:
+    - name: generate-quota
+      match:
+        any:
+          - resources:
+              kinds: ["Namespace"]
+              names: ["lab*", "obs-*", "probes-*", "deploy-*", "helm-*", "cicd-*", "flux-*", "irsa-*", "monitoring-*"]
+      generate:
+        apiVersion: v1
+        kind: ResourceQuota
+        name: student-quota
+        namespace: "{{request.object.metadata.name}}"
+        data:
+          spec:
+            hard:
+              requests.cpu: "4"
+              requests.memory: 8Gi
+              limits.cpu: "8"
+              limits.memory: 16Gi
+              pods: "40"
+              services: "10"
+              persistentvolumeclaims: "10"
+    - name: generate-limitrange
+      match:
+        any:
+          - resources:
+              kinds: ["Namespace"]
+              names: ["lab*", "obs-*", "probes-*", "deploy-*", "helm-*", "cicd-*", "flux-*", "irsa-*", "monitoring-*"]
+      generate:
+        apiVersion: v1
+        kind: LimitRange
+        name: student-limits
+        namespace: "{{request.object.metadata.name}}"
+        data:
+          spec:
+            limits:
+              - type: Container
+                default:
+                  cpu: 500m
+                  memory: 512Mi
+                defaultRequest:
+                  cpu: 50m
+                  memory: 64Mi
+              - type: Pod
+                max:
+                  cpu: "4"
+                  memory: 4Gi

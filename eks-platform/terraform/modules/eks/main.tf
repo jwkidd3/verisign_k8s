@@ -2,6 +2,8 @@
 # EKS Module — VPC + EKS Cluster + Managed Node Group
 ###############################################################################
 
+data "aws_caller_identity" "current" {}
+
 data "aws_availability_zones" "available" {
   filter {
     name   = "opt-in-status"
@@ -72,6 +74,23 @@ module "eks" {
 
   # Allow Flux, Vault, and other controllers full access
   enable_cluster_creator_admin_permissions = true
+
+  access_entries = {
+    student = {
+      principal_arn     = aws_iam_role.student.arn
+      kubernetes_groups = ["students"]
+      type              = "STANDARD"
+
+      policy_associations = {
+        student = {
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+          access_scope = {
+            type = "cluster"
+          }
+        }
+      }
+    }
+  }
 
   cluster_addons = {
     coredns                = { most_recent = true }
@@ -260,4 +279,56 @@ resource "kubernetes_annotations" "remove_gp2_default" {
   }
 
   force = true
+}
+
+# ============================================================
+# Student Access Configuration
+# ============================================================
+
+resource "aws_iam_role" "student" {
+  name = "${var.cluster_name}-student-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root" }
+      Action    = "sts:AssumeRole"
+    }]
+  })
+
+  tags = {
+    Purpose = "EKS student access for training"
+  }
+}
+
+resource "aws_iam_role_policy" "student_eks" {
+  name = "${var.cluster_name}-student-eks-policy"
+  role = aws_iam_role.student.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["eks:DescribeCluster", "eks:ListClusters"]
+        Resource = "*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["iam:*"]
+        Resource = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/irsa-*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["iam:*"]
+        Resource = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/irsa-*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["s3:GetObject", "s3:ListBucket"]
+        Resource = ["arn:aws:s3:::${var.cluster_name}-irsa-demo", "arn:aws:s3:::${var.cluster_name}-irsa-demo/*"]
+      }
+    ]
+  })
 }
