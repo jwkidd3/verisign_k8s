@@ -72,7 +72,7 @@ rules:
 Create a ServiceAccount and bind the Role to it:
 
 ```bash
-kubectl apply -f pod-reader-role.yaml
+envsubst < pod-reader-role.yaml | kubectl apply -f -
 kubectl create serviceaccount pod-viewer -n lab07-$STUDENT_NAME
 ```
 
@@ -94,7 +94,7 @@ roleRef:
 ```
 
 ```bash
-kubectl apply -f pod-reader-binding.yaml
+envsubst < pod-reader-binding.yaml | kubectl apply -f -
 ```
 
 ---
@@ -129,7 +129,7 @@ spec:
 ```
 
 ```bash
-kubectl apply -f rbac-test-pod.yaml
+envsubst < rbac-test-pod.yaml | kubectl apply -f -
 kubectl wait --for=condition=Ready pod/rbac-test -n lab07-$STUDENT_NAME --timeout=60s
 
 # This should SUCCEED
@@ -162,7 +162,7 @@ rules:
 ```
 
 ```bash
-kubectl apply -f cluster-reader-role.yaml
+envsubst < cluster-reader-role.yaml | kubectl apply -f -
 kubectl create serviceaccount cluster-viewer -n lab07-$STUDENT_NAME
 ```
 
@@ -185,7 +185,7 @@ roleRef:
 ```
 
 ```bash
-kubectl apply -f cluster-reader-binding.yaml
+envsubst < cluster-reader-binding.yaml | kubectl apply -f -
 
 # Test cross-namespace read (should be YES)
 kubectl auth can-i list pods -n kube-system \
@@ -254,8 +254,8 @@ spec:
 
 ```bash
 # Both should FAIL under the restricted profile
-kubectl apply -f privileged-pod.yaml
-kubectl apply -f root-pod.yaml
+envsubst < privileged-pod.yaml | kubectl apply -f -
+envsubst < root-pod.yaml | kubectl apply -f -
 ```
 
 > ✅ **Checkpoint:** Both pods are blocked. Read the error messages to see which checks failed.
@@ -298,7 +298,7 @@ spec:
 ```
 
 ```bash
-kubectl apply -f secure-pod.yaml
+envsubst < secure-pod.yaml | kubectl apply -f -
 kubectl wait --for=condition=Ready pod/secure-app \
   -n lab07-restricted-$STUDENT_NAME --timeout=60s
 
@@ -325,7 +325,7 @@ kubectl exec secure-app -n lab07-restricted-$STUDENT_NAME -- \
 ## Step 9: Create an IRSA-Annotated ServiceAccount
 
 ```bash
-OIDC_ISSUER=$(aws eks describe-cluster --name platform-lab \
+OIDC_ISSUER=$(aws eks describe-cluster --name verisign-k8s-lab \
   --query "cluster.identity.oidc.issuer" --output text | sed 's|https://||')
 ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
 ROLE_ARN="arn:aws:iam::${ACCOUNT_ID}:role/irsa-s3-reader-$STUDENT_NAME"
@@ -367,7 +367,7 @@ spec:
 ```
 
 ```bash
-kubectl apply -f irsa-test-pod.yaml
+envsubst < irsa-test-pod.yaml | kubectl apply -f -
 kubectl wait --for=condition=Ready \
   pod/irsa-test-$STUDENT_NAME -n lab07-irsa-$STUDENT_NAME --timeout=60s
 

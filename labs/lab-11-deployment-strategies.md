@@ -67,7 +67,7 @@ spec:
 Apply and expose:
 
 ```bash
-kubectl apply -f app-deploy-v1.yaml
+envsubst < app-deploy-v1.yaml | kubectl apply -f -
 
 kubectl expose deployment webapp \
   --port=80 --target-port=80 \
@@ -211,9 +211,9 @@ spec:
 Apply and switch traffic:
 
 ```bash
-kubectl apply -f blue-deploy.yaml
-kubectl apply -f green-deploy.yaml
-kubectl apply -f bg-service.yaml
+envsubst < blue-deploy.yaml | kubectl apply -f -
+envsubst < green-deploy.yaml | kubectl apply -f -
+envsubst < bg-service.yaml | kubectl apply -f -
 
 kubectl run bg-test1 --image=curlimages/curl --rm -it --restart=Never \
   -n deploy-lab-$STUDENT_NAME -- curl -s webapp-bg-svc
@@ -293,9 +293,9 @@ spec:
 ```
 
 ```bash
-kubectl apply -f canary-stable.yaml
-kubectl apply -f canary-new.yaml
-kubectl apply -f canary-service.yaml
+envsubst < canary-stable.yaml | kubectl apply -f -
+envsubst < canary-new.yaml | kubectl apply -f -
+envsubst < canary-service.yaml | kubectl apply -f -
 kubectl get pods -n deploy-lab-$STUDENT_NAME -l app=webapp-canary --show-labels
 ```
 
@@ -340,7 +340,7 @@ spec:
 ```
 
 ```bash
-kubectl apply -f pdb.yaml
+envsubst < pdb.yaml | kubectl apply -f -
 kubectl get pdb -n deploy-lab-$STUDENT_NAME
 ```
 

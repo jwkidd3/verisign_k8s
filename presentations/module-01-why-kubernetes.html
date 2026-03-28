@@ -891,24 +891,6 @@ kubectl describe pod myapp-abc123</code></pre>
                 <aside class="notes">This slide is the architecture roadmap for the course. Verisign runs DNS-critical infrastructure, so availability is non-negotiable — that drives patterns like PodDisruptionBudgets and multi-AZ topology constraints. The dual ingress pattern separates internal service-to-service traffic from external-facing endpoints, reducing attack surface. FluxCD watches Git repositories and automatically applies changes to the cluster, eliminating manual kubectl apply in production. Vault replaces Kubernetes-native Secrets for sensitive credentials, integrating with IAM and Kubernetes service accounts. All container images flow through ECR with vulnerability scanning. And the observability stack — Prometheus, Grafana, and Splunk — ensures teams can monitor, alert, and debug effectively. Emphasize that students will get hands-on with each of these systems throughout the course.</aside>
             </section>
 
-            <!-- Lab Callout -->
-            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" class="lab-callout">
-                <h2>&#128295; Lab 1: Exploring Your Kubernetes Cluster</h2>
-                <h3>Hands-on: Connect, explore, deploy</h3>
-                <ul>
-                    <li>Connect to the EKS cluster using <code>aws eks update-kubeconfig</code></li>
-                    <li>Explore cluster resources with <code>kubectl get</code> and <code>kubectl describe</code></li>
-                    <li>Deploy a sample application using a Deployment manifest</li>
-                    <li>Expose it with a Service and verify connectivity</li>
-                    <li>Practice imperative vs. declarative approaches</li>
-                    <li>Examine pod lifecycle events and logs</li>
-                </ul>
-                <div class="highlight-box">
-                    <strong>Duration:</strong> ~30 minutes
-                </div>
-                <aside class="notes">This lab establishes the baseline workflow. Everyone should be comfortable with kubectl, cluster connectivity, and basic resource creation before we proceed. Circulate and help anyone with authentication issues — those are the most common blockers.</aside>
-            </section>
-
             <!-- Section Divider: Course Roadmap -->
             <section data-background="linear-gradient(135deg, #2b6cb0 0%, #2c5282 100%)" class="section-divider">
                 <h2>&#128506;&#65039; Course Roadmap</h2>
@@ -1013,6 +995,24 @@ kubectl describe pod myapp-abc123</code></pre>
                     </tbody>
                 </table>
                 <aside class="notes">Modules 9-13 focus on production readiness and operational excellence. These are the skills that separate someone who can deploy to Kubernetes from someone who can run production workloads reliably. Module 13 ties everything together with end-to-end CI/CD and GitOps pipelines.</aside>
+            </section>
+
+            <!-- Lab Callout -->
+            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" class="lab-callout">
+                <h2>&#128295; Lab 1: Exploring Your Kubernetes Cluster</h2>
+                <h3>Hands-on: Connect, explore, deploy</h3>
+                <ul>
+                    <li>Connect to the EKS cluster using <code>aws eks update-kubeconfig</code></li>
+                    <li>Explore cluster resources with <code>kubectl get</code> and <code>kubectl describe</code></li>
+                    <li>Deploy a sample application using a Deployment manifest</li>
+                    <li>Expose it with a Service and verify connectivity</li>
+                    <li>Explore cluster resources with kubectl describe and logs</li>
+                    <li>Examine pod lifecycle events and logs</li>
+                </ul>
+                <div class="highlight-box">
+                    <strong>Duration:</strong> ~30 minutes
+                </div>
+                <aside class="notes">This lab establishes the baseline workflow. Everyone should be comfortable with kubectl, cluster connectivity, and basic resource creation before we proceed. Circulate and help anyone with authentication issues — those are the most common blockers.</aside>
             </section>
 
             <!-- Summary -->

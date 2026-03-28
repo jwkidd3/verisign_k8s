@@ -48,7 +48,7 @@ kubectl get configmap app-config -n lab05-$STUDENT_NAME -o yaml
 Now create configuration files and load them into a ConfigMap:
 
 ```bash
-cat <<EOF > nginx.conf
+cat <<'EOF' > nginx.conf
 server {
     listen 80;
     server_name localhost;
@@ -99,7 +99,7 @@ spec:
 ```
 
 ```bash
-kubectl apply -f pod-envfrom.yaml
+envsubst < pod-envfrom.yaml | kubectl apply -f -
 kubectl logs env-from-demo -n lab05-$STUDENT_NAME | grep APP_
 ```
 
@@ -124,7 +124,7 @@ spec:
 ```
 
 ```bash
-kubectl apply -f pod-valuefrom.yaml
+envsubst < pod-valuefrom.yaml | kubectl apply -f -
 kubectl logs value-from-demo -n lab05-$STUDENT_NAME
 ```
 
@@ -170,7 +170,7 @@ spec:
 ```
 
 ```bash
-kubectl apply -f pod-volume-mount.yaml
+envsubst < pod-volume-mount.yaml | kubectl apply -f -
 kubectl wait --for=condition=Ready pod/volume-mount-demo \
     -n lab05-$STUDENT_NAME --timeout=60s
 
@@ -239,7 +239,7 @@ spec:
 ```
 
 ```bash
-kubectl apply -f pod-secret-env.yaml
+envsubst < pod-secret-env.yaml | kubectl apply -f -
 kubectl logs secret-env-demo -n lab05-$STUDENT_NAME
 ```
 
@@ -264,7 +264,7 @@ spec:
 ```
 
 ```bash
-kubectl apply -f pod-secret-volume.yaml
+envsubst < pod-secret-volume.yaml | kubectl apply -f -
 kubectl logs secret-vol-demo -n lab05-$STUDENT_NAME
 kubectl exec secret-vol-demo -n lab05-$STUDENT_NAME -- cat /etc/db-creds/DB_USERNAME
 ```
@@ -289,7 +289,7 @@ immutable: true
 ```
 
 ```bash
-kubectl apply -f immutable-config.yaml
+envsubst < immutable-config.yaml | kubectl apply -f -
 
 # Try to update it (this will fail)
 kubectl patch configmap immutable-app-config \
@@ -339,7 +339,7 @@ spec:
 ```
 
 ```bash
-kubectl apply -f pod-projected.yaml
+envsubst < pod-projected.yaml | kubectl apply -f -
 kubectl wait --for=condition=Ready pod/projected-demo \
     -n lab05-$STUDENT_NAME --timeout=60s
 kubectl exec projected-demo -n lab05-$STUDENT_NAME -- ls -la /etc/projected
@@ -378,7 +378,7 @@ spec:
 ```
 
 ```bash
-kubectl apply -f pod-update-test.yaml
+envsubst < pod-update-test.yaml | kubectl apply -f -
 kubectl wait --for=condition=Ready pod/update-test \
     -n lab05-$STUDENT_NAME --timeout=60s
 kubectl logs update-test -n lab05-$STUDENT_NAME --tail=1
@@ -500,11 +500,11 @@ kubectl get secret vault-db-credentials -n lab05-$STUDENT_NAME \
 ```bash
 kubectl delete namespace lab05-$STUDENT_NAME
 
-kubectl exec -it vault-0 -n vault -- /bin/sh -c '
+kubectl exec -it vault-0 -n vault -- /bin/sh -c "
   vault kv metadata delete secret/lab05-$STUDENT_NAME/database
   vault delete auth/kubernetes/role/lab05-role-$STUDENT_NAME
   vault policy delete lab05-readonly-$STUDENT_NAME
-'
+"
 ```
 
 ---

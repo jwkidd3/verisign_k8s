@@ -64,7 +64,7 @@ spec:
 ```
 
 ```bash
-kubectl apply -f lab-pvc.yaml
+envsubst < lab-pvc.yaml | kubectl apply -f -
 kubectl get pvc -n lab03-$STUDENT_NAME
 ```
 
@@ -101,7 +101,7 @@ spec:
 ```
 
 ```bash
-kubectl apply -f lab-writer-pod.yaml
+envsubst < lab-writer-pod.yaml | kubectl apply -f -
 kubectl get pod data-writer -n lab03-$STUDENT_NAME -w
 ```
 
@@ -159,7 +159,7 @@ spec:
 ```
 
 ```bash
-kubectl apply -f lab-reader-pod.yaml
+envsubst < lab-reader-pod.yaml | kubectl apply -f -
 kubectl logs data-reader -n lab03-$STUDENT_NAME
 ```
 
@@ -225,8 +225,8 @@ spec:
 ```
 
 ```bash
-kubectl apply -f lab-headless-svc.yaml
-kubectl apply -f lab-statefulset.yaml
+envsubst < lab-headless-svc.yaml | kubectl apply -f -
+envsubst < lab-statefulset.yaml | kubectl apply -f -
 kubectl get pods -n lab03-$STUDENT_NAME -l app=web -w
 ```
 

@@ -925,30 +925,18 @@ kubectl get events --sort-by=.lastTimestamp -n &lt;namespace&gt;</code></pre>
                 <aside class="notes">Time for hands-on practice. In this lab you'll configure all three probe types on a web application, deliberately break the application to watch Kubernetes self-heal, debug probe failures using the techniques we covered, and set up PDBs. Take your time with the debugging section — understanding probe events is a critical operational skill.</aside>
             </section>
 
-            <!-- Slide 29: Module Summary -->
-            <section>
-                <h2>&#128203; Module Summary</h2>
-                <ul>
-                    <li>Liveness probes detect stuck containers and trigger automatic restarts</li>
-                    <li>Readiness probes control Service traffic routing to healthy pods only</li>
-                    <li>Startup probes protect slow-starting applications from premature kills</li>
-                    <li>Probe protocols include HTTP, TCP, gRPC, and exec for different workload types</li>
-                    <li>Graceful shutdown requires coordinating preStop hooks, SIGTERM handling, and PDBs</li>
-                    <li>Recognize common failure states: CrashLoopBackOff, ImagePullBackOff, Pending, OOMKilled</li>
-                    <li>Use <code>describe</code>, <code>logs</code>, <code>exec</code>, <code>debug</code>, and <code>top</code> for systematic troubleshooting</li>
-                </ul>
-            </section>
-
-            <!-- Slide 30: Key Takeaways -->
+            <!-- Slide 29: Key Takeaways -->
             <section>
                 <h2>&#127919; Key Takeaways</h2>
                 <ul>
                     <li class="fragment fade-up"><strong>Liveness probes</strong> detect stuck containers and trigger restarts &mdash; never check external dependencies</li>
                     <li class="fragment fade-up"><strong>Readiness probes</strong> control traffic routing &mdash; can and should check if the app can serve good responses</li>
                     <li class="fragment fade-up"><strong>Startup probes</strong> protect slow-starting apps from premature liveness kills</li>
+                    <li class="fragment fade-up"><strong>Probe protocols</strong> include HTTP, TCP, gRPC, and exec for different workload types</li>
                     <li class="fragment fade-up"><strong>Use all three together</strong> for comprehensive health management</li>
                     <li class="fragment fade-up"><strong>Tune parameters carefully</strong> &mdash; too aggressive causes flapping, too relaxed delays recovery</li>
                     <li class="fragment fade-up"><strong>Graceful shutdown</strong> requires coordination between preStop hooks, SIGTERM handling, and PDBs</li>
+                    <li class="fragment fade-up"><strong>Recognize failure states:</strong> CrashLoopBackOff, ImagePullBackOff, Pending, OOMKilled</li>
                     <li class="fragment fade-up"><strong>Systematic debugging:</strong> Events &rarr; Describe &rarr; Logs &rarr; Exec/Debug &rarr; Top</li>
                 </ul>
                 <aside class="notes">Let's recap the core lessons. The three probe types serve distinct purposes and work best together. The most common mistake is checking dependencies in liveness probes. Tune your parameters based on your application's actual behavior, and always implement graceful shutdown to prevent dropped connections during termination. When things go wrong, follow the debugging workflow: check events first, then describe, then logs, then exec or debug into the container, and use top for resource issues.</aside>

@@ -100,8 +100,8 @@ spec:
 ```
 
 ```bash
-kubectl apply -f backend-deployment.yaml
-kubectl apply -f frontend-deployment.yaml
+envsubst < backend-deployment.yaml | kubectl apply -f -
+envsubst < frontend-deployment.yaml | kubectl apply -f -
 kubectl get pods -n lab04-$STUDENT_NAME -o wide
 ```
 
@@ -131,7 +131,7 @@ spec:
 ```
 
 ```bash
-kubectl apply -f backend-svc.yaml
+envsubst < backend-svc.yaml | kubectl apply -f -
 kubectl get svc backend-svc -n lab04-$STUDENT_NAME
 kubectl describe svc backend-svc -n lab04-$STUDENT_NAME
 ```
@@ -205,7 +205,7 @@ spec:
 ```
 
 ```bash
-kubectl apply -f frontend-nodeport.yaml
+envsubst < frontend-nodeport.yaml | kubectl apply -f -
 kubectl get svc frontend-nodeport -n lab04-$STUDENT_NAME
 NODE_PORT=$(kubectl get svc frontend-nodeport -n lab04-$STUDENT_NAME -o jsonpath='{.spec.ports[0].nodePort}')
 echo "NodePort assigned: $NODE_PORT"
@@ -243,7 +243,7 @@ spec:
 ```
 
 ```bash
-kubectl apply -f frontend-lb.yaml
+envsubst < frontend-lb.yaml | kubectl apply -f -
 kubectl get svc frontend-lb -n lab04-$STUDENT_NAME -w
 ```
 
@@ -306,7 +306,7 @@ spec:
 ```
 
 ```bash
-kubectl apply -f backend-headless.yaml
+envsubst < backend-headless.yaml | kubectl apply -f -
 ```
 
 Compare DNS responses between normal and headless Services:
@@ -350,7 +350,7 @@ spec:
 ```
 
 ```bash
-kubectl apply -f frontend-multiport.yaml
+envsubst < frontend-multiport.yaml | kubectl apply -f -
 kubectl get svc frontend-multiport -n lab04-$STUDENT_NAME
 ```
 

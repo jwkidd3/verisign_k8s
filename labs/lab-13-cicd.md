@@ -207,7 +207,7 @@ spec:
 ## Step 6: Observe ArgoCD Sync
 
 ```bash
-kubectl apply -f argocd-app.yaml
+envsubst < argocd-app.yaml | kubectl apply -f -
 
 argocd app get cicd-demo-$STUDENT_NAME
 argocd app sync cicd-demo-$STUDENT_NAME
@@ -338,8 +338,8 @@ spec:
 Apply and verify:
 
 ```bash
-kubectl apply -f helm-source.yaml
-kubectl apply -f helm-release.yaml
+envsubst < helm-source.yaml | kubectl apply -f -
+envsubst < helm-release.yaml | kubectl apply -f -
 
 flux get helmreleases -n flux-lab-$STUDENT_NAME lab-nginx-$STUDENT_NAME --watch
 

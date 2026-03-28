@@ -718,8 +718,8 @@ kubectl apply --dry-run=server \
                     <li class="fragment fade-up">Verify default allow &mdash; all pods can reach all pods</li>
                     <li class="fragment fade-up">Apply default-deny ingress and egress policies</li>
                     <li class="fragment fade-up">Create targeted allow rules for the three-tier communication path</li>
-                    <li class="fragment fade-up">Implement database isolation with egress restrictions</li>
-                    <li class="fragment fade-up">Debug a broken policy (missing DNS rule)</li>
+                    <li class="fragment fade-up">Apply default-deny egress and allow DNS egress policies</li>
+                    <li class="fragment fade-up">Debug a broken policy (wrong selector and port)</li>
                     <li class="fragment fade-up">Test cross-namespace isolation</li>
                 </ul>
                 <div class="highlight-box" style="margin-top: 20px;">

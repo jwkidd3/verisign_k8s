@@ -957,49 +957,17 @@ metadata:
                 <aside class="notes">This lab covers the full RBAC workflow: creating roles, binding them, and testing with impersonation. Students will also apply security contexts and see Pod Security Admission in action, plus configure IRSA for AWS access. Common issues: forgetting to specify the namespace in RoleBindings, and using the wrong apiGroup in subjects. Circulate and help with RBAC debugging — kubectl auth can-i is the key diagnostic tool.</aside>
             </section>
 
-            <!-- Module Summary -->
-            <section>
-                <h2>&#128218; Module 7 Summary</h2>
-                <div class="three-columns">
-                    <div class="card">
-                        <h4>RBAC Essentials</h4>
-                        <ul>
-                            <li>Roles/ClusterRoles define permissions; Bindings grant them</li>
-                            <li>ServiceAccounts provide pod identity</li>
-                            <li>Verbs control allowed actions</li>
-                        </ul>
-                    </div>
-                    <div class="card">
-                        <h4>Security Hardening</h4>
-                        <ul>
-                            <li>securityContext: non-root, read-only FS, drop capabilities</li>
-                            <li>Pod Security Standards replace PSPs</li>
-                            <li>Audit logging for defense in depth</li>
-                        </ul>
-                    </div>
-                    <div class="card">
-                        <h4>IRSA</h4>
-                        <ul>
-                            <li>Per-pod AWS credentials via OIDC federation</li>
-                            <li>Annotate SA &rarr; trust policy &rarr; scoped IAM role</li>
-                            <li>Eliminates shared node IAM roles</li>
-                        </ul>
-                    </div>
-                </div>
-                <aside class="notes">This summary ties together the three themes of this module: RBAC for Kubernetes API authorization, security hardening for defense in depth, and IRSA for least-privilege AWS access. Together they form a complete access control story for EKS workloads.</aside>
-            </section>
-
             <!-- Key Takeaways -->
             <section>
                 <h2>&#127919; Key Takeaways</h2>
                 <div class="key-point fragment fade-up">
-                    <strong>Least Privilege:</strong> Grant only the minimum permissions needed. Start with no access and add permissions as required.
+                    <strong>Least Privilege:</strong> Grant only the minimum permissions needed. Roles/ClusterRoles define permissions; Bindings grant them. ServiceAccounts provide pod identity. Start with no access and add permissions as required.
                 </div>
                 <div class="key-point fragment fade-up">
-                    <strong>PSS Restricted Profile:</strong> Use the restricted Pod Security Standard for all production namespaces to enforce non-root, read-only FS, and no privilege escalation.
+                    <strong>PSS Restricted Profile:</strong> Use the restricted Pod Security Standard for all production namespaces to enforce non-root, read-only FS, and no privilege escalation. securityContext and audit logging provide defense in depth.
                 </div>
                 <div class="key-point fragment fade-up">
-                    <strong>IRSA for Pod Identity:</strong> Use IAM Roles for Service Accounts to give pods scoped AWS access without sharing static credentials.
+                    <strong>IRSA for Pod Identity:</strong> Use IAM Roles for Service Accounts to give pods scoped AWS access without sharing static credentials. Per-pod AWS credentials via OIDC federation eliminate shared node IAM roles.
                 </div>
                 <div class="key-point fragment fade-up">
                     <strong>Audit Logging:</strong> Enable Kubernetes audit logging and forward to your SIEM to detect unauthorized access and policy violations.

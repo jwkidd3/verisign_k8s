@@ -928,45 +928,20 @@ kubectl logs -n kube-system -l k8s-app=kube-proxy --tail=50</code></pre>
                 <aside class="notes">This lab covers all the Service types and discovery mechanisms we discussed. Participants will create different Service types, verify endpoint resolution, test DNS discovery, work with headless Services, configure traffic policies, and practice debugging common issues. The AWS NLB exercise requires the AWS Load Balancer Controller to be installed in the cluster.</aside>
             </section>
 
-            <!-- Summary -->
-            <section>
-                <h2>&#128218; Module 4 Summary</h2>
-                <div class="two-columns">
-                    <div class="card">
-                        <h4>&#127760; Service Fundamentals</h4>
-                        <ul>
-                            <li>Services provide stable IPs and DNS over ephemeral Pods</li>
-                            <li>Four types: ClusterIP, NodePort, LoadBalancer, ExternalName</li>
-                            <li>Selectors match Pod labels; EndpointSlices track backends</li>
-                            <li>Headless Services return Pod IPs directly</li>
-                        </ul>
-                    </div>
-                    <div class="card">
-                        <h4>&#128230; Traffic &amp; Discovery</h4>
-                        <ul>
-                            <li>CoreDNS provides automatic DNS-based discovery</li>
-                            <li>kube-proxy implements routing via iptables or IPVS</li>
-                            <li>Traffic policies control source IP; topology-aware routing reduces AZ costs</li>
-                        </ul>
-                    </div>
-                </div>
-                <aside class="notes">Let's recap Module 4. Services solve the ephemeral Pod IP problem by providing stable virtual IPs and DNS names. We covered four Service types, with ClusterIP being the most common. DNS-based discovery via CoreDNS is the recommended approach. kube-proxy handles the actual traffic routing, and traffic policies let you control source IP preservation and routing behavior. For AWS EKS, use the Load Balancer Controller with IP-mode targets.</aside>
-            </section>
-
             <!-- Key Takeaways -->
             <section>
                 <h2>&#127919; Key Takeaways</h2>
                 <div class="key-point fragment fade-up">
-                    <strong>1. Services are the networking primitive</strong> &mdash; They provide stable endpoints over dynamic Pod infrastructure. Never hard-code Pod IPs.
+                    <strong>1. Services are the networking primitive</strong> &mdash; They provide stable endpoints over dynamic Pod infrastructure. Never hard-code Pod IPs. Four types: ClusterIP, NodePort, LoadBalancer, ExternalName.
                 </div>
                 <div class="key-point fragment fade-up">
-                    <strong>2. DNS is the standard discovery mechanism</strong> &mdash; Use <code>service.namespace.svc.cluster.local</code> or short names within the same namespace.
+                    <strong>2. DNS is the standard discovery mechanism</strong> &mdash; Use <code>service.namespace.svc.cluster.local</code> or short names within the same namespace. Headless Services return Pod IPs directly.
                 </div>
                 <div class="key-point fragment fade-up">
-                    <strong>3. Choose the right traffic policy</strong> &mdash; Use <code>Local</code> for source IP preservation; use <code>Cluster</code> for even distribution.
+                    <strong>3. Choose the right traffic policy</strong> &mdash; Use <code>Local</code> for source IP preservation; use <code>Cluster</code> for even distribution. kube-proxy implements routing via iptables or IPVS.
                 </div>
                 <div class="key-point fragment fade-up">
-                    <strong>4. Use AWS Load Balancer Controller in production</strong> &mdash; IP-mode NLB targets give you direct Pod routing with lower latency.
+                    <strong>4. Use AWS Load Balancer Controller in production</strong> &mdash; IP-mode NLB targets give you direct Pod routing with lower latency. Topology-aware routing reduces cross-AZ costs.
                 </div>
                 <aside class="notes">Four key takeaways. Services are the fundamental networking abstraction — always use them instead of direct Pod IPs. DNS via CoreDNS is the standard discovery mechanism. Choose your traffic policy based on whether you need source IP preservation or even distribution. And on EKS, always use the AWS Load Balancer Controller with IP-mode targets for the best performance.</aside>
             </section>

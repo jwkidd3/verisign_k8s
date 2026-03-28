@@ -90,7 +90,7 @@ spec:
 ```
 
 ```bash
-kubectl apply -f php-apache-deployment.yaml
+envsubst < php-apache-deployment.yaml | kubectl apply -f -
 kubectl expose deployment php-apache --port=80 --target-port=80
 kubectl get all -n lab02-$STUDENT_NAME
 ```
@@ -210,7 +210,7 @@ spec:
 ```
 
 ```bash
-kubectl apply -f hpa-v2.yaml
+envsubst < hpa-v2.yaml | kubectl apply -f -
 kubectl describe hpa php-apache-v2 -n lab02-$STUDENT_NAME
 ```
 
@@ -246,7 +246,7 @@ spec:
 ```
 
 ```bash
-kubectl apply -f vpa.yaml
+envsubst < vpa.yaml | kubectl apply -f -
 kubectl describe vpa php-apache-vpa -n lab02-$STUDENT_NAME
 ```
 
@@ -287,7 +287,7 @@ spec:
 ```
 
 ```bash
-kubectl apply -f inflate-deployment.yaml
+envsubst < inflate-deployment.yaml | kubectl apply -f -
 
 # Watch pods - some should be Pending if cluster is at capacity
 kubectl get pods -n lab02-$STUDENT_NAME -l app=inflate --watch

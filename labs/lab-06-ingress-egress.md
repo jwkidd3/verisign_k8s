@@ -125,8 +125,8 @@ spec:
 ```
 
 ```bash
-kubectl apply -f app-v1.yaml
-kubectl apply -f app-v2.yaml
+envsubst < app-v1.yaml | kubectl apply -f -
+envsubst < app-v2.yaml | kubectl apply -f -
 kubectl get pods -n lab06-$STUDENT_NAME -l app=web
 kubectl get svc -n lab06-$STUDENT_NAME
 ```
@@ -172,7 +172,7 @@ spec:
 ```
 
 ```bash
-kubectl apply -f ingress-host.yaml
+envsubst < ingress-host.yaml | kubectl apply -f -
 ```
 
 ---
@@ -236,7 +236,7 @@ spec:
 ```
 
 ```bash
-kubectl apply -f ingress-path.yaml
+envsubst < ingress-path.yaml | kubectl apply -f -
 
 curl -s -H "Host: app-$STUDENT_NAME.lab.local" http://$INGRESS_IP/v1
 curl -s -H "Host: app-$STUDENT_NAME.lab.local" http://$INGRESS_IP/v2
@@ -271,10 +271,10 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - secure.lab.local
+        - secure-$STUDENT_NAME.lab.local
       secretName: lab-tls-secret
   rules:
-    - host: secure.lab.local
+    - host: secure-$STUDENT_NAME.lab.local
       http:
         paths:
           - path: /
@@ -287,10 +287,10 @@ spec:
 ```
 
 ```bash
-kubectl apply -f ingress-tls.yaml
+envsubst < ingress-tls.yaml | kubectl apply -f -
 
-curl -sk -H "Host: secure.lab.local" https://$INGRESS_IP
-curl -sI -H "Host: secure.lab.local" http://$INGRESS_IP
+curl -sk -H "Host: secure-$STUDENT_NAME.lab.local" https://$INGRESS_IP
+curl -sI -H "Host: secure-$STUDENT_NAME.lab.local" http://$INGRESS_IP
 ```
 
 > ✅ **Checkpoint:** HTTPS returns `Hello from App V1`. HTTP returns a `308 Permanent Redirect` to HTTPS.
@@ -318,7 +318,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: api.lab.local
+    - host: api-$STUDENT_NAME.lab.local
       http:
         paths:
           - path: /api(/|$)(.*)
@@ -331,19 +331,19 @@ spec:
 ```
 
 ```bash
-kubectl apply -f ingress-annotations.yaml
+envsubst < ingress-annotations.yaml | kubectl apply -f -
 
-curl -s -H "Host: api.lab.local" http://$INGRESS_IP/api/
+curl -s -H "Host: api-$STUDENT_NAME.lab.local" http://$INGRESS_IP/api/
 
 # Check CORS and custom headers
-curl -sI -H "Host: api.lab.local" \
+curl -sI -H "Host: api-$STUDENT_NAME.lab.local" \
     -H "Origin: https://app.verisign.com" \
     http://$INGRESS_IP/api/ 2>&1 | grep -E "cors|X-Served"
 
 # Test rate limiting
 for i in $(seq 1 15); do
     curl -s -o /dev/null -w "%{http_code} " \
-        -H "Host: api.lab.local" http://$INGRESS_IP/api/
+        -H "Host: api-$STUDENT_NAME.lab.local" http://$INGRESS_IP/api/
 done
 echo ""
 ```
@@ -399,7 +399,7 @@ spec:
 ```
 
 ```bash
-kubectl apply -f gateway.yaml
+envsubst < gateway.yaml | kubectl apply -f -
 kubectl get gateway -n lab06-$STUDENT_NAME
 ```
 
@@ -435,7 +435,7 @@ spec:
 ```
 
 ```bash
-kubectl apply -f httproute.yaml
+envsubst < httproute.yaml | kubectl apply -f -
 
 GATEWAY_IP=$(kubectl get gateway lab-gateway -n lab06-$STUDENT_NAME \
     -o jsonpath='{.status.addresses[0].value}')
@@ -501,7 +501,7 @@ spec:
 ```
 
 ```bash
-kubectl apply -f egress-policy.yaml
+envsubst < egress-policy.yaml | kubectl apply -f -
 
 # Internal service access should work
 kubectl exec egress-test -n lab06-$STUDENT_NAME -- \

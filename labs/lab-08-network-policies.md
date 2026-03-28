@@ -114,9 +114,9 @@ spec:
 ```
 
 ```bash
-kubectl apply -f database.yaml
-kubectl apply -f backend.yaml
-kubectl apply -f frontend.yaml
+envsubst < database.yaml | kubectl apply -f -
+envsubst < backend.yaml | kubectl apply -f -
+envsubst < frontend.yaml | kubectl apply -f -
 
 kubectl wait --for=condition=Ready pod --all -n lab08-$STUDENT_NAME --timeout=60s
 kubectl get pods -n lab08-$STUDENT_NAME -o wide --show-labels
@@ -157,7 +157,7 @@ spec:
 ```
 
 ```bash
-kubectl apply -f deny-all-ingress.yaml
+envsubst < deny-all-ingress.yaml | kubectl apply -f -
 ```
 
 ---
@@ -209,7 +209,7 @@ spec:
 ```
 
 ```bash
-kubectl apply -f allow-frontend-to-backend.yaml
+envsubst < allow-frontend-to-backend.yaml | kubectl apply -f -
 
 # Frontend -> Backend (should now SUCCEED)
 kubectl exec frontend -n lab08-$STUDENT_NAME -- \
@@ -250,7 +250,7 @@ spec:
 ```
 
 ```bash
-kubectl apply -f allow-backend-to-database.yaml
+envsubst < allow-backend-to-database.yaml | kubectl apply -f -
 
 # Backend -> Database (should now SUCCEED)
 kubectl exec backend -n lab08-$STUDENT_NAME -- \
@@ -317,7 +317,7 @@ spec:
 ```
 
 ```bash
-kubectl apply -f deny-all-egress.yaml
+envsubst < deny-all-egress.yaml | kubectl apply -f -
 
 # DNS is now broken
 kubectl exec frontend -n lab08-$STUDENT_NAME -- \
@@ -348,7 +348,7 @@ spec:
 ```
 
 ```bash
-kubectl apply -f allow-dns-egress.yaml
+envsubst < allow-dns-egress.yaml | kubectl apply -f -
 
 # Verify DNS and traffic flow restored
 kubectl exec frontend -n lab08-$STUDENT_NAME -- \
@@ -394,10 +394,14 @@ spec:
     ports:
     - protocol: TCP
       port: 80
+    - protocol: TCP
+      port: 8080
+    - protocol: TCP
+      port: 3306
 ```
 
 ```bash
-kubectl apply -f allow-monitoring-ingress.yaml
+envsubst < allow-monitoring-ingress.yaml | kubectl apply -f -
 
 kubectl exec monitor -n monitoring-$STUDENT_NAME -- \
   curl -s --max-time 3 http://backend.lab08-$STUDENT_NAME.svc.cluster.local:8080
@@ -435,7 +439,7 @@ spec:
 ```
 
 ```bash
-kubectl apply -f broken-policy.yaml
+envsubst < broken-policy.yaml | kubectl apply -f -
 kubectl run test-client --image=nginx:1.25 -n lab08-$STUDENT_NAME --rm -it \
   --restart=Never -- curl -s --max-time 3 \
   http://frontend.lab08-$STUDENT_NAME.svc.cluster.local:80
@@ -466,7 +470,7 @@ spec:
 ```
 
 ```bash
-kubectl apply -f fixed-policy.yaml
+envsubst < fixed-policy.yaml | kubectl apply -f -
 kubectl run test-client --image=nginx:1.25 \
   -n lab08-$STUDENT_NAME --rm -it --restart=Never -- \
   curl -s --max-time 3 \
