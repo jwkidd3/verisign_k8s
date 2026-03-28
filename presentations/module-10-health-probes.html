@@ -920,7 +920,7 @@ kubectl get events --sort-by=.lastTimestamp -n &lt;namespace&gt;</code></pre>
                     <li>Implement graceful shutdown with preStop hooks</li>
                 </ul>
                 <div class="highlight-box">
-                    <strong>Lab Guide:</strong> Follow the step-by-step instructions in <code>labs/lab-10-health-probes/</code>
+                    <strong>Lab Guide:</strong> Follow the step-by-step instructions in <code>labs/lab-10-health-probes.md</code>
                 </div>
                 <aside class="notes">Time for hands-on practice. In this lab you'll configure all three probe types on a web application, deliberately break the application to watch Kubernetes self-heal, debug probe failures using the techniques we covered, and set up PDBs. Take your time with the debugging section — understanding probe events is a critical operational skill.</aside>
             </section>
@@ -946,7 +946,7 @@ kubectl get events --sort-by=.lastTimestamp -n &lt;namespace&gt;</code></pre>
             <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" class="questions-slide" style="text-align: center;">
                 <h2>&#10067; Questions &amp; Discussion</h2>
                 <p>Health Probes &amp; Application Debugging</p>
-                <p style="font-size: 0.8em; margin-top: 40px;">Up Next: Module 11</p>
+                <p style="font-size: 0.8em; margin-top: 40px;">Up Next: Module 11 &mdash; Deployment Strategies</p>
                 <aside class="notes">Open the floor for questions. Common questions include: when to use exec vs HTTP probes, how to handle probe timeouts during garbage collection pauses, and whether to use the same endpoint for liveness and readiness. If time permits, discuss how probes interact with Horizontal Pod Autoscaler scaling decisions.</aside>
             </section>
 

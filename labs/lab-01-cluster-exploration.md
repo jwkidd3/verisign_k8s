@@ -8,73 +8,150 @@
 
 ### Objectives
 
-- Install and configure kubectl
+- Set up your AWS Cloud9 environment with required tools
 - Connect to the shared EKS cluster
 - Navigate cluster nodes, namespaces, and workloads
 - Deploy, inspect, scale, and access an application
 
 ### Prerequisites
 
-- Terminal / shell access (macOS, Linux, or WSL)
-- AWS CLI v2 installed
-- AWS credentials provided by the instructor
+- AWS account credentials (provided by the instructor)
 
 > ⏱ **Duration:** ~45 minutes
 
 ---
 
-## Step 1: Install kubectl
+## Step 1: Create Your Cloud9 Environment
 
-Install the Kubernetes CLI for your operating system.
+1. Sign in to the **AWS Management Console** using the credentials provided by the instructor
+2. Set the region to **US East (N. Virginia) / us-east-1** (top-right dropdown)
+3. Search for **Cloud9** in the services search bar and open it
+4. Click **Create environment**
+5. Configure:
 
-**macOS:**
+| Setting | Value |
+|---|---|
+| **Name** | `k8s-lab-<your-name>` |
+| **Environment type** | New EC2 instance |
+| **Instance type** | `m5.large` |
+| **Platform** | Amazon Linux |
+| **Network settings** | **SSH** (not SSM) |
+| **VPC / Subnet** | Use defaults (or as directed by instructor) |
+
+6. Click **Create**
+7. Wait 1-2 minutes for the status to show **Ready**, then click **Open** to launch the IDE
+
+You will work in the Cloud9 terminal (bottom panel) for all labs. Install the tools needed for all 13 labs below.
+
+### Attach IAM Role for EKS Access
+
+Cloud9 managed credentials are scoped down and cannot access EKS. The instructor has already created an IAM role for the class. Disable managed credentials and attach the role to your instance.
+
+> ⚠️ **If the role does not exist**, create it: IAM Console → Roles → Create role → Trusted entity: **AWS service / EC2** → Policy: **AdministratorAccess** → Name: `k8s-lab-role`
+
+**Disable Cloud9 Managed Credentials:**
+
+1. Back in the Cloud9 IDE, click the **gear icon** (top-right) or go to **Cloud9 → Preferences**
+2. Expand **AWS Settings**
+3. Turn **OFF** "AWS managed temporary credentials"
+
+**Attach the Role to Your Instance:**
+
+1. Open the **EC2 Console** in a new browser tab
+2. Find your Cloud9 instance (named `aws-cloud9-k8s-lab-<your-name>-...`)
+3. Select the instance → **Actions → Security → Modify IAM role**
+4. Choose `k8s-lab-role` → click **Update IAM role**
+
+Verify the role is active in the Cloud9 terminal:
 
 ```bash
-brew install kubectl
+aws sts get-caller-identity
 ```
 
-**Linux / WSL:**
+> ✅ **Checkpoint:** The output should show the `k8s-lab-role` ARN.
+
+### Install kubectl
 
 ```bash
 curl -LO "https://dl.k8s.io/release/$(curl -Ls https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
 chmod +x kubectl
 sudo mv kubectl /usr/local/bin/
-```
-
-Verify the installation:
-
-```bash
 kubectl version --client
 ```
 
-> ✅ **Checkpoint:** `kubectl version --client` should display v1.28+.
+### Install Helm
+
+```bash
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+helm version
+```
+
+### Install Flux CLI
+
+```bash
+curl -s https://fluxcd.io/install.sh | sudo bash
+flux --version
+```
+
+### Install ArgoCD CLI
+
+```bash
+curl -sSL -o argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+chmod +x argocd
+sudo mv argocd /usr/local/bin/
+argocd version --client
+```
+
+### Install jq and envsubst
+
+```bash
+# Amazon Linux 2
+sudo yum install -y jq gettext
+
+# Amazon Linux 2023 (if yum is not available)
+# sudo dnf install -y jq gettext
+
+jq --version
+envsubst --version
+```
+
+> ⚠️ **Note:** `curl`, `git`, `openssl`, `sed`, and `docker` are pre-installed on Amazon Linux Cloud9 instances.
+
+### Verify All Tools
+
+```bash
+echo "=== Tool Versions ==="
+kubectl version --client --short 2>/dev/null || kubectl version --client
+helm version --short
+flux --version
+argocd version --client --short 2>/dev/null || argocd version --client
+jq --version
+envsubst --version
+git --version
+docker --version
+openssl version
+```
+
+> ✅ **Checkpoint:** All commands above should return version information without errors.
 
 ---
 
 ## Step 2: Connect to the Shared EKS Cluster
 
-Configure AWS credentials (provided by the instructor):
-
-```bash
-aws configure
-# AWS Access Key ID:     <provided by instructor>
-# AWS Secret Access Key: <provided by instructor>
-# Default region name:   us-east-1
-# Default output format: json
-```
-
-Generate kubeconfig and set up your student environment:
+Generate kubeconfig for the shared cluster:
 
 ```bash
 aws eks update-kubeconfig \
   --name verisign-k8s-lab \
   --region us-east-1
+```
 
-# Set your unique student name
+Set your unique student name and verify connectivity:
+
+```bash
 export STUDENT_NAME=<your-name>
 echo "Student: $STUDENT_NAME"
 
-# Verify cluster connectivity
 kubectl cluster-info
 kubectl config current-context
 ```
@@ -184,14 +261,14 @@ kubectl get pods -n lab01-$STUDENT_NAME -w
 
 ## Step 8: Access the Application
 
-Use port-forwarding to access your service locally:
+Use port-forwarding to access your service:
 
 ```bash
 # Forward local port 8080 to the service port 80
 kubectl port-forward service/nginx-lab 8080:80 -n lab01-$STUDENT_NAME
 ```
 
-Open a **second terminal** and test the connection:
+Open a **second terminal tab** in Cloud9 (click the `+` icon next to your current tab) and test:
 
 ```bash
 curl http://localhost:8080

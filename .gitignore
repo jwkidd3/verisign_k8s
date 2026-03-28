@@ -1,0 +1,26 @@
+# Local .terraform directory (plugins, modules, providers)
+**/.terraform/
+
+# State files — never commit these
+**/*.tfstate
+**/*.tfstate.*
+**/*.tfstate.backup
+
+# Plan output files
+**/*.tfplan
+**/*.plan
+
+# Variable files — often contain secrets
+**/*.tfvars
+**/*.tfvars.json
+
+# Override files (local dev overrides)
+**/override.tf
+**/override.tf.json
+**/*_override.tf
+**/*_override.tf.json
+
+# Crash logs
+**/crash.log
+**/crash.*.log
+

@@ -102,10 +102,10 @@ provider "flux" {
 module "eks" {
   source = "./modules/eks"
 
-  cluster_name    = var.cluster_name
-  cluster_version = var.cluster_version
-  aws_region      = var.aws_region
-  vpc_cidr        = var.vpc_cidr
+  cluster_name       = var.cluster_name
+  cluster_version    = var.cluster_version
+  aws_region         = var.aws_region
+  vpc_cidr           = var.vpc_cidr
   node_instance_type = var.node_instance_type
   node_desired       = var.node_desired
   node_min           = var.node_min
@@ -115,11 +115,11 @@ module "eks" {
 module "irsa" {
   source = "./modules/irsa"
 
-  cluster_name               = module.eks.cluster_name
-  cluster_oidc_provider_arn  = module.eks.oidc_provider_arn
-  cluster_oidc_provider_url  = module.eks.oidc_provider_url
-  domain_zone_id             = var.route53_zone_id
-  enable_dns                 = var.enable_dns
+  cluster_name              = module.eks.cluster_name
+  cluster_oidc_provider_arn = module.eks.oidc_provider_arn
+  cluster_oidc_provider_url = module.eks.oidc_provider_url
+  domain_zone_id            = var.route53_zone_id
+  enable_dns                = var.enable_dns
 }
 
 module "vault" {

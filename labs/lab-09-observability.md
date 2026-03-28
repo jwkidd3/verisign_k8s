@@ -383,6 +383,7 @@ kube_pod_container_status_last_terminated_reason{
 ## Step 10: Clean Up
 
 ```bash
+kubectl config set-context --current --namespace=default
 kubectl delete namespace obs-lab-$STUDENT_NAME
 kubectl delete prometheusrule pod-restart-alert-$STUDENT_NAME -n monitoring --ignore-not-found
 pkill -f "port-forward.*9090" 2>/dev/null

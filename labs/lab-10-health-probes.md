@@ -563,7 +563,7 @@ kubectl delete pod $GRACEFUL_POD
 ## Step 9: Clean Up
 
 ```bash
-# Delete the lab namespace (removes all resources)
+kubectl config set-context --current --namespace=default
 kubectl delete namespace probes-lab-$STUDENT_NAME
 
 # Verify cleanup

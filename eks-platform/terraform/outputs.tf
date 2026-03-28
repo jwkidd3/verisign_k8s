@@ -18,7 +18,7 @@ output "irsa_roles" {
   value = var.enable_dns ? {
     cert_manager = module.irsa.cert_manager_role_arn
     external_dns = module.irsa.external_dns_role_arn
-  } : {
+    } : {
     cert_manager = "DNS disabled — set enable_dns = true with route53_zone_id and domain"
     external_dns = "DNS disabled — set enable_dns = true with route53_zone_id and domain"
   }
