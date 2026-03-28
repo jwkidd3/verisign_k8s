@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: database
+  namespace: lab08-$STUDENT_NAME
+  labels: { app: bookstore, tier: database }
+spec:
+  containers:
+  - name: db
+    image: nginx:1.25
+    ports: [{ containerPort: 80 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: database
+  namespace: lab08-$STUDENT_NAME
+spec:
+  selector: { tier: database }
+  ports: [{ port: 80, targetPort: 80 }]

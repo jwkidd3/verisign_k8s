@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: data-writer
+  namespace: lab03-$STUDENT_NAME
+spec:
+  containers:
+    - name: writer
+      image: busybox:1.36
+      command: ["sh", "-c"]
+      args:
+        - |
+          echo "Written at $(date)" > /data/testfile.txt
+          echo "Hostname: $(hostname)" >> /data/testfile.txt
+          sleep 3600
+      volumeMounts:
+        - name: lab-data
+          mountPath: /data
+  volumes:
+    - name: lab-data
+      persistentVolumeClaim:
+        claimName: lab-data-pvc

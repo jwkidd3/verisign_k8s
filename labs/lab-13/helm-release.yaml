@@ -1,0 +1,22 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: lab-nginx-$STUDENT_NAME
+  namespace: flux-lab-$STUDENT_NAME
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: nginx
+      version: ">=15.0.0 <16.0.0"
+      sourceRef:
+        kind: HelmRepository
+        name: bitnami-$STUDENT_NAME
+        namespace: flux-system
+  values:
+    replicaCount: 2
+    service: { type: ClusterIP }
+  install:
+    remediation: { retries: 3 }
+  upgrade:
+    remediation: { retries: 3, strategy: rollback }

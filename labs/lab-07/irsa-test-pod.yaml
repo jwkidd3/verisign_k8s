@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: irsa-test-$STUDENT_NAME
+  namespace: lab07-irsa-$STUDENT_NAME
+spec:
+  serviceAccountName: s3-reader-$STUDENT_NAME
+  containers:
+  - name: aws-cli
+    image: amazon/aws-cli:2.15
+    command: ["sleep", "3600"]
+  restartPolicy: Never

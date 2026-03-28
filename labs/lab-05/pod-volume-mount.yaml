@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: volume-mount-demo
+  namespace: lab05-$STUDENT_NAME
+spec:
+  containers:
+    - name: nginx
+      image: nginx:1.25
+      volumeMounts:
+        - name: nginx-config
+          mountPath: /etc/nginx/conf.d
+          readOnly: true
+        - name: app-config
+          mountPath: /etc/app
+          readOnly: true
+  volumes:
+    - name: nginx-config
+      configMap:
+        name: app-files
+        items:
+          - key: nginx.conf
+            path: default.conf
+    - name: app-config
+      configMap:
+        name: app-files
+        items:
+          - key: app.properties
+            path: app.properties

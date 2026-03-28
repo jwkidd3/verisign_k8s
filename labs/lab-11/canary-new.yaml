@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: webapp-canary, namespace: deploy-lab-$STUDENT_NAME }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: webapp-canary, track: canary }
+  template:
+    metadata: { labels: { app: webapp-canary, track: canary } }
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.25
+        ports: [{containerPort: 80}]
+        command: ["/bin/sh", "-c"]
+        args:
+        - "echo 'CANARY-v2' > \
+          /usr/share/nginx/html/index.html; \
+          nginx -g 'daemon off;'"

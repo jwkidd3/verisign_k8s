@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: exec-probe-app, namespace: probes-lab-$STUDENT_NAME }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: exec-probe-app }
+  template:
+    metadata: { labels: { app: exec-probe-app } }
+    spec:
+      containers:
+      - name: app
+        image: busybox
+        command: ['sh', '-c', 'touch /tmp/healthy; while true; do \
+          sleep 5; done']
+        livenessProbe:
+          exec: { command: [cat, /tmp/healthy] }
+          initialDelaySeconds: 5
+          periodSeconds: 5

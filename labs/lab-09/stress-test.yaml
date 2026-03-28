@@ -1,0 +1,15 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: stress-test, namespace: obs-lab-$STUDENT_NAME }
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: stress-test }
+  template:
+    metadata: { labels: { app: stress-test } }
+    spec:
+      containers:
+      - name: stress
+        image: busybox
+        command: ['sh', '-c', 'while true; do dd if=/dev/urandom
+          bs=1024 count=1024 of=/dev/null 2>/dev/null; done']

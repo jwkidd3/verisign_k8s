@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: data-reader
+  namespace: lab03-$STUDENT_NAME
+spec:
+  containers:
+    - name: reader
+      image: busybox:1.36
+      command: ["sh", "-c"]
+      args:
+        - cat /data/testfile.txt && sleep 3600
+      volumeMounts:
+        - name: lab-data
+          mountPath: /data
+  volumes:
+    - name: lab-data
+      persistentVolumeClaim:
+        claimName: lab-data-pvc

@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-headless
+  namespace: lab03-$STUDENT_NAME
+spec:
+  clusterIP: None
+  selector:
+    app: web
+  ports:
+    - port: 80
+      targetPort: 80

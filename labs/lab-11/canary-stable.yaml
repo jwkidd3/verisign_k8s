@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: webapp-stable, namespace: deploy-lab-$STUDENT_NAME }
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: webapp-canary, track: stable }
+  template:
+    metadata: { labels: { app: webapp-canary, track: stable } }
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.24
+        ports: [{containerPort: 80}]
+        command: ["/bin/sh", "-c"]
+        args:
+        - "echo 'STABLE-v1' > \
+          /usr/share/nginx/html/index.html; \
+          nginx -g 'daemon off;'"

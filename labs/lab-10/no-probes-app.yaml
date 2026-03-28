@@ -1,0 +1,18 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: no-probes-app
+  namespace: probes-lab-$STUDENT_NAME
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: no-probes-app }
+  template:
+    metadata:
+      labels: { app: no-probes-app }
+    spec:
+      containers:
+      - name: server
+        image: nginx:1.25
+        ports:
+        - containerPort: 80

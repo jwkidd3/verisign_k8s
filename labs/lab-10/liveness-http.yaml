@@ -1,0 +1,18 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: liveness-http, namespace: probes-lab-$STUDENT_NAME }
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: liveness-http }
+  template:
+    metadata: { labels: { app: liveness-http } }
+    spec:
+      containers:
+      - name: server
+        image: nginx:1.25
+        ports: [{containerPort: 80}]
+        livenessProbe:
+          httpGet: { path: /, port: 80 }
+          initialDelaySeconds: 5
+          periodSeconds: 10
