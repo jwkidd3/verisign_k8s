@@ -42,7 +42,7 @@ Examine a typical GitHub Actions workflow for Kubernetes:
 name: Build and Deploy
 on: { push: { branches: [main] } }
 env:
-  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com
+  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-2.amazonaws.com
   ECR_REPOSITORY: my-app
 jobs:
   build-and-deploy:
@@ -53,7 +53,7 @@ jobs:
       uses: aws-actions/configure-aws-credentials@v4
       with: { aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }},
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }},
-        aws-region: us-east-1 }
+        aws-region: us-east-2 }
     - name: Build and push image
       run: |
         IMAGE_TAG=$(git rev-parse --short HEAD)
@@ -92,13 +92,14 @@ Build and tag with the git SHA:
 export GIT_SHA=$(git rev-parse --short HEAD)
 echo "Building with SHA: $GIT_SHA"
 
-sed -i.bak "s/__BUILD_SHA__/$GIT_SHA/g" index.html
-sed -i.bak "s/__DEPLOY_TIME__/$(date -u +%Y-%m-%dT%H:%M:%SZ)/g" index.html
+cp index.html index.html.orig
+sed -i "s/__BUILD_SHA__/$GIT_SHA/g" index.html
+sed -i "s/__DEPLOY_TIME__/$(date -u +%Y-%m-%dT%H:%M:%SZ)/g" index.html
 
 docker build -t my-app:$GIT_SHA .
 docker build -t my-app:latest .
 
-mv index.html.bak index.html
+mv index.html.orig index.html
 ```
 
 ---
@@ -108,13 +109,13 @@ mv index.html.bak index.html
 ```bash
 export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query \
   Account --output text)
-export ECR_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com"
+export ECR_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.us-east-2.amazonaws.com"
 export ECR_REPO="cicd-lab-app-$STUDENT_NAME"
 
 aws ecr create-repository --repository-name $ECR_REPO \
-  --region us-east-1 || echo "Repository already exists"
+  --region us-east-2 || echo "Repository already exists"
 
-aws ecr get-login-password --region us-east-1 | \
+aws ecr get-login-password --region us-east-2 | \
   docker login --username AWS --password-stdin $ECR_REGISTRY
 
 docker tag my-app:$GIT_SHA $ECR_REGISTRY/$ECR_REPO:$GIT_SHA
@@ -219,7 +220,7 @@ argocd app sync cicd-demo-$STUDENT_NAME
 argocd app wait cicd-demo-$STUDENT_NAME --health
 ```
 
-> To access the UI: `kubectl port-forward svc/argocd-server -n argocd 8080:443`
+> **Optional — ArgoCD UI via Cloud9 Preview:** `kubectl port-forward svc/argocd-server -n argocd 8080:443 &` then **Preview → Preview Running Application**.
 > Default password: `kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d && echo`
 
 ---
@@ -230,8 +231,7 @@ Make a code change, rebuild, and update the manifest:
 
 ```bash
 cd ~/cicd-lab
-sed -i.bak 's/CI\/CD Demo Application/CI\/CD Demo v2/' index.html
-rm -f *.bak
+sed -i 's/CI\/CD Demo Application/CI\/CD Demo v2/' index.html
 git add . && git commit -m "Update application to v2"
 
 NEW_SHA=$(git rev-parse --short HEAD)
@@ -240,11 +240,10 @@ docker build -t my-app:$NEW_SHA .
 docker tag my-app:$NEW_SHA $ECR_REGISTRY/$ECR_REPO:$NEW_SHA
 docker push $ECR_REGISTRY/$ECR_REPO:$NEW_SHA
 
-sed -i.bak "s|image: .*|image: \
+sed -i "s|image: .*|image: \
 ${ECR_REGISTRY}/${ECR_REPO}:${NEW_SHA}|" \
   k8s/deployment.yaml
-sed -i.bak "s|git-commit: .*|git-commit: \"${NEW_SHA}\"|" k8s/deployment.yaml
-rm -f k8s/*.bak
+sed -i "s|git-commit: .*|git-commit: \"${NEW_SHA}\"|" k8s/deployment.yaml
 git add k8s/deployment.yaml
 git commit -m "Deploy image $NEW_SHA"
 
@@ -391,7 +390,7 @@ kubectl delete application cicd-demo-$STUDENT_NAME -n argocd --ignore-not-found
 # CI/CD namespace and ECR
 kubectl delete namespace cicd-lab-$STUDENT_NAME
 aws ecr delete-repository --repository-name cicd-lab-app-$STUDENT_NAME \
-  --region us-east-1 --force || echo "Skipping ECR cleanup"
+  --region us-east-2 --force || echo "Skipping ECR cleanup"
 rm -rf ~/cicd-lab
 docker rmi $(docker images my-app -q) 2>/dev/null || true
 

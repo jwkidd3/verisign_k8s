@@ -234,3 +234,7 @@ rm -rf mychart/ mychart-*.tgz
 - **Release Management** -- install, upgrade, rollback with full revision history
 - **Custom Charts** -- scaffold and organize chart templates with Go templating
 - **Validation** -- lint, template, and dry-run before deploying
+
+---
+
+*Lab 12 Complete — Up Next: Lab 13 — CI/CD and GitOps*

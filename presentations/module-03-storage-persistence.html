@@ -430,7 +430,7 @@ volumeBindingMode: WaitForFirstConsumer</code></pre>
                     <li class="fragment fade-up"><strong>volumeBindingMode</strong> — <code>WaitForFirstConsumer</code> delays binding until a pod is scheduled (AZ-aware)</li>
                     <li class="fragment fade-up"><strong>allowVolumeExpansion</strong> — enables online resizing of PVCs</li>
                 </ul>
-                <aside class="notes">WaitForFirstConsumer is essential on EKS. EBS volumes are AZ-specific — if you provision a volume in us-east-1a but the pod lands on a node in us-east-1b, it can't attach. WaitForFirstConsumer ensures the volume is created in the same AZ as the node where the pod is scheduled.</aside>
+                <aside class="notes">WaitForFirstConsumer is essential on EKS. EBS volumes are AZ-specific — if you provision a volume in us-east-2a but the pod lands on a node in us-east-2b, it can't attach. WaitForFirstConsumer ensures the volume is created in the same AZ as the node where the pod is scheduled.</aside>
             </section>
 
             <!-- Slide 16: AWS EBS CSI Driver -->

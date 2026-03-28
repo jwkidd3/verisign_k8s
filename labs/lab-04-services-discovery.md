@@ -60,7 +60,7 @@ spec:
     spec:
       containers:
         - name: httpbin
-          image: kennethreitz/httpbin
+          image: kong/httpbin
           ports:
             - containerPort: 80
           readinessProbe:
@@ -97,8 +97,8 @@ spec:
           ports:
             - containerPort: 80
               name: http
-            - containerPort: 9113
-              name: metrics
+            - containerPort: 8443
+              name: https
 ```
 
 ```bash
@@ -346,9 +346,9 @@ spec:
     - name: http
       port: 80
       targetPort: 80
-    - name: metrics
-      port: 9113
-      targetPort: 9113
+    - name: https
+      port: 8443
+      targetPort: 8443
 ```
 
 ```bash
@@ -356,7 +356,7 @@ envsubst < frontend-multiport.yaml | kubectl apply -f -
 kubectl get svc frontend-multiport -n lab04-$STUDENT_NAME
 ```
 
-> ✅ **Checkpoint:** Output shows `80/TCP,9113/TCP`. When a Service has multiple ports, each **must** have a `name` field.
+> ✅ **Checkpoint:** Output shows `80/TCP,8443/TCP`. When a Service has multiple ports, each **must** have a `name` field.
 
 ---
 
@@ -366,6 +366,7 @@ kubectl get svc frontend-multiport -n lab04-$STUDENT_NAME
 # Delete LoadBalancer first to ensure NLB cleanup
 kubectl delete svc frontend-lb -n lab04-$STUDENT_NAME
 sleep 30
+kubectl config set-context --current --namespace=default
 kubectl delete namespace lab04-$STUDENT_NAME
 ```
 
@@ -388,4 +389,4 @@ kubectl delete namespace lab04-$STUDENT_NAME
 
 ---
 
-**Lab 4 Complete!** Up Next: Lab 5
+*Lab 4 Complete — Up Next: Lab 5 — ConfigMaps, Secrets, and External Secrets*

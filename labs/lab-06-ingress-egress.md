@@ -497,7 +497,7 @@ spec:
               kubernetes.io/metadata.name: lab06-$STUDENT_NAME
       ports:
         - protocol: TCP
-          port: 80
+          port: 8080
 ```
 
 ```bash
@@ -536,3 +536,7 @@ rm -f app-v1.yaml app-v2.yaml ingress-host.yaml ingress-path.yaml \
 - **Ingress:** Host-based and path-based routing, TLS termination with SSL redirect, controller-specific annotations for rewrite/rate-limiting/CORS
 - **Gateway API:** Role-based separation (GatewayClass/Gateway/HTTPRoute), native traffic splitting via weighted `backendRefs`
 - **Egress Controls:** NetworkPolicy egress rules restrict outbound traffic; always include a DNS exception (port 53) when restricting egress
+
+---
+
+*Lab 6 Complete — Up Next: Lab 7 — RBAC, Security, and IRSA*

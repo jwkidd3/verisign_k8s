@@ -582,3 +582,7 @@ kubectl get namespace probes-lab-$STUDENT_NAME
 - **Startup:** Protects slow-starting containers from premature liveness kills
 - **Tuning:** Balance detection speed against probe overhead and false positives
 - **Graceful Shutdown:** preStop hooks and `terminationGracePeriodSeconds` ensure clean termination
+
+---
+
+*Lab 10 Complete — Up Next: Lab 11 — Deployment Strategies*

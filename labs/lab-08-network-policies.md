@@ -486,6 +486,12 @@ kubectl run test-client --image=nginx:1.25 \
 ```bash
 kubectl delete namespace lab08-$STUDENT_NAME
 kubectl delete namespace monitoring-$STUDENT_NAME
+
+rm -f database.yaml backend.yaml frontend.yaml \
+  deny-all-ingress.yaml allow-frontend-to-backend.yaml \
+  allow-backend-to-database.yaml deny-all-egress.yaml \
+  allow-dns-egress.yaml allow-monitoring-ingress.yaml \
+  broken-policy.yaml fixed-policy.yaml
 ```
 
 ---
@@ -497,3 +503,7 @@ kubectl delete namespace monitoring-$STUDENT_NAME
 - NetworkPolicies are additive -- multiple policies combine their allowed paths
 - Always allow DNS (UDP/TCP port 53) when implementing egress policies
 - Use `namespaceSelector` with namespace labels for cross-namespace communication
+
+---
+
+*Lab 8 Complete — Up Next: Lab 9 — Observability*

@@ -24,45 +24,42 @@
 ## Step 1: Create Your Cloud9 Environment
 
 1. Sign in to the **AWS Management Console** using the credentials provided by the instructor
-2. Set the region to **US East (N. Virginia) / us-east-1** (top-right dropdown)
+2. Set the region to **US East (Ohio) / us-east-2** (top-right dropdown)
 3. Search for **Cloud9** in the services search bar and open it
 4. Click **Create environment**
-5. Configure:
+5. Set **Name** to `k8s-lab-<your-name>`
+6. Set **Environment type** to New EC2 instance
+7. Set **Instance type** to `m5.large`
+8. Set **Platform** to Amazon Linux
+9. Set **Network settings** to **SSH** (not SSM)
+10. Set **VPC / Subnet** to defaults (or as directed by instructor)
+11. Click **Create**
+12. Wait 1-2 minutes for the status to show **Ready**, then click **Open** to launch the IDE
 
-| Setting | Value |
-|---|---|
-| **Name** | `k8s-lab-<your-name>` |
-| **Environment type** | New EC2 instance |
-| **Instance type** | `m5.large` |
-| **Platform** | Amazon Linux |
-| **Network settings** | **SSH** (not SSM) |
-| **VPC / Subnet** | Use defaults (or as directed by instructor) |
+You will work in the Cloud9 terminal (bottom panel) for all labs.
 
-6. Click **Create**
-7. Wait 1-2 minutes for the status to show **Ready**, then click **Open** to launch the IDE
+---
 
-You will work in the Cloud9 terminal (bottom panel) for all labs. Install the tools needed for all 13 labs below.
+## Step 2: Attach IAM Role for EKS Access
 
-### Attach IAM Role for EKS Access
-
-Cloud9 managed credentials are scoped down and cannot access EKS. The instructor has already created an IAM role for the class. Disable managed credentials and attach the role to your instance.
+Cloud9 managed credentials cannot access EKS. The instructor has already created an IAM role for the class. Disable managed credentials and attach the role to your instance.
 
 > ⚠️ **If the role does not exist**, create it: IAM Console → Roles → Create role → Trusted entity: **AWS service / EC2** → Policy: **AdministratorAccess** → Name: `k8s-lab-role`
 
-**Disable Cloud9 Managed Credentials:**
+### Disable Cloud9 Managed Credentials
 
-1. Back in the Cloud9 IDE, click the **gear icon** (top-right) or go to **Cloud9 → Preferences**
+1. In the Cloud9 IDE, click the **gear icon** (top-right) or go to **Cloud9 → Preferences**
 2. Expand **AWS Settings**
 3. Turn **OFF** "AWS managed temporary credentials"
 
-**Attach the Role to Your Instance:**
+### Attach the Role to Your Instance
 
 1. Open the **EC2 Console** in a new browser tab
 2. Find your Cloud9 instance (named `aws-cloud9-k8s-lab-<your-name>-...`)
 3. Select the instance → **Actions → Security → Modify IAM role**
 4. Choose `k8s-lab-role` → click **Update IAM role**
 
-Verify the role is active in the Cloud9 terminal:
+### Verify
 
 ```bash
 aws sts get-caller-identity
@@ -70,7 +67,13 @@ aws sts get-caller-identity
 
 > ✅ **Checkpoint:** The output should show the `k8s-lab-role` ARN.
 
-### Install kubectl
+---
+
+## Step 3: Install Required Tools
+
+Install the tools needed for all 13 labs.
+
+### kubectl
 
 ```bash
 curl -LO "https://dl.k8s.io/release/$(curl -Ls https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
@@ -79,21 +82,21 @@ sudo mv kubectl /usr/local/bin/
 kubectl version --client
 ```
 
-### Install Helm
+### Helm
 
 ```bash
 curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 helm version
 ```
 
-### Install Flux CLI
+### Flux CLI
 
 ```bash
 curl -s https://fluxcd.io/install.sh | sudo bash
 flux --version
 ```
 
-### Install ArgoCD CLI
+### ArgoCD CLI
 
 ```bash
 curl -sSL -o argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
@@ -102,7 +105,7 @@ sudo mv argocd /usr/local/bin/
 argocd version --client
 ```
 
-### Install jq and envsubst
+### jq and envsubst
 
 ```bash
 # Amazon Linux 2
@@ -132,18 +135,16 @@ docker --version
 openssl version
 ```
 
-> ✅ **Checkpoint:** All commands above should return version information without errors.
+> ✅ **Checkpoint:** All commands should return version information without errors.
 
 ---
 
-## Step 2: Connect to the Shared EKS Cluster
-
-Generate kubeconfig for the shared cluster:
+## Step 4: Connect to the Shared EKS Cluster
 
 ```bash
 aws eks update-kubeconfig \
-  --name verisign-k8s-lab \
-  --region us-east-1
+  --name platform-lab \
+  --region us-east-2
 ```
 
 Set your unique student name and verify connectivity:
@@ -162,7 +163,7 @@ kubectl config current-context
 
 ---
 
-## Step 3: Explore Cluster Nodes
+## Step 5: Explore Cluster Nodes
 
 ```bash
 # List all nodes with extended information
@@ -180,7 +181,7 @@ kubectl describe node <NODE_NAME> | grep -A 5 "Taints:"
 
 ---
 
-## Step 4: Explore Namespaces and Workloads
+## Step 6: Explore Namespaces and Workloads
 
 ```bash
 # List all namespaces
@@ -195,7 +196,7 @@ kubectl get all -A
 
 ---
 
-## Step 5: Deploy Your First Application
+## Step 7: Deploy Your First Application
 
 ```bash
 # Create your personal namespace
@@ -216,7 +217,7 @@ kubectl get all -n lab01-$STUDENT_NAME
 
 ---
 
-## Step 6: Examine Pod Details
+## Step 8: Examine Pod Details
 
 ```bash
 # Get pod names
@@ -241,7 +242,7 @@ exit
 
 ---
 
-## Step 7: Scale the Deployment
+## Step 9: Scale the Deployment
 
 ```bash
 # Scale up to 5 replicas
@@ -259,7 +260,7 @@ kubectl get pods -n lab01-$STUDENT_NAME -w
 
 ---
 
-## Step 8: Access the Application
+## Step 10: Access the Application
 
 Use port-forwarding to access your service:
 
@@ -268,7 +269,7 @@ Use port-forwarding to access your service:
 kubectl port-forward service/nginx-lab 8080:80 -n lab01-$STUDENT_NAME
 ```
 
-Open a **second terminal tab** in Cloud9 (click the `+` icon next to your current tab) and test:
+You can also click **Preview → Preview Running Application** in Cloud9 to view in the built-in browser. Or open a **second terminal tab** (click the `+` icon) and test with curl:
 
 ```bash
 curl http://localhost:8080
@@ -279,7 +280,7 @@ curl -I http://localhost:8080
 
 ---
 
-## Step 9: Explore Resource Usage
+## Step 11: Explore Resource Usage
 
 ```bash
 kubectl top nodes
@@ -290,7 +291,7 @@ kubectl top pods -n lab01-$STUDENT_NAME
 
 ---
 
-## Step 10: Clean Up
+## Step 12: Clean Up
 
 ```bash
 kubectl config set-context --current --namespace=default

@@ -123,7 +123,7 @@ spec:
   serviceAccountName: pod-viewer
   containers:
   - name: kubectl
-    image: bitnami/kubectl:latest
+    image: bitnami/kubectl:1.28
     command: ["sleep", "3600"]
   restartPolicy: Never
 ```
@@ -232,7 +232,7 @@ metadata:
 spec:
   containers:
   - name: nginx
-    image: nginx:latest
+    image: nginx:1.25
     securityContext:
       privileged: true
 ```
@@ -247,7 +247,7 @@ metadata:
 spec:
   containers:
   - name: nginx
-    image: nginx:latest
+    image: nginx:1.25
     securityContext:
       runAsUser: 0
 ```
@@ -281,7 +281,7 @@ spec:
       type: RuntimeDefault
   containers:
   - name: app
-    image: busybox:latest
+    image: busybox:1.36
     command: ["sleep", "3600"]
     securityContext:
       allowPrivilegeEscalation: false
@@ -325,7 +325,7 @@ kubectl exec secure-app -n lab07-restricted-$STUDENT_NAME -- \
 ## Step 9: Create an IRSA-Annotated ServiceAccount
 
 ```bash
-OIDC_ISSUER=$(aws eks describe-cluster --name verisign-k8s-lab \
+OIDC_ISSUER=$(aws eks describe-cluster --name platform-lab \
   --query "cluster.identity.oidc.issuer" --output text | sed 's|https://||')
 ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
 ROLE_ARN="arn:aws:iam::${ACCOUNT_ID}:role/irsa-s3-reader-$STUDENT_NAME"
@@ -361,7 +361,7 @@ spec:
   serviceAccountName: s3-reader-$STUDENT_NAME
   containers:
   - name: aws-cli
-    image: amazon/aws-cli:latest
+    image: amazon/aws-cli:2.15
     command: ["sleep", "3600"]
   restartPolicy: Never
 ```
@@ -413,6 +413,10 @@ kubectl delete clusterrole cluster-pod-reader-$STUDENT_NAME
 kubectl delete namespace lab07-$STUDENT_NAME
 kubectl delete namespace lab07-restricted-$STUDENT_NAME
 kubectl delete namespace lab07-irsa-$STUDENT_NAME
+
+rm -f pod-reader-role.yaml pod-reader-binding.yaml rbac-test-pod.yaml \
+  cluster-reader-role.yaml cluster-reader-binding.yaml \
+  privileged-pod.yaml root-pod.yaml secure-pod.yaml irsa-test-pod.yaml
 ```
 
 ---
@@ -424,3 +428,7 @@ kubectl delete namespace lab07-irsa-$STUDENT_NAME
 - Pod Security Standards (restricted, baseline, privileged) enforce security profiles at the namespace level
 - SecurityContext settings (`runAsNonRoot`, `readOnlyRootFilesystem`, `drop: ALL`) provide defense-in-depth
 - IRSA provides pod-level IAM identities via projected service-account tokens -- no long-lived AWS keys needed
+
+---
+
+*Lab 7 Complete — Up Next: Lab 8 — Network Policies*

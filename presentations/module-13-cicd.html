@@ -211,7 +211,7 @@
 docker build -t myapp:${GIT_SHA} .
 trivy image --severity HIGH,CRITICAL myapp:${GIT_SHA}
 cosign sign --key cosign.key myapp:${GIT_SHA}
-ECR=123456789.dkr.ecr.us-east-1.amazonaws.com
+ECR=123456789.dkr.ecr.us-east-2.amazonaws.com
 docker tag myapp:${GIT_SHA} ${ECR}/myapp:${GIT_SHA}
 docker push ${ECR}/myapp:${GIT_SHA}</code></pre>
                 <aside class="notes">The image lifecycle is the backbone of cloud-native CI. Multi-stage builds keep images lean, immutable tags ensure reproducibility, and image signing creates a chain of trust. Using Git SHA as the tag creates a direct link between the code commit and the running image. ECR supports image scanning natively, and Cosign from the Sigstore project provides keyless or key-based signing.</aside>
@@ -780,7 +780,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::123456789:role/github-actions
-          aws-region: us-east-1
+          aws-region: us-east-2
       - name: Login to ECR
         uses: aws-actions/amazon-ecr-login@v2
       - name: Build, scan, and push

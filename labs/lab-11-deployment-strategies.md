@@ -390,6 +390,9 @@ kubectl rollout status deployment/webapp -n deploy-lab-$STUDENT_NAME
 
 ```bash
 kubectl delete namespace deploy-lab-$STUDENT_NAME
+rm -f app-deploy-v1.yaml blue-deploy.yaml green-deploy.yaml \
+  bg-service.yaml canary-stable.yaml canary-new.yaml \
+  canary-service.yaml pdb.yaml
 ```
 
 ---
@@ -401,3 +404,7 @@ kubectl delete namespace deploy-lab-$STUDENT_NAME
 - **Canary** -- gradual traffic shift using replica ratios
 - **Pod Disruption Budgets** -- protects availability during voluntary disruptions
 - **Progress Deadline** -- detects stuck rollouts automatically
+
+---
+
+*Lab 11 Complete — Up Next: Lab 12 — Helm and Templating*

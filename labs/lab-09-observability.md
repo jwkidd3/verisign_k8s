@@ -207,67 +207,76 @@ kubectl get svc -n monitoring
 
 ```bash
 kubectl port-forward -n monitoring \
-  svc/monitoring-kube-prometheus-prometheus 9090:9090 &
-
-echo "Prometheus UI: http://localhost:9090"
+  svc/kube-prometheus-stack-prometheus 8080:9090 &
 ```
 
-### Run PromQL Queries
+> ⚠️ **Cloud9:** Click **Preview → Preview Running Application** (top menu) to open the Prometheus UI. Or use `curl` in a second terminal tab.
 
-Navigate to the **Graph** tab and run these queries (replace `$STUDENT_NAME` with your actual name in the browser):
+### Run PromQL Queries via curl
 
-```promql
+```bash
 # Total CPU usage per node
-sum(rate(node_cpu_seconds_total{mode!="idle"}[5m])) by (instance)
+curl -s 'http://localhost:8080/api/v1/query' \
+  --data-urlencode 'query=sum(rate(node_cpu_seconds_total{mode!="idle"}[5m])) by (instance)' | jq .
 
 # Memory usage percentage per node
-100 * (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes))
+curl -s 'http://localhost:8080/api/v1/query' \
+  --data-urlencode 'query=100 * (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes))' | jq .
 
 # Pod CPU usage in your namespace
-sum(rate(container_cpu_usage_seconds_total{
-  namespace="obs-lab-$STUDENT_NAME"
-}[5m])) by (pod)
+curl -s 'http://localhost:8080/api/v1/query' \
+  --data-urlencode "query=sum(rate(container_cpu_usage_seconds_total{namespace=\"obs-lab-$STUDENT_NAME\"}[5m])) by (pod)" | jq .
 
 # Container restart count
-sum(kube_pod_container_status_restarts_total) by (namespace, pod)
+curl -s 'http://localhost:8080/api/v1/query' \
+  --data-urlencode 'query=sum(kube_pod_container_status_restarts_total) by (namespace, pod)' | jq .
 ```
 
 ### Useful Cluster Queries
 
-```promql
+```bash
 # Pod count per namespace
-count(kube_pod_info) by (namespace)
+curl -s 'http://localhost:8080/api/v1/query' \
+  --data-urlencode 'query=count(kube_pod_info) by (namespace)' | jq .
 
 # Pods in CrashLoopBackOff
-kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}
+curl -s 'http://localhost:8080/api/v1/query' \
+  --data-urlencode 'query=kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}' | jq .
 
 # Top 5 memory consumers
-topk(5, container_memory_working_set_bytes{
-  container!="", container!="POD"
-})
+curl -s 'http://localhost:8080/api/v1/query' \
+  --data-urlencode 'query=topk(5, container_memory_working_set_bytes{container!="", container!="POD"})' | jq .
 ```
 
 ---
 
 ## Step 6: Explore Grafana Dashboards
 
-```bash
-kubectl port-forward -n monitoring \
-  svc/monitoring-grafana 3000:80 &
+Stop the Prometheus port-forward first, then forward Grafana on port 8080:
 
-echo "Grafana UI: http://localhost:3000"
-echo "Username: admin / Password: admin123"
+```bash
+pkill -f "port-forward.*8080" 2>/dev/null
+kubectl port-forward -n monitoring \
+  svc/kube-prometheus-stack-grafana 8080:80 &
 ```
 
-In Grafana, go to **Dashboards > Browse** and explore:
+> ⚠️ **Cloud9:** Click **Preview → Preview Running Application** to open Grafana. Login: `admin` / `admin`
 
-- **Kubernetes / Compute Resources / Cluster** — Overall cluster CPU and memory
-- **Kubernetes / Compute Resources / Namespace (Pods)** — Pod metrics by namespace
-- **Kubernetes / Compute Resources / Pod** — Individual pod details
+### Verify Grafana via API
+
+```bash
+# List available dashboards
+curl -s -u admin:admin http://localhost:8080/api/search | jq '.[].title'
+
+# Check datasources
+curl -s -u admin:admin http://localhost:8080/api/datasources | jq '.[].name'
+```
 
 ### Exercise: Investigate the stress-test Workload
 
-1. Open **Kubernetes / Compute Resources / Namespace (Pods)**
+In the Grafana UI (Cloud9 Preview or browser), navigate to:
+
+1. **Dashboards → Kubernetes / Compute Resources / Namespace (Pods)**
 2. Select namespace: `obs-lab-$STUDENT_NAME`
 3. Locate the `stress-test` pods and note their CPU usage
 4. Click a pod name to drill into the per-pod dashboard
@@ -276,8 +285,9 @@ In Grafana, go to **Dashboards > Browse** and explore:
 
 ## Step 7: Create a Custom PrometheusRule Alert
 
+Save the following as `prom-rule.yaml`:
+
 ```yaml
-cat <<EOF | kubectl apply -f -
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
@@ -299,17 +309,26 @@ spec:
     - alert: PodCrashLooping
       expr: rate(kube_pod_container_status_restarts_total[15m]) * 60 * 15 > 0
       labels: { severity: critical }
-EOF
+```
+
+```bash
+envsubst '$STUDENT_NAME' < prom-rule.yaml | kubectl apply -f -
 ```
 
 > 💡 The `labels.release` must match the Helm release name for the Prometheus operator to pick up this rule.
 
 ```bash
 kubectl get prometheusrules -n monitoring
-# Verify in Prometheus UI: Status -> Rules -> look for "pod-restarts"
+
+# Verify the rule was picked up by Prometheus (may take up to 60s)
+pkill -f "port-forward.*8080" 2>/dev/null
+kubectl port-forward -n monitoring \
+  svc/kube-prometheus-stack-prometheus 8080:9090 &
+sleep 5
+curl -s 'http://localhost:8080/api/v1/rules' | jq '.data.groups[].rules[] | select(.name | test("pod"))'
 ```
 
-> ✅ **Checkpoint:** The `pod-restart-alert` rule appears in the Prometheus Rules page. Rules may take up to 60 seconds to load.
+> ✅ **Checkpoint:** You should see the `HighPodRestartCount` and `PodCrashLooping` rules in the output.
 
 ---
 
@@ -386,8 +405,8 @@ kube_pod_container_status_last_terminated_reason{
 kubectl config set-context --current --namespace=default
 kubectl delete namespace obs-lab-$STUDENT_NAME
 kubectl delete prometheusrule pod-restart-alert-$STUDENT_NAME -n monitoring --ignore-not-found
-pkill -f "port-forward.*9090" 2>/dev/null
-pkill -f "port-forward.*3000" 2>/dev/null
+pkill -f "port-forward.*8080" 2>/dev/null
+rm -f prom-rule.yaml
 ```
 
 > 📝 Keep the monitoring namespace installed -- it will be useful in subsequent labs.
@@ -405,4 +424,4 @@ pkill -f "port-forward.*3000" 2>/dev/null
 
 ---
 
-**Lab 9 Complete!** Next: Lab 10 — Health Checks and Probes
+*Lab 9 Complete — Up Next: Lab 10 — Health Checks and Probes*

@@ -407,38 +407,38 @@ kubectl logs update-test -n lab05-$STUDENT_NAME --tail=3
 ## Step 9: Connect to Vault and Write Secrets
 
 ```bash
-kubectl exec -it vault-0 -n vault -- /bin/sh
+kubectl exec -it vault-0 -n vault -- /bin/sh -c "
+  vault kv put secret/lab05-$STUDENT_NAME/database \
+    username=admin \
+    password=s3cureP@ss \
+    host=postgres.lab05-$STUDENT_NAME.svc.cluster.local \
+    port=5432
 
-vault kv put secret/lab05-$STUDENT_NAME/database \
-  username=admin \
-  password=s3cureP@ss \
-  host=postgres.lab05-$STUDENT_NAME.svc.cluster.local \
-  port=5432
-
-vault kv get secret/lab05-$STUDENT_NAME/database
+  vault kv get secret/lab05-$STUDENT_NAME/database
+"
 ```
 
 ### Create a Vault Policy and Auth Role
 
 ```bash
-# Still inside the Vault pod shell
-vault policy write lab05-readonly-$STUDENT_NAME - <<EOF
-path "secret/data/lab05-$STUDENT_NAME/*" {
-  capabilities = ["read", "list"]
+kubectl exec -it vault-0 -n vault -- /bin/sh -c "
+  vault policy write lab05-readonly-$STUDENT_NAME - <<EOF
+path \"secret/data/lab05-$STUDENT_NAME/*\" {
+  capabilities = [\"read\", \"list\"]
 }
-path "secret/metadata/lab05-$STUDENT_NAME/*" {
-  capabilities = ["read", "list"]
+path \"secret/metadata/lab05-$STUDENT_NAME/*\" {
+  capabilities = [\"read\", \"list\"]
 }
 EOF
 
-vault write auth/kubernetes/role/lab05-role-$STUDENT_NAME \
-  bound_service_account_names=lab05-sa \
-  bound_service_account_namespaces=lab05-$STUDENT_NAME \
-  policies=lab05-readonly-$STUDENT_NAME \
-  ttl=1h
+  vault write auth/kubernetes/role/lab05-role-$STUDENT_NAME \
+    bound_service_account_names=lab05-sa \
+    bound_service_account_namespaces=lab05-$STUDENT_NAME \
+    policies=lab05-readonly-$STUDENT_NAME \
+    ttl=1h
 
-vault policy read lab05-readonly-$STUDENT_NAME
-exit
+  vault policy read lab05-readonly-$STUDENT_NAME
+"
 ```
 
 ---
@@ -505,6 +505,11 @@ kubectl exec -it vault-0 -n vault -- /bin/sh -c "
   vault delete auth/kubernetes/role/lab05-role-$STUDENT_NAME
   vault policy delete lab05-readonly-$STUDENT_NAME
 "
+
+rm -f nginx.conf app.properties tls.key tls.crt \
+  pod-envfrom.yaml pod-valuefrom.yaml pod-volume-mount.yaml \
+  pod-secret-env.yaml pod-secret-volume.yaml immutable-config.yaml \
+  pod-projected.yaml pod-update-test.yaml
 ```
 
 ---
@@ -514,3 +519,7 @@ kubectl exec -it vault-0 -n vault -- /bin/sh -c "
 - **ConfigMaps:** Created from literals and files; consumed via `envFrom`, `valueFrom`, and volume mounts; volume mounts auto-update but env vars do not
 - **Secrets:** Same consumption patterns as ConfigMaps; base64-encoded, not encrypted by default; use RBAC to restrict access and enable KMS encryption at rest
 - **Vault + ESO:** Syncs external secrets into K8s Secrets automatically; applications consume standard K8s Secrets with no Vault awareness
+
+---
+
+*Lab 5 Complete — Up Next: Lab 6 — Ingress and Gateway API*

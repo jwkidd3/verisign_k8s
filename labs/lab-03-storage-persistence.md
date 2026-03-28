@@ -37,6 +37,7 @@ echo "Student: $STUDENT_NAME"
 
 ```bash
 kubectl create namespace lab03-$STUDENT_NAME
+kubectl config set-context --current --namespace=lab03-$STUDENT_NAME
 kubectl get storageclass
 kubectl describe storageclass gp2
 ```
@@ -323,6 +324,7 @@ kubectl get pvc web-data-web-0 -n lab03-$STUDENT_NAME -w
 ## Step 10: Clean Up
 
 ```bash
+kubectl config set-context --current --namespace=default
 kubectl delete statefulset web -n lab03-$STUDENT_NAME
 kubectl delete pvc --all -n lab03-$STUDENT_NAME
 kubectl delete namespace lab03-$STUDENT_NAME
@@ -337,3 +339,7 @@ kubectl delete namespace lab03-$STUDENT_NAME
 - StatefulSets provide stable network identity, ordered operations, and per-replica storage
 - PVCs are retained on scale-down to protect data
 - Volume expansion is supported but is a one-way operation
+
+---
+
+*Lab 3 Complete — Up Next: Lab 4 — Services and Service Discovery*

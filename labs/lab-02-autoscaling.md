@@ -320,4 +320,4 @@ kubectl delete namespace lab02-$STUDENT_NAME
 
 ---
 
-**Lab 2 Complete** — Configuring Autoscaling | Up Next: Lab 3
+*Lab 2 Complete — Up Next: Lab 3 — Storage and StatefulSets*
