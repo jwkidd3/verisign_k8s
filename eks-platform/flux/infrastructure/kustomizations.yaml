@@ -46,6 +46,21 @@ spec:
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
+  name: infrastructure-security-stores
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./flux/infrastructure/security-stores
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+    - name: infrastructure-security
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
   name: infrastructure-monitoring
   namespace: flux-system
 spec:
@@ -73,6 +88,7 @@ spec:
   dependsOn:
     - name: infrastructure-core
     - name: infrastructure-security
+    - name: infrastructure-security-stores
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
@@ -106,6 +122,7 @@ spec:
   wait: true
   dependsOn:
     - name: infrastructure-security
+    - name: infrastructure-security-stores
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
@@ -122,6 +139,7 @@ spec:
   dependsOn:
     - name: infrastructure-core
     - name: infrastructure-security
+    - name: infrastructure-security-stores
     - name: infrastructure-networking
     - name: infrastructure-monitoring
     - name: infrastructure-logging
@@ -140,3 +158,4 @@ spec:
     name: flux-system
   dependsOn:
     - name: infrastructure-security
+    - name: infrastructure-security-stores

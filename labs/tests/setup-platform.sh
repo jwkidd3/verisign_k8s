@@ -208,7 +208,7 @@ echo "Waiting for Flux Kustomizations to reconcile..."
 
 MAX_WAIT=600
 ELAPSED=0
-EXPECTED_KS=9  # sources, core, security, monitoring, networking, logging, gitops, platform, policies
+EXPECTED_KS=10  # sources, core, security, security-stores, monitoring, networking, logging, gitops, platform, policies
 
 while [ $ELAPSED -lt $MAX_WAIT ]; do
   KS_READY=$(kubectl get kustomizations.kustomize.toolkit.fluxcd.io -A --no-headers 2>/dev/null | grep -c "True" || true)
