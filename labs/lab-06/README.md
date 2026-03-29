@@ -31,6 +31,7 @@ Approximately 30-40 minutes
 ## Environment Setup
 
 ```bash
+cd ~/environment/verisign_k8s/labs/lab-06
 export STUDENT_NAME=<your-name>
 echo "Student: $STUDENT_NAME"
 ```

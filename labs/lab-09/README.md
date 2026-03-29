@@ -30,6 +30,7 @@
 ## Environment Setup
 
 ```bash
+cd ~/environment/verisign_k8s/labs/lab-09
 export STUDENT_NAME=<your-name>
 echo "Student: $STUDENT_NAME"
 ```
