@@ -3,7 +3,7 @@
 # Platform Setup — Push Infrastructure to Flux Repo & Wait for Reconciliation
 #
 # Usage:
-#   bash setup-platform.sh                          # Auto-detect settings
+#   bash setup-platform.sh                          # Push + wait for ready
 #   bash setup-platform.sh --skip-wait              # Push only, don't wait
 #   GITHUB_TOKEN=xxx bash setup-platform.sh         # Explicit token
 #
@@ -80,8 +80,10 @@ if [ -z "${FLUX_DIR:-}" ]; then
   for candidate in \
     "$SCRIPT_DIR/../../eks-platform/flux" \
     "$HOME/environment/eks-platform/flux" \
+    "$HOME/environment/verisign_k8s/eks-platform/flux" \
     "$HOME/eks-platform/flux" \
-    "/home/ec2-user/environment/eks-platform/flux"; do
+    "/home/ec2-user/environment/eks-platform/flux" \
+    "/home/ec2-user/environment/verisign_k8s/eks-platform/flux"; do
     if [ -d "$candidate/infrastructure" ]; then
       FLUX_DIR="$(cd "$candidate" && pwd)"
       break
@@ -96,94 +98,62 @@ info "Flux repo:     $FLUX_REPO"
 info "Cluster name:  $CLUSTER_NAME"
 info "Flux dir:      $FLUX_DIR"
 
-# ─── Check current Flux state ──────────────────────────────────────────────
+# ─── Always push infrastructure to Flux repo ─────────────────────────────
 
 echo ""
-echo "Checking Flux state..."
+echo "Syncing infrastructure definitions to Flux repo..."
 
-KS_COUNT=$(kubectl get kustomizations.kustomize.toolkit.fluxcd.io -A --no-headers 2>/dev/null | wc -l | tr -d ' ')
-HR_COUNT=$(kubectl get helmreleases.helm.toolkit.fluxcd.io -A --no-headers 2>/dev/null | wc -l | tr -d ' ')
+TMPDIR=$(mktemp -d)
+trap "rm -rf $TMPDIR" EXIT
 
-if [ "$KS_COUNT" -gt 1 ] && [ "$HR_COUNT" -gt 0 ]; then
-  info "Flux already has $KS_COUNT Kustomizations and $HR_COUNT HelmReleases"
-  info "Infrastructure appears to be deployed — skipping push"
+git clone "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_OWNER}/${FLUX_REPO}.git" \
+  "$TMPDIR/repo" 2>/dev/null || die "Failed to clone ${GITHUB_OWNER}/${FLUX_REPO}"
 
-  if [ "$SKIP_WAIT" = false ]; then
-    echo ""
-    echo "Verifying all HelmReleases are ready..."
-    READY=$(kubectl get helmreleases.helm.toolkit.fluxcd.io -A --no-headers 2>/dev/null | grep -c "True" || true)
-    if [ "$READY" -eq "$HR_COUNT" ]; then
-      info "All $HR_COUNT HelmReleases ready"
-    else
-      warn "$READY/$HR_COUNT HelmReleases ready — waiting for reconciliation..."
-      # Fall through to wait loop below
-    fi
-  fi
+# Copy flux directory
+rm -rf "$TMPDIR/repo/flux"
+cp -r "$FLUX_DIR" "$TMPDIR/repo/flux"
+info "Copied flux/ directory"
 
-  # If everything is already deployed and ready, exit early
-  if [ "$READY" -eq "$HR_COUNT" ] 2>/dev/null; then
-    echo ""
-    echo -e "${GREEN}Platform is ready.${NC}"
-    exit 0
+# Create cluster infrastructure reference
+CLUSTER_DIR="$TMPDIR/repo/clusters/$CLUSTER_NAME"
+mkdir -p "$CLUSTER_DIR"
+cp "$FLUX_DIR/infrastructure/kustomizations.yaml" "$CLUSTER_DIR/infrastructure.yaml"
+info "Created clusters/$CLUSTER_NAME/infrastructure.yaml"
+
+# Ensure the cluster kustomization.yaml includes infrastructure.yaml
+CLUSTER_KS="$CLUSTER_DIR/kustomization.yaml"
+if [ -f "$CLUSTER_KS" ]; then
+  if ! grep -q "infrastructure.yaml" "$CLUSTER_KS"; then
+    # Add to resources list
+    sed -i.bak '/resources:/a\  - infrastructure.yaml' "$CLUSTER_KS" 2>/dev/null || \
+      echo "  - infrastructure.yaml" >> "$CLUSTER_KS"
+    rm -f "${CLUSTER_KS}.bak"
+    info "Updated cluster kustomization.yaml"
+  else
+    info "Cluster kustomization.yaml already references infrastructure.yaml"
   fi
 else
-  # ─── Push infrastructure to Flux repo ───────────────────────────────────
-
-  echo ""
-  echo "Pushing infrastructure definitions to Flux repo..."
-
-  TMPDIR=$(mktemp -d)
-  trap "rm -rf $TMPDIR" EXIT
-
-  git clone "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_OWNER}/${FLUX_REPO}.git" \
-    "$TMPDIR/repo" 2>/dev/null || die "Failed to clone ${GITHUB_OWNER}/${FLUX_REPO}"
-
-  # Copy flux directory
-  rm -rf "$TMPDIR/repo/flux"
-  cp -r "$FLUX_DIR" "$TMPDIR/repo/flux"
-  info "Copied flux/ directory"
-
-  # Create cluster infrastructure reference
-  CLUSTER_DIR="$TMPDIR/repo/clusters/$CLUSTER_NAME"
-  mkdir -p "$CLUSTER_DIR"
-  cp "$FLUX_DIR/infrastructure/kustomizations.yaml" "$CLUSTER_DIR/infrastructure.yaml"
-  info "Created clusters/$CLUSTER_NAME/infrastructure.yaml"
-
-  # Ensure the cluster kustomization.yaml includes infrastructure.yaml
-  CLUSTER_KS="$CLUSTER_DIR/kustomization.yaml"
-  if [ -f "$CLUSTER_KS" ]; then
-    if ! grep -q "infrastructure.yaml" "$CLUSTER_KS"; then
-      # Add to resources list
-      sed -i.bak '/resources:/a\  - infrastructure.yaml' "$CLUSTER_KS" 2>/dev/null || \
-        echo "  - infrastructure.yaml" >> "$CLUSTER_KS"
-      rm -f "${CLUSTER_KS}.bak"
-      info "Updated cluster kustomization.yaml"
-    else
-      info "Cluster kustomization.yaml already references infrastructure.yaml"
-    fi
-  else
-    cat > "$CLUSTER_KS" <<'KUSTOMIZE'
+  cat > "$CLUSTER_KS" <<'KUSTOMIZE'
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - flux-system
   - infrastructure.yaml
 KUSTOMIZE
-    info "Created cluster kustomization.yaml"
-  fi
+  info "Created cluster kustomization.yaml"
+fi
 
-  cd "$TMPDIR/repo"
-  git config user.email "terraform@platform-lab"
-  git config user.name "Terraform"
-  git add -A
+cd "$TMPDIR/repo"
+git config user.email "terraform@platform-lab"
+git config user.name "Terraform"
+git add -A
 
-  if git diff --cached --quiet; then
-    info "No changes needed — repo already up to date"
-  else
-    git commit -m "Add platform infrastructure definitions" >/dev/null
-    git push >/dev/null 2>&1
-    info "Pushed to ${GITHUB_OWNER}/${FLUX_REPO}"
-  fi
+if git diff --cached --quiet; then
+  info "No changes needed — Flux repo already up to date"
+else
+  git commit -m "Sync platform infrastructure definitions" >/dev/null
+  git push >/dev/null 2>&1
+  info "Pushed changes to ${GITHUB_OWNER}/${FLUX_REPO}"
 fi
 
 # ─── Trigger Flux reconciliation ──────────────────────────────────────────
