@@ -253,7 +253,7 @@ kubectl annotate deployment/api-server \
                 <div class="highlight-box fragment fade-up">
                     <strong>Best for:</strong> Critical production services, compliance-heavy environments, APIs with strict SLAs, and when rollback speed is paramount.
                 </div>
-                <aside class="notes">Blue-green is the simplest deployment strategy to reason about. The trade-off is resource cost — you need capacity for two full copies of the application simultaneously. For Verisign's DNS-critical services, the instant rollback capability can justify the extra cost. The database challenge applies here too: both blue and green must work with the same database schema.</aside>
+                <aside class="notes">Blue-green is the simplest deployment strategy to reason about. The trade-off is resource cost — you need capacity for two full copies of the application simultaneously. For the organization's DNS-critical services, the instant rollback capability can justify the extra cost. The database challenge applies here too: both blue and green must work with the same database schema.</aside>
             </section>
 
             <!-- Slide 10: Blue-Green — Blue Deployment -->
@@ -315,7 +315,7 @@ kind: HTTPRoute
 metadata: { name: api-route, namespace: production }
 spec:
   parentRefs: [{ name: production-gateway }]
-  hostnames: ["api.verisign.com"]
+  hostnames: ["api.example.com"]
   rules:
     - backendRefs:
         # Blue-green: 100% to one backend
@@ -432,7 +432,7 @@ metadata:
     # Also available: canary-by-header, canary-by-cookie
 spec:
   rules:
-    - host: api.verisign.com
+    - host: api.example.com
       http:
         paths:
           - path: /
@@ -673,7 +673,7 @@ kubectl rollout status deployment/api-server \
   -n production --timeout=300s
 
 # 4. Run smoke tests
-curl -sf https://api.verisign.com/healthz || \
+curl -sf https://api.example.com/healthz || \
   kubectl rollout undo deployment/api-server -n production</code></pre>
                 <div class="key-point fragment fade-up">
                     <strong>GitOps principle:</strong> Git is the single source of truth. All deployment changes go through Git, enabling audit trails, approvals, and automated rollback to any previous commit.

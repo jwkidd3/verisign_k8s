@@ -231,7 +231,7 @@
                         <li class="fragment fade-up"><strong>Observe &amp; Iterate</strong> — Logs, metrics, traces</li>
                     </ol>
                 </div>
-                <aside class="notes">This is the core loop every developer runs through. In practice, steps 2-5 are usually automated by a CI/CD pipeline, but developers need to understand each step. At Verisign, this pipeline typically uses ECR for the registry and EKS for the cluster.</aside>
+                <aside class="notes">This is the core loop every developer runs through. In practice, steps 2-5 are usually automated by a CI/CD pipeline, but developers need to understand each step. At your organization, this pipeline typically uses ECR for the registry and EKS for the cluster.</aside>
             </section>
 
             <!-- What Developers Own -->
@@ -309,7 +309,7 @@
                         </tr>
                     </tbody>
                 </table>
-                <aside class="notes">This table is the contract. When both sides honor it, the result is a highly productive system. Developers get self-service capabilities, and platform teams get consistent, manageable workloads. At Verisign with EKS, AWS manages the control plane, further simplifying the platform team's scope.</aside>
+                <aside class="notes">This table is the contract. When both sides honor it, the result is a highly productive system. Developers get self-service capabilities, and platform teams get consistent, manageable workloads. At your organization with EKS, AWS manages the control plane, further simplifying the platform team's scope.</aside>
             </section>
 
             <!-- The API as Contract -->
@@ -767,7 +767,7 @@ kubectl apply -k k8s/overlays/prod/</code></pre>
             <!-- Section Divider: EKS Context -->
             <section data-background="linear-gradient(135deg, #2b6cb0 0%, #2c5282 100%)" class="section-divider">
                 <h2>&#9729;&#65039; Kubernetes on EKS</h2>
-                <h3>Your platform at Verisign</h3>
+                <h3>Your enterprise platform</h3>
                 <aside class="notes">Let's ground everything we've discussed in the specific platform you'll be working with — Amazon EKS.</aside>
             </section>
 
@@ -821,11 +821,11 @@ kubectl describe pod myapp-abc123</code></pre>
                 <aside class="notes">This is the daily workflow for developers on EKS. The aws eks update-kubeconfig command configures your local kubectl to authenticate with the EKS cluster using IAM. From there, it's standard Kubernetes commands. Namespaces are typically used to isolate team workloads.</aside>
             </section>
 
-            <!-- Section Divider: Verisign Architecture Patterns -->
+            <!-- Section Divider: Enterprise Architecture Patterns -->
             <section data-background="linear-gradient(135deg, #2b6cb0 0%, #2c5282 100%)" class="section-divider">
-                <h2>&#127959;&#65039; Verisign Architecture Patterns</h2>
+                <h2>&#127959;&#65039; Enterprise Architecture Patterns</h2>
                 <h3>Mapping N-tier applications to Kubernetes primitives</h3>
-                <aside class="notes">Now that we understand Kubernetes core abstractions and EKS, let's see how a real N-tier application maps to Kubernetes resources — and how Verisign's platform builds on top of these patterns.</aside>
+                <aside class="notes">Now that we understand Kubernetes core abstractions and EKS, let's see how a real N-tier application maps to Kubernetes resources — and how the organization's platform builds on top of these patterns.</aside>
             </section>
 
             <!-- N-Tier Application on Kubernetes -->
@@ -835,124 +835,66 @@ kubectl describe pod myapp-abc123</code></pre>
                     <div class="card">
                         <h4>&#127760; Frontend</h4>
                         <ul>
-                            <li class="fragment fade-up"><strong>Deployment</strong> — stateless replicas</li>
-                            <li class="fragment fade-up"><strong>Service</strong> (ClusterIP) — internal routing</li>
-                            <li class="fragment fade-up"><strong>Ingress / HTTPRoute</strong> — external traffic, TLS termination</li>
+                            <li><strong>Deployment</strong> — stateless replicas</li>
+                            <li><strong>Service</strong> — internal routing</li>
+                            <li><strong>Ingress</strong> — external traffic + TLS</li>
                         </ul>
                     </div>
                     <div class="card">
                         <h4>&#9881;&#65039; API / Backend</h4>
                         <ul>
-                            <li class="fragment fade-up"><strong>Deployment</strong> — horizontally scaled</li>
-                            <li class="fragment fade-up"><strong>Service</strong> (ClusterIP) — discovery via DNS</li>
-                            <li class="fragment fade-up"><strong>ConfigMap / Secret</strong> — externalized config</li>
+                            <li><strong>Deployment</strong> — horizontally scaled</li>
+                            <li><strong>Service</strong> — DNS discovery</li>
+                            <li><strong>ConfigMap / Secret</strong> — config</li>
                         </ul>
                     </div>
                     <div class="card">
                         <h4>&#128451;&#65039; Data Layer</h4>
                         <ul>
-                            <li class="fragment fade-up"><strong>StatefulSet + PVC</strong> — stable identity &amp; storage</li>
-                            <li class="fragment fade-up"><strong>Headless Service</strong> — direct pod DNS</li>
-                            <li class="fragment fade-up"><strong>Cache</strong> (Redis/Memcached) — Deployment or StatefulSet</li>
+                            <li><strong>StatefulSet + PVC</strong> — stable storage</li>
+                            <li><strong>Headless Service</strong> — pod DNS</li>
+                            <li><strong>Cache</strong> — Redis / Memcached</li>
                         </ul>
                     </div>
                 </div>
-                <div class="highlight-box success fragment fade-up" style="margin-top: 15px;">
-                    <strong>Key insight:</strong> Every tier maps to a small set of Kubernetes primitives — Deployment, Service, ConfigMap, StatefulSet, Ingress. Master these and you can model any architecture.
-                </div>
-                <aside class="notes">This is the mental model to carry through the entire course. A typical N-tier app uses fewer than ten Kubernetes resource types. The frontend is stateless, so a Deployment with an Ingress handles it. The API tier is also stateless but needs configuration injection via ConfigMaps and Secrets. The data layer requires stable identities and persistent storage, which is where StatefulSets and PVCs come in. Cache layers like Redis can run as either Deployments (if ephemeral) or StatefulSets (if persistence matters). We will cover each of these resource types in dedicated modules.</aside>
+                <p class="fragment fade-up" style="margin-top: 20px; text-align: center; font-style: italic;">Every tier maps to a small set of primitives — master these and you can model any architecture.</p>
+                <aside class="notes">This is the mental model for the entire course. A typical N-tier app uses fewer than ten Kubernetes resource types. Frontend is stateless (Deployment + Ingress). API tier needs config injection (ConfigMaps, Secrets). Data layer needs stable identity and persistent storage (StatefulSets, PVCs). Each resource type is covered in dedicated modules.</aside>
             </section>
 
-            <!-- Verisign Architecture on EKS -->
+            <!-- Enterprise Architecture on EKS -->
             <section>
-                <h2>&#128737;&#65039; Verisign Architecture on EKS</h2>
-                <div class="two-columns">
-                    <div>
-                        <h4>Platform Patterns</h4>
-                        <ul>
-                            <li class="fragment fade-up"><strong>DNS-critical services</strong> — high availability with multi-AZ scheduling and PodDisruptionBudgets</li>
-                            <li class="fragment fade-up"><strong>Dual Ingress</strong> — separate controllers for internal vs. external traffic isolation</li>
-                            <li class="fragment fade-up"><strong>GitOps via FluxCD</strong> — Git is the single source of truth; clusters reconcile automatically</li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h4>Supporting Infrastructure</h4>
-                        <ul>
-                            <li class="fragment fade-up"><strong>Vault</strong> — secrets management integrated with Kubernetes auth</li>
-                            <li class="fragment fade-up"><strong>ECR</strong> — container images scanned and stored in AWS Elastic Container Registry</li>
-                            <li class="fragment fade-up"><strong>Observability</strong> — Prometheus + Grafana for metrics, Splunk for log aggregation</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="concept-box fragment fade-up" style="margin-top: 15px;">
-                    <h4>Course Connection</h4>
-                    <p>Each of these patterns is covered in detail in subsequent modules: Ingress (Module 5), Configuration &amp; Secrets (Module 6), RBAC &amp; Security (Module 7), Observability (Module 9), and CI/CD &amp; GitOps (Module 13).</p>
-                </div>
-                <aside class="notes">This slide is the architecture roadmap for the course. Verisign runs DNS-critical infrastructure, so availability is non-negotiable — that drives patterns like PodDisruptionBudgets and multi-AZ topology constraints. The dual ingress pattern separates internal service-to-service traffic from external-facing endpoints, reducing attack surface. FluxCD watches Git repositories and automatically applies changes to the cluster, eliminating manual kubectl apply in production. Vault replaces Kubernetes-native Secrets for sensitive credentials, integrating with IAM and Kubernetes service accounts. All container images flow through ECR with vulnerability scanning. And the observability stack — Prometheus, Grafana, and Splunk — ensures teams can monitor, alert, and debug effectively. Emphasize that students will get hands-on with each of these systems throughout the course.</aside>
+                <h2>&#128737;&#65039; Enterprise Architecture on EKS</h2>
+                <ul>
+                    <li class="fragment fade-up"><strong>DNS-critical services</strong> — multi-AZ scheduling + PodDisruptionBudgets</li>
+                    <li class="fragment fade-up"><strong>Dual Ingress</strong> — separate internal vs. external traffic</li>
+                    <li class="fragment fade-up"><strong>GitOps via FluxCD</strong> — Git as single source of truth</li>
+                    <li class="fragment fade-up"><strong>Vault + ESO</strong> — secrets management with Kubernetes auth</li>
+                    <li class="fragment fade-up"><strong>ECR</strong> — scanned container images</li>
+                    <li class="fragment fade-up"><strong>Observability</strong> — Prometheus, Grafana, Splunk</li>
+                </ul>
+                <p class="fragment fade-up" style="margin-top: 20px; font-style: italic;">Each pattern is covered hands-on in Modules 5-13.</p>
+                <aside class="notes">This slide is the architecture roadmap for the course. DNS-critical infrastructure drives patterns like PDBs and multi-AZ constraints. Dual ingress separates internal from external traffic. FluxCD automates cluster reconciliation. Vault replaces native Secrets. ECR provides image scanning. Prometheus/Grafana/Splunk cover observability. Students get hands-on with each system throughout the course.</aside>
             </section>
 
-            <!-- Section Divider: Course Roadmap -->
-            <section data-background="linear-gradient(135deg, #2b6cb0 0%, #2c5282 100%)" class="section-divider">
+            <!-- Course Roadmap -->
+            <section>
                 <h2>&#128506;&#65039; Course Roadmap</h2>
-                <h3>What we'll cover across 13 modules</h3>
-                <aside class="notes">Let's preview the entire course so you can see how everything connects. Each module builds on the previous ones.</aside>
-            </section>
-
-            <!-- Course Roadmap Part 1 -->
-            <section>
-                <h2>&#128506;&#65039; Course Roadmap — Modules 1-8</h2>
-                <table>
+                <table style="font-size: 0.7em;">
                     <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Module</th>
-                            <th>Focus</th>
-                        </tr>
+                        <tr><th>#</th><th>Module</th><th>Focus</th></tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>1</td>
-                            <td><strong>Why Kubernetes</strong></td>
-                            <td>Developer value prop, core abstractions</td>
-                        </tr>
-                        <tr>
-                            <td>2</td>
-                            <td>Scaling &amp; AutoScalers</td>
-                            <td>HPA, VPA, KEDA, metrics</td>
-                        </tr>
-                        <tr>
-                            <td>3</td>
-                            <td>Managing Data</td>
-                            <td>PVCs, StorageClasses, StatefulSets</td>
-                        </tr>
-                        <tr>
-                            <td>4</td>
-                            <td>Services &amp; Discovery</td>
-                            <td>Service types, DNS, kube-proxy</td>
-                        </tr>
-                        <tr>
-                            <td>5</td>
-                            <td>Configuration &amp; Secrets</td>
-                            <td>ConfigMaps, Secrets, Vault, ESO</td>
-                        </tr>
-                        <tr>
-                            <td>6</td>
-                            <td>Ingress &amp; Egress</td>
-                            <td>Ingress controllers, Gateway API, TLS</td>
-                        </tr>
-                        <tr>
-                            <td>7</td>
-                            <td>RBAC, Security &amp; IRSA</td>
-                            <td>Roles, PSA, container security, IRSA</td>
-                        </tr>
-                        <tr>
-                            <td>8</td>
-                            <td>Network Policies</td>
-                            <td>Pod-to-pod traffic control</td>
-                        </tr>
+                        <tr><td>1</td><td><strong>Why Kubernetes</strong></td><td>Core abstractions, EKS</td></tr>
+                        <tr><td>2</td><td>Scaling</td><td>HPA, VPA, Cluster Autoscaler</td></tr>
+                        <tr><td>3</td><td>Storage</td><td>PVCs, StatefulSets</td></tr>
+                        <tr><td>4</td><td>Services</td><td>Service types, DNS</td></tr>
+                        <tr><td>5</td><td>Config &amp; Secrets</td><td>ConfigMaps, Secrets, Vault</td></tr>
+                        <tr><td>6</td><td>Ingress &amp; Egress</td><td>Ingress, Gateway API, TLS</td></tr>
+                        <tr><td>7</td><td>RBAC &amp; Security</td><td>Roles, PSA, IRSA</td></tr>
+                        <tr><td>8</td><td>Network Policies</td><td>Pod-to-pod traffic control</td></tr>
                     </tbody>
                 </table>
-                <aside class="notes">Modules 1-8 cover the core developer skills. By the end of module 8, you'll be able to deploy, expose, configure, secure, and scale applications on Kubernetes. The remaining modules build advanced operational skills.</aside>
+                <aside class="notes">Modules 1-8 cover core developer skills. By module 8, students can deploy, expose, configure, secure, and scale applications on Kubernetes.</aside>
             </section>
 
             <!-- Course Roadmap Part 2 -->

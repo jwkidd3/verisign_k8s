@@ -681,7 +681,6 @@ kubectl get pvc
                             <li>Create <code>postgres-1</code>, wait until Ready</li>
                             <li>Create <code>postgres-2</code>, wait until Ready</li>
                         </ol>
-                        <p><em>Each pod must be Running and Ready before the next one starts.</em></p>
                     </div>
                     <div class="card">
                         <h4>Scale Down (3 &rarr; 1)</h4>
@@ -690,12 +689,9 @@ kubectl get pvc
                             <li>Terminate <code>postgres-1</code>, wait until gone</li>
                             <li><code>postgres-0</code> remains</li>
                         </ol>
-                        <p><em>Highest ordinal terminated first. Reverse order.</em></p>
                     </div>
                 </div>
-                <div class="highlight-box fragment fade-up">
-                    <strong>Why ordering matters:</strong> Databases often initialize the primary (ordinal 0) first, then join replicas to the cluster one at a time. Unordered startup can cause split-brain or data corruption.
-                </div>
+                <p style="margin-top: 15px;"><strong>Why ordering matters:</strong> Databases initialize the primary (ordinal 0) first, then join replicas one at a time. Unordered startup can cause split-brain.</p>
                 <aside class="notes">The ordering guarantee is critical for distributed systems. For example, a PostgreSQL cluster using Patroni needs pod-0 to initialize the primary before pod-1 can stream replication from it. If both started simultaneously, neither would know who the primary is. The reverse order for scale-down ensures replicas are drained before the primary is affected.</aside>
             </section>
 
@@ -713,7 +709,6 @@ kubectl get pvc
                         <ul>
                             <li>Updates pods in reverse ordinal order</li>
                             <li>Waits for each to be Ready</li>
-                            <li><code>partition</code> allows canary updates</li>
                         </ul>
                     </div>
                     <div class="card">
@@ -724,15 +719,12 @@ kubectl get pvc
     rollingUpdate:
       partition: 2  # Only update pods >= 2</code></pre>
                         <ul>
-                            <li>Pods with ordinal &ge; partition get the new version</li>
-                            <li>Pods below partition keep the old version</li>
-                            <li>Gradually lower partition to roll out</li>
+                            <li>Pods with ordinal &ge; partition get new version</li>
+                            <li>Lower partition gradually to roll out</li>
                         </ul>
                     </div>
                 </div>
-                <div class="key-point fragment fade-up">
-                    <strong>Partition strategy:</strong> Set partition=2 on a 3-replica StatefulSet to update only <code>pod-2</code>. Validate, then set partition=1, then partition=0 for a controlled rollout.
-                </div>
+                <p style="margin-top: 15px;"><strong>Canary example:</strong> Set <code>partition=2</code> on a 3-replica set &rarr; only <code>pod-2</code> updates. Validate, then lower to 1, then 0.</p>
                 <aside class="notes">The partition field is a powerful canary mechanism unique to StatefulSets. Unlike Deployment rollouts that are all-or-nothing per ReplicaSet, StatefulSet partitions let you update one replica at a time and validate before proceeding. For database upgrades, this is invaluable — update one replica, verify data integrity, then continue.</aside>
             </section>
 

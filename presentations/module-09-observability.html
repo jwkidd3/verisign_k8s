@@ -62,7 +62,7 @@
             <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" class="title-slide">
                 <h1>&#128269; Observability</h1>
                 <h2>Logging, Metrics &amp; Tracing &mdash; Module 9 of 13</h2>
-                <h3>Verisign EKS Platform</h3>
+                <h3>Enterprise EKS Platform</h3>
                                 <div class="module-progress">
                     <div class="step completed"></div>
                     <div class="step completed"></div>
@@ -360,13 +360,13 @@ after 30s for user api-svc</code></pre>
                 <h2>&#128300; Logging to Splunk on EKS</h2>
                 <div class="concept-box">
                     <h4>Fluent Bit &rarr; Splunk HEC Pipeline</h4>
-                    <p>Verisign's EKS clusters ship logs to Splunk using Fluent Bit's native <code>splunk</code> output plugin via the HTTP Event Collector (HEC)</p>
+                    <p>The organization's EKS clusters ship logs to Splunk using Fluent Bit's native <code>splunk</code> output plugin via the HTTP Event Collector (HEC)</p>
                 </div>
                 <pre class="fragment fade-up"><code class="language-ini"># fluent-bit OUTPUT section
 [OUTPUT]
     Name           splunk
     Match          kube.*
-    Host           splunk-hec.internal.verisign.com
+    Host           splunk-hec.internal.example.com
     Port           8088
     Splunk_Token   ${SPLUNK_HEC_TOKEN}
     TLS            On
@@ -379,7 +379,7 @@ after 30s for user api-svc</code></pre>
                 <div class="highlight-box fragment fade-up" style="margin-top: 10px;">
                     <strong>Key detail:</strong> HEC token is stored in a Kubernetes Secret and injected via <code>envFrom</code>. Index-per-namespace routing uses Fluent Bit's <code>Rewrite_Tag</code> filter to direct logs to the correct Splunk index.
                 </div>
-                <aside class="notes">Verisign's EKS platform uses Fluent Bit DaemonSets to collect container logs and forward them to Splunk via the HTTP Event Collector. The Splunk output plugin ships JSON-structured logs over TLS to the HEC endpoint. The HEC token is stored as a Kubernetes Secret and mounted into the Fluent Bit pods. Index routing is handled by Fluent Bit's Rewrite_Tag filter — logs from different namespaces can be sent to separate Splunk indexes based on label or namespace metadata, which aligns with Splunk's role-based access controls. Splunk_Send_Raw preserves the JSON structure so fields are automatically extracted in Splunk without additional parsing configuration.</aside>
+                <aside class="notes">the organization's EKS platform uses Fluent Bit DaemonSets to collect container logs and forward them to Splunk via the HTTP Event Collector. The Splunk output plugin ships JSON-structured logs over TLS to the HEC endpoint. The HEC token is stored as a Kubernetes Secret and mounted into the Fluent Bit pods. Index routing is handled by Fluent Bit's Rewrite_Tag filter — logs from different namespaces can be sent to separate Splunk indexes based on label or namespace metadata, which aligns with Splunk's role-based access controls. Splunk_Send_Raw preserves the JSON structure so fields are automatically extracted in Splunk without additional parsing configuration.</aside>
             </section>
 
             <!-- Slide 14: Section — Metrics -->
@@ -565,7 +565,7 @@ container_memory_working_set_bytes / container_spec_memory_limit_bytes</code></p
                     </ul>
                 </div>
                 <pre class="fragment fade-up"><code class="language-bash"># Enable Container Insights with the ADOT add-on
-aws eks create-addon --cluster-name verisign-prod \
+aws eks create-addon --cluster-name mycompany-prod \
   --addon-name amazon-cloudwatch-observability \
   --addon-version v1.5.0-eksbuild.1</code></pre>
                 <aside class="notes">Container Insights is the AWS-native option for EKS monitoring. It requires no Prometheus stack — metrics go directly to CloudWatch. The newer ADOT-based approach uses the AWS Distro for OpenTelemetry, which can collect both metrics and traces. For teams already invested in CloudWatch for other AWS services, Container Insights provides a unified pane of glass. The trade-off is cost at scale — CloudWatch custom metrics can become expensive with high-cardinality workloads.</aside>
@@ -693,7 +693,7 @@ service:
                 <div class="highlight-box fragment fade-up">
                     <strong>Recommendation:</strong> Use X-Ray on EKS for AWS-native visibility. Add Jaeger if you need advanced trace analysis or self-hosted retention control.
                 </div>
-                <aside class="notes">Jaeger gives you full control and deep analysis capabilities. X-Ray gives you a managed service with zero infrastructure overhead and native integration with other AWS services like Lambda, API Gateway, and RDS. On EKS, you can use the ADOT Collector to export traces to both simultaneously if needed. For Verisign's EKS environment, X-Ray is the natural starting point with Jaeger as an option for teams that need more advanced trace querying.</aside>
+                <aside class="notes">Jaeger gives you full control and deep analysis capabilities. X-Ray gives you a managed service with zero infrastructure overhead and native integration with other AWS services like Lambda, API Gateway, and RDS. On EKS, you can use the ADOT Collector to export traces to both simultaneously if needed. For the organization's EKS environment, X-Ray is the natural starting point with Jaeger as an option for teams that need more advanced trace querying.</aside>
             </section>
 
             <!-- Slide 27: Section — Alerting & Incident Response -->
@@ -748,9 +748,9 @@ receivers:
                 <aside class="notes">Alertmanager routes alerts based on label matching. The route tree is hierarchical — more specific matches override the default. group_by batches related alerts into a single notification to reduce noise. group_wait delays the first notification slightly to catch related alerts that fire around the same time. Critical severity goes to PagerDuty for immediate response; warnings go to Slack for awareness. The send_resolved flag sends a recovery notification when the alert clears.</aside>
             </section>
 
-            <!-- Slide 29b: Verisign Alerting Destinations -->
+            <!-- Slide 29b: Enterprise Alerting Destinations -->
             <section>
-                <h2>&#128232; Verisign Alerting Destinations</h2>
+                <h2>&#128232; Enterprise Alerting Destinations</h2>
                 <div class="three-columns">
                     <div class="card fragment fade-up">
                         <h4>&#127381; Netcool (Webhook)</h4>
@@ -783,7 +783,7 @@ receivers:
                 <div class="highlight-box fragment fade-up" style="margin-top: 12px;">
                     <strong>Routing tree strategy:</strong> <code>severity: critical</code> &rarr; Netcool + WebEx &ensp;|&ensp; <code>severity: warning</code> &rarr; Email + WebEx &ensp;|&ensp; <code>severity: info</code> &rarr; Email only
                 </div>
-                <aside class="notes">On Verisign's EKS platform, Alertmanager routes to three primary destinations. Netcool is the enterprise event management system — alerts reach it through a webhook receiver that POSTs JSON to the Netcool OMNIbus REST probe. The probe maps Kubernetes alert labels (severity, namespace, alertname) into Netcool event fields such as Class, Summary, and Node. Email uses the built-in SMTP receiver pointed at the corporate relay, and is typically reserved for warning and informational alerts that create tickets rather than pages. WebEx Teams integration uses the Incoming Webhook connector — Alertmanager posts an Adaptive Card with alert details to a designated Space so the on-call team has real-time visibility. In the routing tree, critical alerts fan out to both Netcool and WebEx for immediate response, while lower-severity alerts go to email for tracking.</aside>
+                <aside class="notes">On the organization's EKS platform, Alertmanager routes to three primary destinations. Netcool is the enterprise event management system — alerts reach it through a webhook receiver that POSTs JSON to the Netcool OMNIbus REST probe. The probe maps Kubernetes alert labels (severity, namespace, alertname) into Netcool event fields such as Class, Summary, and Node. Email uses the built-in SMTP receiver pointed at the corporate relay, and is typically reserved for warning and informational alerts that create tickets rather than pages. WebEx Teams integration uses the Incoming Webhook connector — Alertmanager posts an Adaptive Card with alert details to a designated Space so the on-call team has real-time visibility. In the routing tree, critical alerts fan out to both Netcool and WebEx for immediate response, while lower-severity alerts go to email for tracking.</aside>
             </section>
 
             <!-- Slide 30: SLOs and Error Budgets -->

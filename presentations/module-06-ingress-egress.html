@@ -62,7 +62,7 @@
             <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" class="title-slide">
                 <h1>&#127760; Accessing Your Applications from Outside</h1>
                 <h2>Ingress &amp; Egress &mdash; Module 6 of 13</h2>
-                <h3>Verisign EKS Platform</h3>
+                <h3>Enterprise EKS Platform</h3>
                                 <div class="module-progress">
                     <div class="step completed"></div>
                     <div class="step completed"></div>
@@ -91,7 +91,7 @@
                     <li class="fragment fade-up">Annotations, TLS Termination &amp; cert-manager</li>
                     <li class="fragment fade-up">Gateway API: GatewayClass, Gateway, HTTPRoute</li>
                     <li class="fragment fade-up">Traffic Splitting and Canary Deployments</li>
-                    <li class="fragment fade-up">Verisign Integration &amp; Egress Controls</li>
+                    <li class="fragment fade-up">Enterprise Integration &amp; Egress Controls</li>
                 </ul>
                 <aside class="notes">We have a packed module covering both Ingress and the newer Gateway API. We'll start with the established NGINX Ingress pattern, then show how Gateway API improves upon it, and finish with egress controls for outbound traffic management.</aside>
             </section>
@@ -138,7 +138,7 @@
                         <li class="fragment fade-up">Reloads NGINX when Ingress resources change</li>
                     </ol>
                 </div>
-                <aside class="notes">Tip: IngressClass specifies which controller handles an Ingress. Multiple controllers can coexist (e.g., internal vs external). Critical for Verisign where you might have separate internal and external ingress controllers.</aside>
+                <aside class="notes">Tip: IngressClass specifies which controller handles an Ingress. Multiple controllers can coexist (e.g., internal vs external). Critical in environments where you might have separate internal and external ingress controllers.</aside>
             </section>
 
             <section>
@@ -158,7 +158,7 @@ metadata: { name: nginx-internal }
 spec:
   controller: k8s.io/ingress-nginx-internal</code></pre>
                 <div class="key-point fragment fade-up">
-                    <strong>Production Pattern:</strong> Verisign runs separate IngressClasses for external (internet-facing) and internal (VPC-only) traffic, each backed by its own controller deployment and load balancer.
+                    <strong>Production Pattern:</strong> The organization runs separate IngressClasses for external (internet-facing) and internal (VPC-only) traffic, each backed by its own controller deployment and load balancer.
                 </div>
                 <aside class="notes">IngressClass is mandatory in modern Kubernetes. It decouples the Ingress resource from the controller. By setting is-default-class, any Ingress without an explicit ingressClassName will be picked up by that controller. Running separate internal and external controllers is a common production pattern.</aside>
             </section>
@@ -180,7 +180,7 @@ metadata:
 spec:
   ingressClassName: nginx-external
   rules:
-  - host: app.verisign.internal
+  - host: app.example.internal
     http:
       paths:
       - path: /api(/|$)(.*)
@@ -196,17 +196,17 @@ spec:
                 <h2>&#127760; Host-Based Routing</h2>
                 <pre class="fragment fade-up"><code class="language-yaml">apiVersion: networking.k8s.io/v1
 kind: Ingress
-metadata: { name: multi-host-ingress, namespace: verisign-apps }
+metadata: { name: multi-host-ingress, namespace: mycompany-apps }
 spec:
   ingressClassName: nginx-external
   rules:
-  - host: api.verisign.internal
+  - host: api.example.internal
     http:
       paths:
       - path: /
         pathType: Prefix
         backend: { service: { name: api-service, port: { number: 8080 } } }
-  - host: dashboard.verisign.internal
+  - host: dashboard.example.internal
     http:
       paths:
       - path: /
@@ -263,7 +263,7 @@ spec:
     nginx.ingress.kubernetes.io/limit-rps: "50"
     nginx.ingress.kubernetes.io/limit-burst-multiplier: "5"
     nginx.ingress.kubernetes.io/enable-cors: "true"
-    nginx.ingress.kubernetes.io/cors-allow-origin: "https://app.verisign.com"</code></pre>
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://app.example.com"</code></pre>
                 <aside class="notes">These are the most commonly used annotations in production. SSL redirect ensures all HTTP traffic is upgraded to HTTPS. proxy-body-size controls upload limits. Rate limiting protects your backends from overload. CORS headers are essential for APIs consumed by web frontends. Each annotation maps to an NGINX directive in the generated configuration.</aside>
             </section>
 
@@ -312,10 +312,10 @@ metadata:
 spec:
   ingressClassName: nginx-external
   tls:
-  - hosts: [api.verisign.internal, dashboard.verisign.internal]
+  - hosts: [api.example.internal, dashboard.example.internal]
     secretName: app-tls
   rules:
-  - host: api.verisign.internal
+  - host: api.example.internal
     http:
       paths:
       - path: /
@@ -332,7 +332,7 @@ metadata: { name: letsencrypt-prod }
 spec:
   acme:
     server: https://acme-v02.api.letsencrypt.org/directory
-    email: certs@verisign.com
+    email: certs@example.com
     privateKeySecretRef: { name: letsencrypt-prod-key }
     solvers:
     - http01:
@@ -351,10 +351,10 @@ metadata:
 spec:
   ingressClassName: nginx-external
   tls:
-  - hosts: [api.verisign.internal]
+  - hosts: [api.example.internal]
     secretName: api-tls-auto
   rules:
-  - host: api.verisign.internal
+  - host: api.example.internal
     http:
       paths:
       - path: /
@@ -415,7 +415,7 @@ spec:
                     </div>
                 </div>
                 <div class="key-point fragment fade-up">
-                    <strong>Role Separation:</strong> Infrastructure teams manage GatewayClass and Gateway. Application teams create HTTPRoutes. This maps cleanly to Verisign's organizational model.
+                    <strong>Role Separation:</strong> Infrastructure teams manage GatewayClass and Gateway. Application teams create HTTPRoutes. This maps cleanly to the organization's team model.
                 </div>
                 <aside class="notes">The three-tier resource model is Gateway API's biggest architectural advantage. Infrastructure providers define GatewayClasses. Platform teams create Gateways. Application developers attach routes. Each role has clear boundaries and RBAC can be applied at each level. This is much cleaner than Ingress where one resource mixes all concerns.</aside>
             </section>
@@ -425,7 +425,7 @@ spec:
                 <pre class="fragment fade-up"><code class="language-yaml"># GatewayClass is typically pre-installed by the platform
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
-metadata: { name: verisign-gateway, namespace: gateway-system }
+metadata: { name: mycompany-gateway, namespace: gateway-system }
 spec:
   gatewayClassName: envoy-gateway
   listeners:
@@ -451,11 +451,11 @@ spec:
                 <h2>&#128208; HTTPRoute Resource</h2>
                 <pre class="fragment fade-up"><code class="language-yaml">apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
-metadata: { name: api-routes, namespace: verisign-apps }
+metadata: { name: api-routes, namespace: mycompany-apps }
 spec:
   parentRefs:
-  - { name: verisign-gateway, namespace: gateway-system, sectionName: https }
-  hostnames: ["api.verisign.internal"]
+  - { name: mycompany-gateway, namespace: gateway-system, sectionName: https }
+  hostnames: ["api.example.internal"]
   rules:
   - matches:
     - path: { type: PathPrefix, value: /v1/dns }
@@ -478,11 +478,11 @@ spec:
                 <h2>&#9878;&#65039; Canary Deployments with HTTPRoute</h2>
                 <pre class="fragment fade-up"><code class="language-yaml">apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
-metadata: { name: dns-service-canary, namespace: verisign-apps }
+metadata: { name: dns-service-canary, namespace: mycompany-apps }
 spec:
   parentRefs:
-  - { name: verisign-gateway, namespace: gateway-system }
-  hostnames: ["dns.verisign.internal"]
+  - { name: mycompany-gateway, namespace: gateway-system }
+  hostnames: ["dns.example.internal"]
   rules:
   - matches:
     - path: { type: PathPrefix, value: / }
@@ -500,11 +500,11 @@ spec:
                 <h2>&#128202; Header-Based Canary Routing</h2>
                 <pre class="fragment fade-up"><code class="language-yaml">apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
-metadata: { name: dns-service-header-canary, namespace: verisign-apps }
+metadata: { name: dns-service-header-canary, namespace: mycompany-apps }
 spec:
   parentRefs:
-  - { name: verisign-gateway, namespace: gateway-system }
-  hostnames: ["dns.verisign.internal"]
+  - { name: mycompany-gateway, namespace: gateway-system }
+  hostnames: ["dns.example.internal"]
   rules:
   - matches:
     - headers: [{ name: X-Canary, value: "true" }]
@@ -517,45 +517,40 @@ spec:
                 <aside class="notes">Tip: QA team sets X-Canary: true header to test new versions in production before enabling weight-based rollout. This lets you verify the canary in the real production environment before exposing it to all users.</aside>
             </section>
 
-            <!-- Verisign Integration -->
+            <!-- Enterprise Integration -->
             <section data-background="linear-gradient(135deg, #2b6cb0 0%, #2c5282 100%)" class="section-divider">
-                <h2>&#127961;&#65039; Verisign Integration</h2>
+                <h2>&#127961;&#65039; Enterprise Integration</h2>
                 <h3>Envoy Gateway + External DNS + cert-manager</h3>
-                <aside class="notes">Let's look at how these components come together in Verisign's EKS platform.</aside>
+                <aside class="notes">Let's look at how these components come together in the organization's EKS platform.</aside>
             </section>
 
             <section>
-                <h2>&#127961;&#65039; Verisign EKS Ingress Stack</h2>
-                <div class="concept-box">
-                    <h4>Production Architecture</h4>
-                </div>
-                <div class="three-columns fragment fade-up">
+                <h2>&#127961;&#65039; Enterprise EKS Ingress Stack</h2>
+                <div class="three-columns" style="font-size: 0.85em;">
                     <div class="card">
                         <h4>&#128310; Envoy Gateway</h4>
                         <ul>
-                            <li>Gateway API with Envoy data plane</li>
-                            <li>Advanced L7: gRPC + HTTP routing</li>
+                            <li>Gateway API + Envoy data plane</li>
+                            <li>Advanced L7: gRPC + HTTP</li>
                         </ul>
                     </div>
                     <div class="card">
                         <h4>&#127760; External DNS</h4>
                         <ul>
-                            <li>Watches Gateway/Ingress resources</li>
+                            <li>Watches Gateway/Ingress</li>
                             <li>Auto-creates Route53 records</li>
                         </ul>
                     </div>
                     <div class="card">
                         <h4>&#128274; cert-manager</h4>
                         <ul>
-                            <li>Automated certificate lifecycle with auto-renewal</li>
-                            <li>Internal CA, ACME, or Gateway API integration</li>
+                            <li>Automated cert lifecycle</li>
+                            <li>Internal CA, ACME, or Gateway API</li>
                         </ul>
                     </div>
                 </div>
-                <div class="key-point fragment fade-up">
-                    <strong>Workflow:</strong> Developer creates HTTPRoute &rarr; Envoy Gateway configures proxy &rarr; External DNS creates Route53 record &rarr; cert-manager provisions TLS certificate &rarr; Application is live with HTTPS.
-                </div>
-                <aside class="notes">This is the golden path at Verisign. An application developer creates an HTTPRoute, and the platform automation handles everything else — DNS records, TLS certificates, and proxy configuration. This reduces the time from code to production and eliminates manual certificate and DNS management.</aside>
+                <p style="margin-top: 15px;"><strong>Workflow:</strong> HTTPRoute &rarr; Envoy configures proxy &rarr; External DNS creates Route53 record &rarr; cert-manager provisions TLS &rarr; App is live with HTTPS.</p>
+                <aside class="notes">This is the golden path at your organization. An application developer creates an HTTPRoute, and the platform automation handles everything else — DNS records, TLS certificates, and proxy configuration. This reduces the time from code to production and eliminates manual certificate and DNS management.</aside>
             </section>
 
             <!-- Egress Controls -->

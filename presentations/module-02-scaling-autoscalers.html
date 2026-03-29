@@ -214,7 +214,8 @@
             <!-- QoS Classes -->
             <section>
                 <h2>&#127919; Quality of Service (QoS) Classes</h2>
-                <table>
+                <p>Kubernetes automatically assigns a <strong>QoS class</strong> to every pod based on its resource configuration. When a node runs low on memory, the kubelet uses QoS class to decide which pods to evict first.</p>
+                <table style="font-size: 0.85em;">
                     <thead>
                         <tr>
                             <th>QoS Class</th>
@@ -240,20 +241,39 @@
                         </tr>
                     </tbody>
                 </table>
-                <aside class="notes">QoS class determines what happens under memory pressure. The kubelet evicts BestEffort first, then Burstable, and Guaranteed last.</aside>
+                <aside class="notes">QoS class determines what happens under memory pressure. The kubelet uses an OOM score calculated from QoS class and actual usage. BestEffort pods get evicted first, then Burstable (sorted by usage relative to request), and Guaranteed last. You can check a pod's QoS class with: kubectl get pod &lt;name&gt; -o jsonpath='{.status.qosClass}'</aside>
             </section>
 
             <section>
-                <h2>&#127919; QoS Classes — Example</h2>
-                <pre class="fragment fade-up"><code class="language-yaml"># Guaranteed QoS — best for production critical workloads
+                <h2>&#127919; QoS Classes — Examples</h2>
+                <div class="two-columns">
+                    <div>
+                        <pre><code class="language-yaml"># Guaranteed — requests == limits
 resources:
   requests:
     cpu: "500m"
     memory: "512Mi"
   limits:
-    cpu: "500m"      # Same as request
-    memory: "512Mi"  # Same as request</code></pre>
-                <aside class="notes">Tip: Production workloads should be Guaranteed or Burstable — never deploy BestEffort to production.</aside>
+    cpu: "500m"
+    memory: "512Mi"</code></pre>
+                    </div>
+                    <div>
+                        <pre><code class="language-yaml"># Burstable — requests < limits
+resources:
+  requests:
+    cpu: "250m"
+    memory: "256Mi"
+  limits:
+    cpu: "1000m"
+    memory: "512Mi"</code></pre>
+                    </div>
+                </div>
+                <pre><code class="language-yaml"># BestEffort — no resources specified (not recommended for production)
+containers:
+- name: worker
+  image: myapp:latest
+  # No resources block → QoS = BestEffort</code></pre>
+                <aside class="notes">Guaranteed is ideal for critical production workloads — stable performance, last to be evicted. Burstable is a practical middle ground — reserve what you need, burst when available. BestEffort should only be used for throwaway jobs or development — these pods are evicted first under memory pressure.</aside>
             </section>
 
             <!-- Section Divider: Metrics Server -->
@@ -488,21 +508,18 @@ spec:
             <!-- HPA Status -->
             <section>
                 <h2>&#128270; Monitoring HPA Status</h2>
-                <pre><code class="language-bash"># View HPA status
+                <pre><code class="language-bash"># View HPA status — TARGETS shows current/target for each metric
 $ kubectl get hpa myapp-hpa
 NAME        REFERENCE         TARGETS          REPLICAS
-myapp-hpa   Deployment/myapp  45%/60%,62%/75%  5
-
-# Detailed status with conditions
+myapp-hpa   Deployment/myapp  45%/60%,62%/75%  5</code></pre>
+                <pre><code class="language-bash"># Detailed conditions — is scaling working?
 $ kubectl describe hpa myapp-hpa
 Conditions:
   AbleToScale    True  ReadyForNewScale
   ScalingActive  True  ValidMetricFound
-  ScalingLimited False DesiredInRange
-
-# View HPA scaling events
-$ kubectl get events \
-  --field-selector involvedObject.name=myapp-hpa</code></pre>
+  ScalingLimited False DesiredInRange</code></pre>
+                <pre><code class="language-bash"># View scaling events history
+$ kubectl get events --field-selector involvedObject.name=myapp-hpa</code></pre>
                 <aside class="notes">These commands are essential for troubleshooting HPA behavior. The TARGETS column shows current/target for each metric. The Conditions section tells you whether the HPA can scale, whether metrics are available, and whether it's hitting min/max limits. Events show you the actual scaling history. If ScalingActive is False, check that Metrics Server is running and your pod has resource requests set.</aside>
             </section>
 

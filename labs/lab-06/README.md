@@ -142,7 +142,7 @@ curl -s -H "Host: app-$STUDENT_NAME.lab.local" http://$INGRESS_IP/
 ```bash
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
     -keyout tls-ingress.key -out tls-ingress.crt \
-    -subj "/CN=*.lab.local/O=Verisign Lab"
+    -subj "/CN=*.lab.local/O=Lab"
 
 kubectl create secret tls lab-tls-secret \
     --cert=tls-ingress.crt --key=tls-ingress.key -n lab06-$STUDENT_NAME
@@ -176,7 +176,7 @@ curl -s -H "Host: api-$STUDENT_NAME.lab.local" http://$INGRESS_IP/api/
 
 # Check CORS and custom headers
 curl -sI -H "Host: api-$STUDENT_NAME.lab.local" \
-    -H "Origin: https://app.verisign.com" \
+    -H "Origin: https://app.example.com" \
     http://$INGRESS_IP/api/ 2>&1 | grep -iE "access-control|X-Served"
 
 # Test rate limiting

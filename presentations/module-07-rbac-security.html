@@ -69,7 +69,7 @@
             <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" class="title-slide">
                 <h1>&#128272; RBAC &amp; Security</h1>
                 <h2>Controlling Access and Hardening Your Cluster</h2>
-                <h3>Verisign EKS Platform &mdash; Module 7 of 13</h3>
+                <h3>Enterprise EKS Platform &mdash; Module 7 of 13</h3>
                                 <div class="module-progress">
                     <div class="step completed"></div>
                     <div class="step completed"></div>
@@ -600,35 +600,33 @@ ENTRYPOINT ["/app"]</code></pre>
             <!-- Slide 23: Image Scanning, Signing, and Secrets -->
             <section>
                 <h2>&#128270; Image Security Pipeline</h2>
-                <div class="three-columns">
+                <div class="three-columns" style="font-size: 0.85em;">
                     <div class="card">
                         <h4>&#128737;&#65039; Run as Non-Root</h4>
                         <ul>
-                            <li class="fragment fade-up">Add <code>USER</code> directive in Dockerfile</li>
-                            <li class="fragment fade-up">Pair with <code>runAsNonRoot: true</code> in security context</li>
-                            <li class="fragment fade-up">Never store secrets in image layers — use K8s Secrets or AWS Secrets Manager</li>
+                            <li>Add <code>USER</code> in Dockerfile</li>
+                            <li>Pair with <code>runAsNonRoot: true</code></li>
+                            <li>Never store secrets in layers</li>
                         </ul>
                     </div>
                     <div class="card">
                         <h4>&#128269; Image Scanning</h4>
                         <ul>
-                            <li class="fragment fade-up"><strong>Trivy</strong> — open-source, CI-friendly scanner</li>
-                            <li class="fragment fade-up"><strong>ECR scanning</strong> — automatic on push (Basic or Enhanced with Inspector)</li>
-                            <li class="fragment fade-up">Scan in CI <em>and</em> continuously in the registry</li>
+                            <li><strong>Trivy</strong> — CI-friendly scanner</li>
+                            <li><strong>ECR scanning</strong> — on push or continuous</li>
+                            <li>Scan in CI <em>and</em> in registry</li>
                         </ul>
                     </div>
                     <div class="card">
                         <h4>&#9999;&#65039; Image Signing</h4>
                         <ul>
-                            <li class="fragment fade-up"><strong>Cosign / Sigstore</strong> — keyless signing with OIDC identity</li>
-                            <li class="fragment fade-up">Verify signatures at admission with a policy engine</li>
-                            <li class="fragment fade-up">Pin images by <code>@sha256:</code> digest, not mutable tags</li>
+                            <li><strong>Cosign</strong> — keyless OIDC signing</li>
+                            <li>Verify at admission</li>
+                            <li>Pin by <code>@sha256:</code> digest</li>
                         </ul>
                     </div>
                 </div>
-                <div class="key-point" style="margin-top:10px;">
-                    <strong>Supply-chain rule of thumb:</strong> Build minimal &rarr; scan for CVEs &rarr; sign the artifact &rarr; verify at deploy
-                </div>
+                <p style="margin-top: 15px;"><strong>Supply-chain rule of thumb:</strong> Build minimal &rarr; scan for CVEs &rarr; sign the artifact &rarr; verify at deploy</p>
                 <aside class="notes">These practices form a container supply-chain security pipeline. Trivy can run as a single binary in any CI system — pass --exit-code 1 to fail the build on HIGH/CRITICAL CVEs. ECR Enhanced Scanning uses Amazon Inspector and provides continuous monitoring, not just scan-on-push. Cosign with Sigstore lets you sign images without managing long-lived keys — it ties the signature to your CI system's OIDC identity. Remind students that docker history exposes every layer, so secrets baked into images are trivially extractable even if you delete them in a later layer.</aside>
             </section>
 
@@ -831,7 +829,7 @@ containers:
             <section data-background="linear-gradient(135deg, #2b6cb0 0%, #2c5282 100%)" class="section-divider">
                 <h2>&#128273; IRSA: IAM Roles for Service Accounts</h2>
                 <h3>Least-privilege AWS access for pods</h3>
-                <aside class="notes">We just locked down in-cluster access with RBAC and Pod Security. But pods often need to reach AWS services — S3, SQS, Secrets Manager. Without IRSA, every pod on a node shares the EC2 instance profile, violating least privilege. IRSA extends the security boundary to AWS IAM. On Verisign's EKS platform, IRSA is the standard pattern for any workload accessing AWS services like S3, SQS, or Secrets Manager.</aside>
+                <aside class="notes">We just locked down in-cluster access with RBAC and Pod Security. But pods often need to reach AWS services — S3, SQS, Secrets Manager. Without IRSA, every pod on a node shares the EC2 instance profile, violating least privilege. IRSA extends the security boundary to AWS IAM. On the organization's EKS platform, IRSA is the standard pattern for any workload accessing AWS services like S3, SQS, or Secrets Manager.</aside>
             </section>
 
             <!-- IRSA Slide 1: The Problem and What IRSA Solves -->
@@ -912,29 +910,27 @@ metadata:
             <!-- IRSA Slide 4: Best Practices -->
             <section>
                 <h2>&#9989; IRSA Best Practices</h2>
-                <div class="two-columns">
+                <div class="two-columns" style="font-size: 0.9em;">
                     <div class="card">
                         <h4>Do</h4>
                         <ul>
-                            <li class="fragment fade-up">One IAM role per workload &mdash; never share roles across services</li>
-                            <li class="fragment fade-up">Scope IAM policies to specific resource ARNs &mdash; no <code>"Resource": "*"</code></li>
-                            <li class="fragment fade-up">Always include the <code>:sub</code> condition in trust policies</li>
-                            <li class="fragment fade-up">Verify with <code>kubectl exec -- aws sts get-caller-identity</code></li>
+                            <li>One IAM role per workload</li>
+                            <li>Scope policies to specific resource ARNs</li>
+                            <li>Always include <code>:sub</code> condition in trust policies</li>
+                            <li>Verify with <code>aws sts get-caller-identity</code></li>
                         </ul>
                     </div>
                     <div class="card">
                         <h4>Avoid</h4>
                         <ul>
-                            <li class="fragment fade-up">Sharing the node instance profile across workloads</li>
-                            <li class="fragment fade-up">Wildcard actions or resources in IRSA policies</li>
-                            <li class="fragment fade-up">Using <code>StringLike</code> with broad <code>:sub</code> patterns</li>
-                            <li class="fragment fade-up">Storing long-lived AWS keys in Secrets &mdash; IRSA replaces this entirely</li>
+                            <li>Sharing the node instance profile</li>
+                            <li>Wildcard actions or <code>"Resource": "*"</code></li>
+                            <li>Broad <code>StringLike</code> on <code>:sub</code></li>
+                            <li>Long-lived AWS keys in Secrets</li>
                         </ul>
                     </div>
                 </div>
-                <div class="highlight-box fragment fade-up">
-                    <strong>EKS Pod Identity:</strong> AWS's newer alternative (GA 2023) simplifies IRSA by removing trust-policy management. IRSA remains the standard for existing clusters.
-                </div>
+                <p style="margin-top: 15px; font-size: 0.9em;"><strong>EKS Pod Identity</strong> (GA 2023) simplifies IRSA by removing trust-policy management. IRSA remains the standard for existing clusters.</p>
                 <aside class="notes">Think of IRSA as the AWS extension of the RBAC least-privilege principle we covered earlier. Inside the cluster, RBAC controls what a ServiceAccount can do with the Kubernetes API. Outside the cluster, IRSA controls what that same ServiceAccount can do with AWS APIs. Together they form a complete identity and access management story for EKS workloads.</aside>
             </section>
 

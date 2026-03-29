@@ -205,16 +205,51 @@ assert_eq "projected volume has DB_USERNAME" "app_user" "$PROJ_USER"
 PROJ_NS=$(kubectl exec projected-demo -n "$NS" -- cat /etc/projected/namespace 2>/dev/null)
 assert_eq "projected volume has namespace" "$NS" "$PROJ_NS"
 
-# --- Step 12: Vault / ESO note ------------------------------------------------
+# --- Step 12: Vault / External Secrets Operator --------------------------------
 
 echo ""
-echo "Step 12: Vault / External Secrets (informational)"
+echo "Step 12: External Secrets from Vault (stretch goal)"
 
 VAULT_PODS=$(kubectl get pods -n vault --no-headers 2>/dev/null | wc -l | tr -d ' ')
-if [ "$VAULT_PODS" -gt 0 ] 2>/dev/null; then
-  skip "Vault integration verified — ESO covered in platform setup"
+ESO_PODS=$(kubectl get pods -n external-secrets --no-headers 2>/dev/null | wc -l | tr -d ' ')
+CSS_READY=$(kubectl get clustersecretstore vault-store -o jsonpath='{.status.conditions[0].status}' 2>/dev/null)
+
+if [ "$VAULT_PODS" -gt 0 ] && [ "$ESO_PODS" -gt 0 ] && [ "$CSS_READY" = "True" ]; then
+  # Apply ExternalSecret
+  envsubst < "$LAB_DIR/external-secret.yaml" | kubectl apply -f - &>/dev/null
+
+  # Wait for the secret to sync (up to 30s)
+  for i in $(seq 1 15); do
+    ES_STATUS=$(kubectl get externalsecret db-external -n "$NS" \
+      -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null)
+    [ "$ES_STATUS" = "True" ] && break
+    sleep 2
+  done
+
+  assert_eq "ExternalSecret db-external is Ready" "True" "$ES_STATUS"
+
+  # Verify synced secret exists
+  assert_cmd "Secret db-from-vault created by ESO" \
+    kubectl get secret db-from-vault -n "$NS"
+
+  # Verify secret contents match Vault seed data
+  VAULT_USER=$(kubectl get secret db-from-vault -n "$NS" \
+    -o jsonpath='{.data.DB_USERNAME}' 2>/dev/null | base64 -d)
+  assert_eq "db-from-vault DB_USERNAME=appuser" "appuser" "$VAULT_USER"
+
+  VAULT_HOST=$(kubectl get secret db-from-vault -n "$NS" \
+    -o jsonpath='{.data.DB_HOST}' 2>/dev/null | base64 -d)
+  assert_eq "db-from-vault DB_HOST=db.internal.local" "db.internal.local" "$VAULT_HOST"
+
+  VAULT_PASS=$(kubectl get secret db-from-vault -n "$NS" \
+    -o jsonpath='{.data.DB_PASSWORD}' 2>/dev/null | base64 -d)
+  if [ -n "$VAULT_PASS" ]; then
+    pass "db-from-vault DB_PASSWORD is populated"
+  else
+    fail "db-from-vault DB_PASSWORD is empty"
+  fi
 else
-  skip "Vault not available (platform component) — skipping ESO check"
+  skip "Vault/ESO not available — skipping ExternalSecret tests"
 fi
 
 # --- Cleanup ------------------------------------------------------------------

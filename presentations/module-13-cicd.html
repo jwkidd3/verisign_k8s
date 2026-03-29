@@ -62,7 +62,7 @@
             <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" class="title-slide">
                 <h1>&#128256; CI/CD Integration &amp; GitOps</h1>
                 <h2>Automating Kubernetes Delivery Pipelines &mdash; Module 13 of 13</h2>
-                <h3>Verisign EKS Platform</h3>
+                <h3>Enterprise EKS Platform</h3>
                                 <div class="module-progress">
                     <div class="step completed"></div>
                     <div class="step completed"></div>
@@ -311,7 +311,7 @@ docker push ${ECR}/myapp:${GIT_SHA}</code></pre>
                 <div class="highlight-box fragment">
                     <strong>EKS integration:</strong> Jenkins authenticates to EKS via IRSA (IAM Roles for Service Accounts) or kubeconfig with a service account token &mdash; avoid storing long-lived cluster admin credentials.
                 </div>
-                <aside class="notes">Jenkins remains the most common CI/CD tool in enterprise environments. The Kubernetes plugin transforms Jenkins from a static VM-based system into a cloud-native build platform by scheduling build agents as Pods. For Verisign's EKS clusters, IRSA is the recommended authentication method since it ties IAM roles directly to Kubernetes service accounts without managing static credentials. However, as we discussed in the push vs pull comparison, Jenkins represents the push-based model where the CI system requires direct cluster access. Many organizations keep Jenkins for CI (build, test, scan) but hand off the CD (deploy) step to a GitOps tool like ArgoCD.</aside>
+                <aside class="notes">Jenkins remains the most common CI/CD tool in enterprise environments. The Kubernetes plugin transforms Jenkins from a static VM-based system into a cloud-native build platform by scheduling build agents as Pods. For The organization's EKS clusters, IRSA is the recommended authentication method since it ties IAM roles directly to Kubernetes service accounts without managing static credentials. However, as we discussed in the push vs pull comparison, Jenkins represents the push-based model where the CI system requires direct cluster access. Many organizations keep Jenkins for CI (build, test, scan) but hand off the CD (deploy) step to a GitOps tool like ArgoCD.</aside>
             </section>
 
             <!-- Slide 11: From Jenkins to GitOps -->
@@ -330,7 +330,7 @@ docker push ${ECR}/myapp:${GIT_SHA}</code></pre>
                 <div class="key-point fragment">
                     <strong>Best of both worlds:</strong> Jenkins handles CI (build, test, scan) while ArgoCD owns CD (deploy, reconcile, rollback) &mdash; no cluster credentials leave the cluster.
                 </div>
-                <aside class="notes">This hybrid pattern is rapidly becoming the industry standard. Jenkins excels at running complex build and test pipelines, but giving Jenkins direct kubectl access to production clusters is a security concern. In the hybrid model, the final Jenkins stage simply updates an image tag in the GitOps repository via a Git commit. ArgoCD, running inside the cluster, detects the change and performs the actual deployment. This gives you Jenkins's mature CI ecosystem plus GitOps security and drift detection. Many Verisign teams already running Jenkins can adopt this pattern incrementally without replacing their existing CI investment.</aside>
+                <aside class="notes">This hybrid pattern is rapidly becoming the industry standard. Jenkins excels at running complex build and test pipelines, but giving Jenkins direct kubectl access to production clusters is a security concern. In the hybrid model, the final Jenkins stage simply updates an image tag in the GitOps repository via a Git commit. ArgoCD, running inside the cluster, detects the change and performs the actual deployment. This gives you Jenkins's mature CI ecosystem plus GitOps security and drift detection. Many teams already running Jenkins can adopt this pattern incrementally without replacing their existing CI investment.</aside>
             </section>
 
             <!-- Slide 12: Git as Single Source of Truth -->
@@ -409,7 +409,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/verisign/gitops-repo.git
+    repoURL: https://github.com/mycompany/gitops-repo.git
     targetRevision: main
     path: apps/frontend/overlays/production
   destination:
@@ -557,7 +557,7 @@ kind: GitRepository
 metadata: { name: app-repo, namespace: flux-system }
 spec:
   interval: 1m
-  url: https://github.com/verisign/gitops-repo
+  url: https://github.com/mycompany/gitops-repo
   ref: { branch: main }
   secretRef: { name: git-credentials }</code></pre>
                     </div>
@@ -642,7 +642,7 @@ spec:
                 <h2>&#128640; Flux Bootstrap &amp; Repo Structure</h2>
                 <pre><code class="language-bash"># Bootstrap Flux on a new cluster
 flux bootstrap github \
-  --owner=verisign \
+  --owner=mycompany \
   --repository=fleet-infra \
   --branch=main \
   --path=clusters/production \
@@ -697,7 +697,7 @@ spec:
                 <pre><code class="language-yaml"># 1. Scan registry for new tags
 kind: ImageRepository
 spec:
-  image: ghcr.io/verisign/my-app
+  image: ghcr.io/mycompany/my-app
   interval: 5m
 ---
 # 2. Select latest matching tag
@@ -859,7 +859,7 @@ snyk container test myapp:v1.2.3
 
 # Monitor for new vulnerabilities
 snyk container monitor \
-  myapp:v1.2.3 --org=verisign</code></pre>
+  myapp:v1.2.3 --org=mycompany</code></pre>
                     </div>
                 </div>
                 <aside class="notes">Tip: Never deploy unscanned images to production. Integrate scanning as a mandatory pipeline gate, not an optional step.</aside>

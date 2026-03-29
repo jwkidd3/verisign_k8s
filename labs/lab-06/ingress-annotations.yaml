@@ -7,11 +7,11 @@ metadata:
     nginx.ingress.kubernetes.io/rewrite-target: /$2
     nginx.ingress.kubernetes.io/limit-rps: "10"
     nginx.ingress.kubernetes.io/enable-cors: "true"
-    nginx.ingress.kubernetes.io/cors-allow-origin: "https://app.verisign.com"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://app.example.com"
     nginx.ingress.kubernetes.io/proxy-connect-timeout: "10"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "30"
     nginx.ingress.kubernetes.io/configuration-snippet: |
-      more_set_headers "X-Served-By: verisign-eks";
+      more_set_headers "X-Served-By: lab-eks";
 spec:
   ingressClassName: nginx
   rules:

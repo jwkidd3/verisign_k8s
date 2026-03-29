@@ -104,7 +104,7 @@ echo "Step 5: TLS Termination"
 
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
   -keyout /tmp/tls-ingress-$$.key -out /tmp/tls-ingress-$$.crt \
-  -subj "/CN=*.lab.local/O=Verisign Lab" &>/dev/null
+  -subj "/CN=*.lab.local/O=Lab" &>/dev/null
 
 kubectl create secret tls lab-tls-secret \
   --cert=/tmp/tls-ingress-$$.crt --key=/tmp/tls-ingress-$$.key \
@@ -150,7 +150,7 @@ assert_eq "CORS enabled annotation = true" "true" "$ANN_CORS"
 
 ANN_ORIGIN=$(kubectl get ingress app-ingress-advanced -n "$NS" \
   -o jsonpath='{.metadata.annotations.nginx\.ingress\.kubernetes\.io/cors-allow-origin}' 2>/dev/null)
-assert_eq "CORS origin = https://app.verisign.com" "https://app.verisign.com" "$ANN_ORIGIN"
+assert_eq "CORS origin = https://app.example.com" "https://app.example.com" "$ANN_ORIGIN"
 
 # ─── Step 7: Gateway API (conditional) ─────────────────────────────────
 

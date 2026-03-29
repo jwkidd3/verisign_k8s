@@ -62,7 +62,7 @@
             <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" class="title-slide">
                 <h1>&#128737;&#65039; Network Policies</h1>
                 <h2>Securing Pod-to-Pod Communication &mdash; Module 8 of 13</h2>
-                <h3>Verisign EKS Platform</h3>
+                <h3>Enterprise EKS Platform</h3>
                                 <div class="module-progress">
                     <div class="step completed"></div>
                     <div class="step completed"></div>
@@ -143,7 +143,7 @@
                         </ul>
                     </div>
                 </div>
-                <aside class="notes">This is the core motivation. The flat network is great for development convenience but terrible for security. In a multi-tenant cluster like Verisign's, you absolutely need network policies. Without them, a vulnerability in one microservice compromises everything.</aside>
+                <aside class="notes">This is the core motivation. The flat network is great for development convenience but terrible for security. In a multi-tenant cluster like yours, you absolutely need network policies. Without them, a vulnerability in one microservice compromises everything.</aside>
             </section>
 
             <!-- Slide 6: Section — Network Policy Basics -->
@@ -435,7 +435,7 @@ spec:
                         <tr class="fragment fade-up"><td>Flow Logging</td><td>&#9989;</td><td>&#9989; (Hubble)</td><td>VPC Flow Logs</td></tr>
                     </tbody>
                 </table>
-                <aside class="notes">Not all CNI plugins are equal. The standard Kubernetes NetworkPolicy API covers L3/L4 rules. Calico and Cilium both extend this significantly with their own CRDs. AWS VPC CNI added native network policy support in EKS 1.25, which is relevant for Verisign's platform.</aside>
+                <aside class="notes">Not all CNI plugins are equal. The standard Kubernetes NetworkPolicy API covers L3/L4 rules. Calico and Cilium both extend this significantly with their own CRDs. AWS VPC CNI added native network policy support in EKS 1.25, which is relevant for the organization's platform.</aside>
             </section>
 
             <!-- Slide 20: Calico Network Policies -->
@@ -472,9 +472,9 @@ spec:
                     <li class="fragment fade-up"><strong>Limitation:</strong> No extended CRDs like Calico/Cilium — L3/L4 only</li>
                 </ul>
                 <div class="highlight-box fragment fade-up">
-                    <strong>Verisign Context:</strong> If running VPC CNI natively, standard NetworkPolicy is fully supported. For L7 or global policies, consider Calico overlay alongside VPC CNI.
+                    <strong>Production Context:</strong> If running VPC CNI natively, standard NetworkPolicy is fully supported. For L7 or global policies, consider Calico overlay alongside VPC CNI.
                 </div>
-                <aside class="notes">For Verisign's EKS clusters, AWS VPC CNI is likely the default. The good news is that it now supports standard NetworkPolicy without needing a third-party plugin. The trade-off is that you only get L3/L4 capabilities. If you need L7 filtering or global policies, you can run Calico as a policy-only add-on alongside VPC CNI.</aside>
+                <aside class="notes">For The organization's EKS clusters, AWS VPC CNI is likely the default. The good news is that it now supports standard NetworkPolicy without needing a third-party plugin. The trade-off is that you only get L3/L4 capabilities. If you need L7 filtering or global policies, you can run Calico as a policy-only add-on alongside VPC CNI.</aside>
             </section>
 
             <!-- Slide 22: Cilium Network Policies -->
@@ -751,7 +751,7 @@ kubectl exec -it debug-pod -- \
                 <div class="key-point fragment fade-up">
                     <strong>4. Observe before enforcing.</strong> Enable flow logging, map real traffic, then write policies. Never guess at communication patterns.
                 </div>
-                <aside class="notes">Four takeaways to remember. Default deny is the foundation. DNS is the most common pitfall. Your CNI determines what's enforceable. And observing before enforcing prevents outages. These principles will serve you well as you implement network policies on the Verisign platform.</aside>
+                <aside class="notes">Four takeaways to remember. Default deny is the foundation. DNS is the most common pitfall. Your CNI determines what's enforceable. And observing before enforcing prevents outages. These principles will serve you well as you implement network policies on the organization's platform.</aside>
             </section>
 
             <!-- Slide 33: Questions -->

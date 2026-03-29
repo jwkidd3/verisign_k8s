@@ -10,10 +10,11 @@
 
 - Create ConfigMaps from literals and files; consume as env vars and volume mounts
 - Create Secrets (Opaque, TLS) and consume as env vars and volume mounts
+- *Optional:* Sync secrets from HashiCorp Vault using External Secrets Operator
 
 ### Prerequisites
 
-- Completion of Labs 1–4 with `kubectl` access  |  **Duration:** ~30 minutes
+- Completion of Labs 1–4 with `kubectl` access  |  **Duration:** ~30-40 minutes
 
 ---
 
@@ -130,7 +131,7 @@ kubectl get secret db-credentials -n lab05-$STUDENT_NAME \
 ```bash
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
     -keyout tls.key -out tls.crt \
-    -subj "/CN=app.lab05-$STUDENT_NAME.local/O=Verisign Lab"
+    -subj "/CN=app.lab05-$STUDENT_NAME.local/O=Lab"
 
 kubectl create secret tls app-tls \
     --cert=tls.crt \
@@ -169,7 +170,63 @@ kubectl exec secret-vol-demo -n lab05-$STUDENT_NAME -- cat /etc/db-creds/DB_USER
 
 ---
 
-## Step 6: Clean Up
+---
+
+## Optional Stretch Goals
+
+> These exercises cover additional topics from the presentation. Complete them if you finish the core lab early.
+
+### Step 6: Sync Secrets from Vault with External Secrets Operator
+
+The cluster has HashiCorp Vault and the External Secrets Operator (ESO) pre-installed. ESO watches for `ExternalSecret` resources and automatically syncs secrets from Vault into native Kubernetes Secrets.
+
+#### Verify the Platform Components
+
+```bash
+# Check Vault is running
+kubectl get pods -n vault
+
+# Check ESO is running
+kubectl get pods -n external-secrets
+
+# Check the ClusterSecretStore is available
+kubectl get clustersecretstore vault-store
+```
+
+> ✅ **Checkpoint:** The `vault-store` ClusterSecretStore should show `Ready` status.
+
+#### Create an ExternalSecret
+
+Review `external-secret.yaml` — it defines an ExternalSecret that pulls database credentials from Vault's `prod/database` path:
+
+```bash
+envsubst '$STUDENT_NAME' < external-secret.yaml | kubectl apply -f -
+```
+
+#### Verify the Synced Secret
+
+```bash
+# Check ExternalSecret status (should show SecretSynced)
+kubectl get externalsecret db-external -n lab05-$STUDENT_NAME
+
+# View the Kubernetes Secret that ESO created
+kubectl get secret db-from-vault -n lab05-$STUDENT_NAME
+
+# Decode the synced values
+kubectl get secret db-from-vault -n lab05-$STUDENT_NAME \
+    -o jsonpath='{.data.DB_USERNAME}' | base64 -d
+echo
+
+kubectl get secret db-from-vault -n lab05-$STUDENT_NAME \
+    -o jsonpath='{.data.DB_HOST}' | base64 -d
+echo
+```
+
+> ✅ **Checkpoint:** The `db-from-vault` Secret should contain `DB_USERNAME=appuser`, `DB_PASSWORD`, and `DB_HOST=db.internal.local` — matching the values seeded in Vault during cluster setup.
+
+---
+
+## Clean Up
 
 ```bash
 kubectl delete namespace lab05-$STUDENT_NAME
@@ -182,6 +239,7 @@ rm -f tls.key tls.crt /tmp/nginx.conf /tmp/app.properties
 
 - **ConfigMaps:** Created from literals and files; consumed via `envFrom`, `valueFrom`, and volume mounts
 - **Secrets:** Same consumption patterns as ConfigMaps; base64-encoded, not encrypted by default; use RBAC to restrict access and enable KMS encryption at rest
+- **External Secrets:** ESO syncs secrets from Vault into native Kubernetes Secrets via `ExternalSecret` CRDs — no secret values stored in Git
 
 ---
 

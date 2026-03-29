@@ -23,7 +23,7 @@
 
 ## Step 1: Create Your Cloud9 Environment
 
-1. Sign in to the **AWS Management Console** using the credentials provided by the instructor
+1. Sign in to the **AWS Management Console** at [https://kiddcorp.signin.aws.amazon.com/console](https://kiddcorp.signin.aws.amazon.com/console) using the credentials provided by the instructor
 2. Set the region to **US East (Ohio) / us-east-2** (top-right dropdown)
 3. Search for **Cloud9** in the services search bar and open it
 4. Click **Create environment**
