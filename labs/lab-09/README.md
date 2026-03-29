@@ -13,6 +13,7 @@
 - Grafana dashboards for visualization
 - Custom alerting rules
 - *Optional:* Debug a failing application using observability tools
+- *Optional:* Explore distributed tracing with Jaeger and OpenTelemetry
 
 ### Lab Details
 
@@ -322,7 +323,52 @@ kube_pod_container_status_last_terminated_reason{
 
 ---
 
-## Step 10: Clean Up
+### Step 10: Distributed Tracing with Jaeger
+
+Jaeger has been pre-installed as part of the monitoring stack. Verify it's running:
+
+```bash
+kubectl get pods -n monitoring -l app.kubernetes.io/name=jaeger
+kubectl get svc -n monitoring -l app.kubernetes.io/name=jaeger
+```
+
+### Deploy a Traced Application
+
+This app is configured with OpenTelemetry environment variables pointing to the Jaeger collector:
+
+```bash
+envsubst < traced-app.yaml | kubectl apply -f -
+kubectl wait --for=condition=Ready pod -l app=traced-app \
+  -n obs-lab-$STUDENT_NAME --timeout=60s
+```
+
+### Inspect OTel Configuration
+
+```bash
+kubectl get pod -l app=traced-app -n obs-lab-$STUDENT_NAME \
+  -o jsonpath='{.items[0].spec.containers[0].env}' | jq .
+```
+
+> ✅ **Checkpoint:** The pod has these OTel environment variables:
+> - `OTEL_SERVICE_NAME` — identifies this service in traces
+> - `OTEL_EXPORTER_OTLP_ENDPOINT` — points to Jaeger's OTLP collector
+> - `OTEL_TRACES_SAMPLER` — set to `always_on` for lab visibility
+> - `OTEL_RESOURCE_ATTRIBUTES` — adds custom metadata to every span
+
+### View the Jaeger UI
+
+```bash
+pkill -f "port-forward.*8080" 2>/dev/null
+kubectl port-forward -n monitoring svc/jaeger-all-in-one-query 8080:16686 &
+```
+
+> ⚠️ **Cloud9:** Click **Preview → Preview Running Application** to open the Jaeger UI. Select a service from the dropdown to view traces.
+
+> **Key concepts:** A **trace** represents an end-to-end request. Each trace contains **spans** — individual operations with timing, status, and metadata. In microservices, spans from different services are correlated by a shared trace ID propagated in HTTP headers.
+
+---
+
+## Clean Up
 
 ```bash
 kubectl config set-context --current --namespace=default
@@ -343,6 +389,7 @@ pkill -f "port-forward.*8080" 2>/dev/null
 - **Grafana:** Pre-built dashboards provide immediate cluster visibility
 - **Alerting:** PrometheusRule CRDs define alerting conditions
 - **Debugging:** Follow Events > Logs > Metrics > Describe
+- **Tracing:** OpenTelemetry env vars configure apps to send spans to Jaeger for end-to-end request visibility
 
 ---
 

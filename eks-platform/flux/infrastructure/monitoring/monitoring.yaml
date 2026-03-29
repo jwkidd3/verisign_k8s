@@ -64,3 +64,38 @@ spec:
             severity: critical
           annotations:
             summary: "Probe failed for {{ $labels.instance }}"
+---
+# ─── Jaeger (all-in-one for tracing labs) ─────────────────────────────────────
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: jaeger
+  namespace: flux-system
+spec:
+  interval: 30m
+  targetNamespace: monitoring
+  dependsOn:
+    - name: kube-prometheus-stack
+  chart:
+    spec:
+      chart: jaeger
+      sourceRef:
+        kind: HelmRepository
+        name: jaegertracing
+      version: ">=3.0.0"
+  values:
+    provisionDataStore:
+      cassandra: false
+    allInOne:
+      enabled: true
+      extraEnv:
+        - name: COLLECTOR_OTLP_ENABLED
+          value: "true"
+    storage:
+      type: memory
+    collector:
+      enabled: false
+    query:
+      enabled: false
+    agent:
+      enabled: false

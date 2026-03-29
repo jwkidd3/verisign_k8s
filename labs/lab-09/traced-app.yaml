@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: traced-app
+  namespace: obs-lab-$STUDENT_NAME
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: traced-app
+  template:
+    metadata:
+      labels:
+        app: traced-app
+    spec:
+      containers:
+      - name: app
+        image: nginx:1.25-alpine
+        ports:
+        - containerPort: 80
+        env:
+        - name: OTEL_SERVICE_NAME
+          value: "traced-app-$STUDENT_NAME"
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "http://jaeger-all-in-one.monitoring.svc.cluster.local:4317"
+        - name: OTEL_TRACES_SAMPLER
+          value: "always_on"
+        - name: OTEL_RESOURCE_ATTRIBUTES
+          value: "deployment.environment=lab,student.name=$STUDENT_NAME"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: traced-app-svc
+  namespace: obs-lab-$STUDENT_NAME
+spec:
+  selector:
+    app: traced-app
+  ports:
+  - port: 80
+    targetPort: 80

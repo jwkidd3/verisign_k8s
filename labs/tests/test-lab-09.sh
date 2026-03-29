@@ -397,6 +397,55 @@ else
   skip "Prometheus rules API (CRD unavailable)"
 fi
 
+# ─── Step 10: Distributed Tracing with Jaeger ────────────────────────────
+
+echo ""
+echo "Distributed Tracing (Jaeger):"
+if kubectl get pods -n monitoring -l app.kubernetes.io/name=jaeger --no-headers 2>/dev/null | grep -q Running; then
+  pass "Jaeger pod running in monitoring namespace"
+
+  # Verify Jaeger query service exists
+  JAEGER_SVC=$(kubectl get svc -n monitoring -l app.kubernetes.io/name=jaeger --no-headers 2>/dev/null | wc -l | tr -d ' ')
+  if [ "${JAEGER_SVC:-0}" -gt 0 ]; then
+    pass "Jaeger service exists in monitoring namespace"
+  else
+    fail "Jaeger service not found"
+  fi
+
+  # Deploy traced app
+  envsubst < "$LAB_DIR/traced-app.yaml" | kubectl apply -f - &>/dev/null
+  wait_for_deploy "$NS" traced-app 90
+
+  # Verify OTel env vars are configured
+  OTEL_SVC=$(kubectl get pod -l app=traced-app -n "$NS" \
+    -o jsonpath='{.items[0].spec.containers[0].env[?(@.name=="OTEL_SERVICE_NAME")].value}' 2>/dev/null)
+  assert_contains "traced-app has OTEL_SERVICE_NAME" "$OTEL_SVC" "traced-app"
+
+  OTEL_ENDPOINT=$(kubectl get pod -l app=traced-app -n "$NS" \
+    -o jsonpath='{.items[0].spec.containers[0].env[?(@.name=="OTEL_EXPORTER_OTLP_ENDPOINT")].value}' 2>/dev/null)
+  assert_contains "traced-app OTLP endpoint points to Jaeger" "$OTEL_ENDPOINT" "jaeger"
+
+  OTEL_SAMPLER=$(kubectl get pod -l app=traced-app -n "$NS" \
+    -o jsonpath='{.items[0].spec.containers[0].env[?(@.name=="OTEL_TRACES_SAMPLER")].value}' 2>/dev/null)
+  assert_eq "traced-app sampler is always_on" "always_on" "$OTEL_SAMPLER"
+
+  OTEL_ATTRS=$(kubectl get pod -l app=traced-app -n "$NS" \
+    -o jsonpath='{.items[0].spec.containers[0].env[?(@.name=="OTEL_RESOURCE_ATTRIBUTES")].value}' 2>/dev/null)
+  assert_contains "traced-app resource attributes include environment" "$OTEL_ATTRS" "deployment.environment"
+
+  # Verify traced-app service exists
+  assert_cmd "traced-app-svc exists" kubectl get svc traced-app-svc -n "$NS"
+else
+  skip "Jaeger not running — skipping tracing tests"
+  skip "Jaeger service (Jaeger unavailable)"
+  skip "traced-app deployment (Jaeger unavailable)"
+  skip "traced-app OTel env vars (Jaeger unavailable)"
+  skip "traced-app OTLP endpoint (Jaeger unavailable)"
+  skip "traced-app sampler (Jaeger unavailable)"
+  skip "traced-app resource attributes (Jaeger unavailable)"
+  skip "traced-app service (Jaeger unavailable)"
+fi
+
 # ─── Cleanup ──────────────────────────────────────────────────────────────
 
 summary
