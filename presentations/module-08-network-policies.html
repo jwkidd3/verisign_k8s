@@ -460,21 +460,16 @@ spec:
             <!-- Slide 21: AWS VPC CNI Network Policy Support -->
             <section>
                 <h2>&#9729;&#65039; AWS VPC CNI &amp; Network Policy on EKS</h2>
-                <div class="concept-box">
-                    <h4>EKS Network Policy Support</h4>
-                    <p>Since EKS 1.25, the AWS VPC CNI plugin natively enforces Kubernetes NetworkPolicy resources using eBPF.</p>
-                </div>
-                <ul>
-                    <li class="fragment fade-up"><strong>Enable via add-on:</strong> Update <code>vpc-cni</code> add-on with <code>enableNetworkPolicy: true</code></li>
-                    <li class="fragment fade-up"><strong>eBPF-based:</strong> Enforcement happens in the kernel for minimal latency impact</li>
-                    <li class="fragment fade-up"><strong>Standard API:</strong> Uses native <code>networking.k8s.io/v1</code> resources</li>
-                    <li class="fragment fade-up"><strong>VPC Flow Logs:</strong> Network flow visibility through AWS-native tooling</li>
-                    <li class="fragment fade-up"><strong>Limitation:</strong> No extended CRDs like Calico/Cilium — L3/L4 only</li>
+                <p>Since EKS 1.25, the VPC CNI plugin natively enforces NetworkPolicy using eBPF.</p>
+                <ul style="font-size: 0.9em;">
+                    <li><strong>Enable:</strong> Update <code>vpc-cni</code> add-on with <code>enableNetworkPolicy: true</code></li>
+                    <li><strong>eBPF-based:</strong> Kernel-level enforcement with minimal latency</li>
+                    <li><strong>Standard API:</strong> Uses native <code>networking.k8s.io/v1</code> resources</li>
+                    <li><strong>VPC Flow Logs:</strong> AWS-native network flow visibility</li>
+                    <li><strong>Limitation:</strong> L3/L4 only — no extended CRDs like Calico/Cilium</li>
                 </ul>
-                <div class="highlight-box fragment fade-up">
-                    <strong>Production Context:</strong> If running VPC CNI natively, standard NetworkPolicy is fully supported. For L7 or global policies, consider Calico overlay alongside VPC CNI.
-                </div>
-                <aside class="notes">For The organization's EKS clusters, AWS VPC CNI is likely the default. The good news is that it now supports standard NetworkPolicy without needing a third-party plugin. The trade-off is that you only get L3/L4 capabilities. If you need L7 filtering or global policies, you can run Calico as a policy-only add-on alongside VPC CNI.</aside>
+                <p style="font-size: 0.9em;"><strong>Need L7 or global policies?</strong> Run Calico as a policy-only overlay alongside VPC CNI.</p>
+                <aside class="notes">For EKS clusters, AWS VPC CNI is the default. The good news is that it now supports standard NetworkPolicy without needing a third-party plugin. The trade-off is that you only get L3/L4 capabilities. If you need L7 filtering or global policies, you can run Calico as a policy-only add-on alongside VPC CNI.</aside>
             </section>
 
             <!-- Slide 22: Cilium Network Policies -->
@@ -636,14 +631,13 @@ kubectl exec -it debug-pod -- \
             <!-- Slide 28: Monitoring and Auditing -->
             <section>
                 <h2>&#128202; Monitoring &amp; Auditing Network Flows</h2>
-                <div class="three-columns">
+                <div class="three-columns" style="font-size: 0.85em;">
                     <div class="card">
                         <h4>&#128029; Cilium Hubble</h4>
                         <ul>
                             <li>Real-time flow visibility</li>
                             <li>Policy verdict logging</li>
                             <li>Service dependency maps</li>
-                            <li>CLI + UI dashboard</li>
                         </ul>
                     </div>
                     <div class="card">
@@ -651,7 +645,6 @@ kubectl exec -it debug-pod -- \
                         <ul>
                             <li>Allow/deny log entries</li>
                             <li>Export to SIEM systems</li>
-                            <li>Kibana dashboards</li>
                             <li>Policy recommendation engine</li>
                         </ul>
                     </div>
@@ -659,15 +652,12 @@ kubectl exec -it debug-pod -- \
                         <h4>&#9729;&#65039; AWS VPC Flow Logs</h4>
                         <ul>
                             <li>ENI-level traffic capture</li>
-                            <li>CloudWatch integration</li>
-                            <li>Athena SQL queries</li>
+                            <li>CloudWatch + Athena queries</li>
                             <li>Pod IP correlation</li>
                         </ul>
                     </div>
                 </div>
-                <div class="key-point fragment fade-up">
-                    <strong>Recommendation:</strong> Enable flow logging <em>before</em> enforcing policies. Observe traffic patterns first, then write policies based on actual communication paths.
-                </div>
+                <p style="margin-top: 15px;"><strong>Recommendation:</strong> Enable flow logging <em>before</em> enforcing policies. Observe actual traffic patterns first, then write policies based on real communication paths.</p>
                 <aside class="notes">Monitoring is essential for both writing correct policies and verifying they work. Hubble provides the richest Kubernetes-native visibility. Calico's flow logs integrate well with existing SIEM infrastructure. AWS VPC Flow Logs work at the infrastructure level and can be queried with Athena. The recommended approach is observe-first: enable logging, map actual traffic, then write policies based on reality rather than assumptions.</aside>
             </section>
 
