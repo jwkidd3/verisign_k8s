@@ -12,3 +12,10 @@ spec:
       - name: logger
         image: busybox
         command: ['sh', '-c', 'i=0; while true; do printf "{\"timestamp\":\"%s\",\"level\":\"info\",\"service\":\"order-api\",\"request_id\":\"%d\",\"status\":200}\n" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$i"; sleep 1; i=$((i+1)); done']
+        resources:
+          requests:
+            cpu: 50m
+            memory: 32Mi
+          limits:
+            cpu: 100m
+            memory: 64Mi

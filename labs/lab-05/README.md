@@ -10,6 +10,8 @@
 
 - Create ConfigMaps from literals and files; consume as env vars and volume mounts
 - Create Secrets (Opaque, TLS) and consume as env vars and volume mounts
+- Mark ConfigMaps as immutable and observe update rejection
+- Combine ConfigMap, Secret, and Downward API data using projected volumes
 - *Optional:* Sync secrets from HashiCorp Vault using External Secrets Operator
 
 ### Prerequisites
@@ -171,13 +173,72 @@ kubectl exec secret-vol-demo -n lab05-$STUDENT_NAME -- cat /etc/db-creds/DB_USER
 
 ---
 
+## Step 6: Immutable ConfigMaps
+
+Kubernetes allows ConfigMaps to be marked as **immutable** — once set, neither the data nor the `immutable` flag can be changed. This protects production configuration from accidental edits and lets the kubelet skip watch overhead.
+
+Apply the immutable ConfigMap:
+
+```bash
+envsubst '$STUDENT_NAME' < immutable-config.yaml | kubectl apply -f -
+```
+
+Inspect the ConfigMap and confirm it is immutable:
+
+```bash
+kubectl get configmap immutable-app-config -n lab05-$STUDENT_NAME -o yaml
+```
+
+> Note the `immutable: true` field and the two data keys: `APP_VERSION` and `FEATURE_FLAGS`.
+
+Now attempt to update a value:
+
+```bash
+kubectl patch configmap immutable-app-config -n lab05-$STUDENT_NAME \
+    --type merge -p '{"data":{"APP_VERSION":"3.0.0"}}'
+```
+
+> ✅ **Checkpoint:** The patch command is rejected with an error indicating the ConfigMap is immutable. To change an immutable ConfigMap you must delete and recreate it.
+
+---
+
+## Step 7: Projected Volumes
+
+A **projected volume** combines multiple sources — ConfigMaps, Secrets, and the Downward API — into a single mount point. This is useful when a container needs configuration from several origins under one directory.
+
+Apply the projected-volume pod:
+
+```bash
+envsubst '$STUDENT_NAME' < pod-projected.yaml | kubectl apply -f -
+kubectl wait --for=condition=Ready pod/projected-demo \
+    -n lab05-$STUDENT_NAME --timeout=60s
+```
+
+List the contents of the projected mount and verify each source:
+
+```bash
+# ConfigMap value (from app-config)
+kubectl exec projected-demo -n lab05-$STUDENT_NAME -- cat /etc/projected/APP_ENV
+
+# Secret value (from db-credentials)
+kubectl exec projected-demo -n lab05-$STUDENT_NAME -- cat /etc/projected/DB_USERNAME
+
+# Downward API values
+kubectl exec projected-demo -n lab05-$STUDENT_NAME -- cat /etc/projected/namespace
+kubectl exec projected-demo -n lab05-$STUDENT_NAME -- cat /etc/projected/labels
+```
+
+> ✅ **Checkpoint:** `APP_ENV` returns `production`, `DB_USERNAME` returns `app_user`, and `namespace` returns `lab05-<your-name>`. All four files coexist under `/etc/projected`.
+
+---
+
 ---
 
 ## Optional Stretch Goals
 
 > These exercises cover additional topics from the presentation. Complete them if you finish the core lab early.
 
-### Step 6: Sync Secrets from Vault with External Secrets Operator
+### Step 8: Sync Secrets from Vault with External Secrets Operator
 
 The cluster has HashiCorp Vault and the External Secrets Operator (ESO) pre-installed. ESO watches for `ExternalSecret` resources and automatically syncs secrets from Vault into native Kubernetes Secrets.
 
@@ -239,7 +300,9 @@ rm -f tls.key tls.crt /tmp/nginx.conf /tmp/app.properties
 ## Summary
 
 - **ConfigMaps:** Created from literals and files; consumed via `envFrom`, `valueFrom`, and volume mounts
+- **Immutable ConfigMaps:** Prevent accidental changes to production configuration; must be deleted and recreated to update
 - **Secrets:** Same consumption patterns as ConfigMaps; base64-encoded, not encrypted by default; use RBAC to restrict access and enable KMS encryption at rest
+- **Projected Volumes:** Combine ConfigMap, Secret, and Downward API sources into a single mount point
 - **External Secrets:** ESO syncs secrets from Vault into native Kubernetes Secrets via `ExternalSecret` CRDs — no secret values stored in Git
 
 ---
