@@ -166,7 +166,7 @@ kubectl get svc -n monitoring
 
 ```bash
 kubectl port-forward -n monitoring \
-  svc/kube-prometheus-stack-prometheus 8080:9090 &
+  svc/monitoring-kube-prometheus-prometheus 8080:9090 &
 ```
 
 > ⚠️ **Cloud9:** Click **Preview → Preview Running Application** (top menu) to open the Prometheus UI. Or use `curl` in a second terminal tab.
@@ -213,13 +213,11 @@ curl -s 'http://localhost:8080/api/v1/query' \
 
 Stop the Prometheus port-forward first, then forward Grafana on port 8080:
 
-```bash
-pkill -f "port-forward.*8080" 2>/dev/null
-kubectl port-forward -n monitoring \
-  svc/kube-prometheus-stack-grafana 8080:80 &
-```
+Grafana is available at:
 
-> ⚠️ **Cloud9:** Click **Preview → Preview Running Application** to open Grafana. Login: `admin` / `admin`
+**http://aa6f2adb27add49768448bda2c639a2a-b39039dfd272138d.elb.us-east-2.amazonaws.com**
+
+Login: `admin` / `admin`
 
 ### Verify Grafana via API
 
@@ -258,7 +256,7 @@ kubectl get prometheusrules -n monitoring
 # Verify the rule was picked up by Prometheus (may take up to 60s)
 pkill -f "port-forward.*8080" 2>/dev/null
 kubectl port-forward -n monitoring \
-  svc/kube-prometheus-stack-prometheus 8080:9090 &
+  svc/monitoring-kube-prometheus-prometheus 8080:9090 &
 sleep 5
 curl -s 'http://localhost:8080/api/v1/rules' | jq '.data.groups[].rules[] | select(.name | test("pod"))'
 ```
@@ -361,7 +359,7 @@ kubectl get pod -l app=traced-app -n obs-lab-$STUDENT_NAME \
 
 ```bash
 pkill -f "port-forward.*8080" 2>/dev/null
-kubectl port-forward -n monitoring svc/jaeger-all-in-one-query 8080:16686 &
+kubectl port-forward -n monitoring svc/monitoring-jaeger 8080:16686 &
 ```
 
 > ⚠️ **Cloud9:** Click **Preview → Preview Running Application** to open the Jaeger UI. Select a service from the dropdown to view traces.

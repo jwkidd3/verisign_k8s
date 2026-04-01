@@ -167,23 +167,19 @@ curl -sI -H "Host: secure-$STUDENT_NAME.lab.local" http://$INGRESS_IP
 
 ## Step 7: Explore Ingress Annotations
 
-<!-- Creates an Ingress with rewrite, rate limiting, CORS, and custom headers -->
+<!-- Creates an Ingress with rewrite, rate limiting, and CORS annotations -->
 
-Create the custom headers ConfigMap and apply the Ingress:
+Apply the manifest:
 
 ```bash
-kubectl create configmap custom-headers \
-    --from-literal=X-Served-By=lab-eks \
-    -n lab06-$STUDENT_NAME
-
 envsubst < ingress-annotations.yaml | kubectl apply -f -
 
 curl -s -H "Host: api-$STUDENT_NAME.lab.local" http://$INGRESS_IP/api/
 
-# Check CORS and custom headers
+# Check CORS headers
 curl -sI -H "Host: api-$STUDENT_NAME.lab.local" \
     -H "Origin: https://app.example.com" \
-    http://$INGRESS_IP/api/ 2>&1 | grep -iE "access-control|X-Served"
+    http://$INGRESS_IP/api/ 2>&1 | grep -iE "access-control"
 
 # Test rate limiting
 for i in $(seq 1 15); do
@@ -193,7 +189,7 @@ done
 echo ""
 ```
 
-> ✅ **Checkpoint:** CORS and custom headers appear. After 10 rapid requests, excess requests return `503`.
+> ✅ **Checkpoint:** CORS headers appear in the response. After 10 rapid requests, excess requests return `503`.
 
 ---
 

@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: toleration-demo
+  namespace: sched-$STUDENT_NAME
+spec:
+  containers:
+  - name: app
+    image: nginx:1.25-alpine
+    resources:
+      requests: { cpu: 50m, memory: 32Mi }
+      limits: { cpu: 100m, memory: 64Mi }
+  tolerations:
+  - key: dedicated
+    operator: Equal
+    value: monitoring
+    effect: NoSchedule
