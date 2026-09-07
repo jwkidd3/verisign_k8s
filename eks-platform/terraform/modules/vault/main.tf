@@ -15,6 +15,12 @@ terraform {
   }
 }
 
+variable "vault_chart_version" {
+  description = "Pinned hashicorp/vault chart version. Must be set: with no version, the helm provider re-resolves the chart during apply and Terraform aborts with \"produced an inconsistent final plan\"."
+  type        = string
+  default     = "0.34.1"
+}
+
 variable "vault_root_token" {
   description = "Vault dev root token"
   type        = string
@@ -26,6 +32,7 @@ resource "helm_release" "vault" {
   name             = "vault"
   repository       = "https://helm.releases.hashicorp.com"
   chart            = "vault"
+  version          = var.vault_chart_version
   namespace        = "vault"
   create_namespace = true
 

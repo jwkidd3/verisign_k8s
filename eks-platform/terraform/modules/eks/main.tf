@@ -13,6 +13,30 @@ data "aws_availability_zones" "available" {
 
 locals {
   azs = slice(data.aws_availability_zones.available.names, 0, 3)
+
+  # EKS allows exactly one access entry per principal ARN. When Terraform is
+  # run as the jkidd IAM user, the "terraform_executor" entry would duplicate
+  # the "jkidd" entry below, so it is only created when they differ.
+  caller_arn = data.aws_caller_identity.current.arn
+  jkidd_arn  = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/jkidd"
+
+  executor_access_entry = local.caller_arn == local.jkidd_arn ? {} : {
+    # Grant the Terraform executor cluster-admin so it can create
+    # StorageClasses, Kubernetes resources, and bootstrap Flux/Vault.
+    terraform_executor = {
+      principal_arn = local.caller_arn
+      type          = "STANDARD"
+
+      policy_associations = {
+        admin = {
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+          access_scope = {
+            type = "cluster"
+          }
+        }
+      }
+    }
+  }
 }
 
 # ─── VPC ────────────────────────────────────────────────────────────────────
@@ -74,23 +98,7 @@ module "eks" {
 
   enable_cluster_creator_admin_permissions = false
 
-  access_entries = {
-    # Grant the Terraform executor cluster-admin so it can create
-    # StorageClasses, Kubernetes resources, and bootstrap Flux/Vault.
-    terraform_executor = {
-      principal_arn = data.aws_caller_identity.current.arn
-      type          = "STANDARD"
-
-      policy_associations = {
-        admin = {
-          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
-          access_scope = {
-            type = "cluster"
-          }
-        }
-      }
-    }
-
+  access_entries = merge(local.executor_access_entry, {
     # IAM user jkidd — cluster admin for direct kubectl access.
     jkidd = {
       principal_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/jkidd"
@@ -121,7 +129,7 @@ module "eks" {
         }
       }
     }
-  }
+  })
 
   # Allow all traffic between nodes (required for pod-to-pod across nodes)
   node_security_group_additional_rules = {
