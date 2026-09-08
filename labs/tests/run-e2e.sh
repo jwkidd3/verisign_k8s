@@ -112,7 +112,7 @@ TEST_RC=0
 if [ "$DO_TESTS" = true ]; then
   say "Running platform setup + all lab tests (labs/tests/run-all.sh)"
   # run-all.sh runs setup-platform.sh (pushes Flux infra + waits to reconcile) then every test-lab-*.sh
-  bash "$TESTS_DIR/run-all.sh"
+  bash "$TESTS_DIR/run-all.sh" ${PARALLEL_TESTS:+--parallel}
   TEST_RC=$?
   if [ "$TEST_RC" -eq 0 ]; then say "${GREEN}All tests passed${NC}"; else warn "Tests reported failures (exit $TEST_RC)"; fi
 else

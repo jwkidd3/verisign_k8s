@@ -70,9 +70,33 @@ if [ -n "$VPC" ] && [ "$VPC" != "None" ]; then
   done
 fi
 
-# ─── 3. terraform destroy (with state-surgery fallback) ─────────────────────
+# ─── 3. GitHub flux repo deletion (used after destroy, below) ───────────────
+# `terraform destroy` only removes the repo when it is in state. A repo orphaned
+# by state surgery or a failed apply survives, and the next deploy then fails
+# with 422 "name already exists on this account" — so delete it directly.
+# Requires the token in terraform.tfvars to carry the delete_repo scope.
+delete_flux_repo() {
+  local owner repo token code
+  owner=$(grep -E '^github_owner' terraform.tfvars | sed 's/.*= *"//; s/".*//')
+  repo=$(grep -E '^flux_repository_name' terraform.tfvars | sed 's/.*= *"//; s/".*//')
+  token=$(grep -E '^github_token' terraform.tfvars | sed 's/.*= *"//; s/".*//')
+  [ -n "$owner" ] && [ -n "$repo" ] && [ -n "$token" ] || return 0
+  curl -sf -o /dev/null -H "Authorization: Bearer $token" \
+    "https://api.github.com/repos/$owner/$repo" || return 0
+  echo "==> Deleting GitHub repo $owner/$repo"
+  code=$(curl -s -o /dev/null -w '%{http_code}' -X DELETE \
+    -H "Authorization: Bearer $token" "https://api.github.com/repos/$owner/$repo")
+  case "$code" in
+    204) echo "    deleted" ;;
+    403) echo "    WARNING: token lacks the delete_repo scope — delete $owner/$repo by hand" ;;
+    *)   echo "    WARNING: delete returned HTTP $code — check $owner/$repo" ;;
+  esac
+}
+
+# ─── 4. terraform destroy (with state-surgery fallback) ─────────────────────
 echo "==> terraform destroy"
 if terraform destroy -auto-approve -input=false; then
+  delete_flux_repo
   echo "==> Destroy complete."
   exit 0
 fi
@@ -93,4 +117,5 @@ done
 
 echo "==> Re-running destroy on remaining AWS resources"
 terraform destroy -auto-approve -input=false
+delete_flux_repo
 echo "==> Destroy complete (after state surgery)."

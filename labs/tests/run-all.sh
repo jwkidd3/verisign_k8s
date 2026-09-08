@@ -10,6 +10,9 @@
 #   bash run-all.sh 1-6          # Run a range
 #   bash run-all.sh --no-setup   # Skip platform setup, run all tests
 #   bash run-all.sh setup        # Run setup only (no tests)
+#   bash run-all.sh --parallel   # Setup, then run the tests through run-parallel.sh
+#                                # (combines with any of the above; JOBS=n caps
+#                                #  concurrency, default 6)
 ###############################################################################
 
 set -uo pipefail
@@ -58,6 +61,19 @@ run_test_capture() {
 LABS_TO_RUN=()
 RUN_SETUP=false
 SETUP_ONLY=false
+PARALLEL=false
+
+# Pull --parallel out of the argument list first so it can appear anywhere
+# (e.g. `--no-setup --parallel 5 6`) without disturbing the parsing below.
+ARGS=()
+for arg in "$@"; do
+  if [ "$arg" = "--parallel" ]; then
+    PARALLEL=true
+  else
+    ARGS+=("$arg")
+  fi
+done
+set -- ${ARGS[@]+"${ARGS[@]}"}
 
 if [ $# -eq 0 ]; then
   # Default: setup + all tests
@@ -127,6 +143,18 @@ fi
 
 echo ""
 echo "Running: ${LABS_TO_RUN[*]}"
+
+# ─── Parallel mode ────────────────────────────────────────────────────────
+# Hand the same lab list to the bounded job pool in run-parallel.sh, which
+# prints its own per-lab table and returns non-zero if any lab failed.
+if [ "$PARALLEL" = true ]; then
+  if [ ! -f "$SCRIPT_DIR/run-parallel.sh" ]; then
+    echo -e "${RED}--parallel requested but run-parallel.sh not found${NC}"
+    exit 1
+  fi
+  bash "$SCRIPT_DIR/run-parallel.sh" "${LABS_TO_RUN[@]}"
+  exit $?
+fi
 
 # Save and restore context
 ORIG_NS=$(kubectl config view --minify -o jsonpath='{..namespace}' 2>/dev/null)
