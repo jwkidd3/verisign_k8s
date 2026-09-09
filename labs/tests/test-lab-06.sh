@@ -47,20 +47,13 @@ if kubectl get crd gatewayclasses.gateway.networking.k8s.io &>/dev/null; then
   assert_cmd "GatewayClass created" kubectl get gatewayclass "lab-gateway-class-$STUDENT_NAME"
   assert_cmd "Gateway created" kubectl get gateway lab-gateway -n "$NS"
 
-  # Each Gateway provisions its own load balancer (Envoy Gateway) — wait for it
-  # to be Programmed, then gate the access checks on reachability (a fresh ELB
-  # can take minutes to serve, so these degrade to skip, never false-fail).
+  # Wait for the Gateway's own load balancer to be Programmed. Reachability is
+  # probed after the first HTTPRoute is attached (below) — before that the
+  # Gateway has no route and can only answer 404, so probing here could never
+  # succeed and every access check degraded to a skip.
   kubectl wait --for=condition=Programmed gateway/lab-gateway -n "$NS" --timeout=120s &>/dev/null
   GW_ADDR=$(kubectl get gateway lab-gateway -n "$NS" -o jsonpath='{.status.addresses[0].value}' 2>/dev/null)
   GW_REACHABLE=false
-  if [ -n "$GW_ADDR" ]; then
-    for _i in $(seq 1 18); do
-      code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 \
-        -H "Host: app-$STUDENT_NAME.lab.local" "http://$GW_ADDR/" 2>/dev/null)
-      [ "$code" = "200" ] && { GW_REACHABLE=true; break; }
-      sleep 5
-    done
-  fi
 
   # ── Step 3: weighted HTTPRoute (host-based 80/20) ──
   echo ""
@@ -73,6 +66,17 @@ if kubectl get crd gatewayclasses.gateway.networking.k8s.io &>/dev/null; then
   assert_eq "app-route v1 weight is 80" "80" "$W_V1"
   W_V2=$(kubectl get httproute app-route -n "$NS" -o jsonpath='{.spec.rules[0].backendRefs[1].weight}' 2>/dev/null)
   assert_eq "app-route v2 weight is 20" "20" "$W_V2"
+
+  # Now that a route is attached, poll the LB until it serves (a fresh ELB can
+  # take minutes). Only a genuinely unreachable LB degrades to skip.
+  if [ -n "$GW_ADDR" ]; then
+    for _i in $(seq 1 18); do
+      code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 \
+        -H "Host: app-$STUDENT_NAME.lab.local" "http://$GW_ADDR/" 2>/dev/null)
+      [ "$code" = "200" ] && { GW_REACHABLE=true; break; }
+      sleep 5
+    done
+  fi
 
   if [ "$GW_REACHABLE" = true ]; then
     GW_BODY=$(curl -s --max-time 8 -H "Host: app-$STUDENT_NAME.lab.local" "http://$GW_ADDR/" 2>/dev/null)

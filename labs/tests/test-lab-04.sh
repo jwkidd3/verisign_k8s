@@ -258,7 +258,21 @@ assert_eq "frontend-lb type is LoadBalancer" "LoadBalancer" "$LB_TYPE"
 LB_SELECTOR=$(kubectl get svc frontend-lb -n "$NS" -o jsonpath='{.spec.selector.app}' 2>/dev/null)
 assert_eq "frontend-lb selects app=frontend" "frontend" "$LB_SELECTOR"
 
-skip "EXTERNAL-IP check skipped (NLB provisioning takes several minutes)"
+# AWS assigns the LB hostname within a minute or two, well before the NLB
+# actually serves traffic — so the hostname is a real assertion, while
+# end-to-end reachability stays a soft check.
+LB_HOST=""
+for _i in $(seq 1 24); do
+  LB_HOST=$(kubectl get svc frontend-lb -n "$NS" \
+    -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null)
+  [ -n "$LB_HOST" ] && break
+  sleep 5
+done
+if [ -n "$LB_HOST" ]; then
+  pass "frontend-lb was assigned an external hostname ($LB_HOST)"
+else
+  fail "frontend-lb never got an external hostname within 120s"
+fi
 
 ###############################################################################
 # Cleanup
